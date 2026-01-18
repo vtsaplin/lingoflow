@@ -12,10 +12,10 @@ function Router() {
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       <SidebarNav />
-      <main className="flex-1 pt-16 md:pt-0 overflow-y-auto h-screen scroll-smooth">
+      <main className="flex-1 pt-16 md:pt-0 h-screen flex flex-col">
         <Switch>
           <Route path="/" component={Home} />
-          <Route path="/topic/:id" component={TopicView} />
+          <Route path="/topic/:topicId/text/:textId" component={TopicView} />
           <Route component={NotFound} />
         </Switch>
       </main>

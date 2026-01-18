@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
-import { Volume2, Languages, Book, Loader2, PlayCircle, StopCircle } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
 
 type Mode = "word" | "sentence";
@@ -87,121 +88,128 @@ export function Reader({ title, paragraphs }: ReaderProps) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-12 px-6 sm:px-8">
-      <div className="flex flex-col gap-4 mb-8">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-3xl sm:text-4xl font-serif font-semibold tracking-tight text-foreground">
-            {title}
-          </h1>
-          
-          <div className="flex bg-muted p-1 rounded-lg">
-            <button
-              onClick={() => setMode("word")}
-              data-testid="mode-word"
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                mode === "word" 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Word
-            </button>
-            <button
-              onClick={() => setMode("sentence")}
-              data-testid="mode-sentence"
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                mode === "sentence" 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Sentence
-            </button>
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="px-6 sm:px-8 pt-8 pb-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-serif font-semibold tracking-tight text-foreground">
+                  {title}
+                </h1>
+                
+                <div className="flex bg-muted p-1 rounded-lg">
+                  <button
+                    onClick={() => setMode("word")}
+                    data-testid="mode-word"
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      mode === "word" 
+                        ? "bg-background shadow-sm text-foreground" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Word
+                  </button>
+                  <button
+                    onClick={() => setMode("sentence")}
+                    data-testid="mode-sentence"
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      mode === "sentence" 
+                        ? "bg-background shadow-sm text-foreground" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Sentence
+                  </button>
+                </div>
+              </div>
+
+              <Button 
+                variant="outline" 
+                onClick={handleReadAll}
+                disabled={ttsMutation.isPending && isReadingAll}
+                data-testid="button-read-all"
+                className="self-start"
+              >
+                {isReadingAll ? (
+                  <>
+                    <StopCircle className="h-4 w-4 mr-2" />
+                    Stop
+                  </>
+                ) : (
+                  <>
+                    <PlayCircle className="h-4 w-4 mr-2" />
+                    Read All
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
-        <Button 
-          variant="outline" 
-          onClick={handleReadAll}
-          disabled={ttsMutation.isPending && isReadingAll}
-          data-testid="button-read-all"
-          className="self-start"
-        >
-          {isReadingAll ? (
-            <>
-              <StopCircle className="h-4 w-4 mr-2" />
-              Остановить
-            </>
-          ) : (
-            <>
-              <PlayCircle className="h-4 w-4 mr-2" />
-              Прочитать весь текст
-            </>
-          )}
-        </Button>
-      </div>
-
-      <div className="space-y-6 font-serif prose-text text-foreground/90 text-lg leading-relaxed">
-        {paragraphs.map((para, i) => (
-          <Paragraph 
-            key={i} 
-            text={para} 
-            mode={mode} 
-            onInteract={handleInteraction}
-            selectedText={selectedText}
-          />
-        ))}
+        <ScrollArea className="flex-1 px-6 sm:px-8">
+          <div className="max-w-3xl mx-auto pb-8">
+            <div className="space-y-6 font-serif prose-text text-foreground/90 text-lg leading-relaxed">
+              {paragraphs.map((para, i) => (
+                <Paragraph 
+                  key={i} 
+                  text={para} 
+                  mode={mode} 
+                  onInteract={handleInteraction}
+                  selectedText={selectedText}
+                />
+              ))}
+            </div>
+          </div>
+        </ScrollArea>
       </div>
 
       {selectedText && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4">
-          <div className="bg-card border shadow-xl rounded-xl p-4 w-[90vw] sm:w-[450px] max-h-[70vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-3 gap-2">
-              <div className="flex items-start gap-2 min-w-0">
+        <div className="border-t bg-card animate-in slide-in-from-bottom-4">
+          <div className="max-w-3xl mx-auto px-6 sm:px-8 py-4">
+            <div className="flex justify-between items-start gap-4 mb-3">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
                 {ttsMutation.isPending && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0 mt-1" />}
-                <h3 className="font-serif text-base font-medium leading-relaxed break-words">
+                <p className="font-serif text-base leading-relaxed break-words">
                   "{selectedText}"
-                </h3>
+                </p>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 -mr-2 -mt-2 text-muted-foreground shrink-0"
-                onClick={closePanel}
-                data-testid="button-close-panel"
-              >
-                &times;
-              </Button>
-            </div>
-
-            <div className="flex gap-2 mb-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => playAudio(selectedText)}
-                disabled={ttsMutation.isPending}
-                data-testid="button-listen"
-                className="flex-1"
-              >
-                {ttsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4 mr-2" />}
-                Listen
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => playAudio(selectedText)}
+                  disabled={ttsMutation.isPending}
+                  data-testid="button-listen"
+                >
+                  {ttsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-muted-foreground"
+                  onClick={closePanel}
+                  data-testid="button-close-panel"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <Separator className="my-3" />
 
             <div className="min-h-[60px]">
               {(translateMutation.isPending || dictionaryMutation.isPending) && (
-                <div className="flex items-center justify-center py-4 text-muted-foreground">
+                <div className="flex items-center py-2 text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  <span>{mode === "word" ? "Загрузка словаря..." : "Перевод..."}</span>
+                  <span>{mode === "word" ? "Loading dictionary..." : "Translating..."}</span>
                 </div>
               )}
 
               {translateMutation.isSuccess && (
                 <div className="animate-in fade-in">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Перевод</p>
-                  <p className="text-base text-foreground font-medium">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Translation</p>
+                  <p className="text-base text-foreground">
                     {translateMutation.data.translation}
                   </p>
                 </div>
@@ -227,7 +235,7 @@ export function Reader({ title, paragraphs }: ReaderProps) {
 
                   {(dictionaryMutation.data.example_de || dictionaryMutation.data.example_ru) && (
                     <div className="text-sm space-y-1 pt-1">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Пример</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Example</p>
                       {dictionaryMutation.data.example_de && <p className="italic text-muted-foreground">"{dictionaryMutation.data.example_de}"</p>}
                       {dictionaryMutation.data.example_ru && <p>"{dictionaryMutation.data.example_ru}"</p>}
                     </div>
@@ -236,10 +244,10 @@ export function Reader({ title, paragraphs }: ReaderProps) {
               )}
               
               {translateMutation.isError && (
-                <p className="text-sm text-destructive">Ошибка перевода. Попробуйте ещё раз.</p>
+                <p className="text-sm text-destructive">Translation failed. Please try again.</p>
               )}
               {dictionaryMutation.isError && (
-                <p className="text-sm text-destructive">Не удалось найти определение.</p>
+                <p className="text-sm text-destructive">Could not find definition.</p>
               )}
             </div>
           </div>

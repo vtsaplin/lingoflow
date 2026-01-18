@@ -28,9 +28,7 @@ export function SidebarNav() {
   const [open, setOpen] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
 
-  const currentTopicId = location.startsWith("/topic/") 
-    ? location.split("/")[2] 
-    : null;
+  const currentPath = location;
 
   const toggleTopic = (topicId: string) => {
     setExpandedTopics(prev => {
@@ -42,6 +40,10 @@ export function SidebarNav() {
       }
       return newSet;
     });
+  };
+
+  const isTextActive = (topicId: string, textId: string) => {
+    return currentPath === `/topic/${topicId}/text/${textId}`;
   };
 
   const NavContent = () => (
@@ -71,69 +73,61 @@ export function SidebarNav() {
           <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="space-y-1 px-1">
               {topics?.map((topic) => {
-                const isActive = currentTopicId === topic.id;
-                const isExpanded = expandedTopics.has(topic.id) || isActive;
-                const hasMultipleTexts = topic.texts && topic.texts.length > 1;
+                const hasTexts = topic.texts && topic.texts.length > 0;
+                const isExpanded = expandedTopics.has(topic.id);
+                const hasActiveText = topic.texts?.some(t => isTextActive(topic.id, t.id));
 
                 return (
                   <Collapsible 
                     key={topic.id} 
-                    open={isExpanded}
+                    open={isExpanded || hasActiveText}
                     onOpenChange={() => toggleTopic(topic.id)}
                   >
-                    <div className="flex items-center">
-                      <Link href={`/topic/${topic.id}`} className="flex-1">
-                        <div 
-                          className={`
-                            group flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors cursor-pointer
-                            ${isActive 
-                              ? "bg-primary text-primary-foreground font-medium" 
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            }
-                          `}
-                          data-testid={`topic-${topic.id}`}
-                        >
-                          <BookOpen className={`h-4 w-4 shrink-0 ${isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"}`} />
-                          <span className="truncate flex-1">{topic.title}</span>
-                          {hasMultipleTexts && (
-                            <span className={`text-xs ${isActive ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                    <CollapsibleTrigger asChild>
+                      <div 
+                        className="group flex items-center justify-between px-3 py-2.5 rounded-md text-sm transition-colors cursor-pointer text-foreground hover:bg-muted"
+                        data-testid={`topic-${topic.id}`}
+                      >
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate font-medium">{topic.title}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {hasTexts && (
+                            <span className="text-xs text-muted-foreground">
                               {topic.texts.length}
                             </span>
                           )}
+                          {(isExpanded || hasActiveText) ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
                         </div>
-                      </Link>
-                      {hasMultipleTexts && (
-                        <CollapsibleTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 shrink-0"
-                            data-testid={`expand-${topic.id}`}
-                          >
-                            {isExpanded ? (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </Button>
-                        </CollapsibleTrigger>
-                      )}
-                    </div>
+                      </div>
+                    </CollapsibleTrigger>
                     
-                    {hasMultipleTexts && (
+                    {hasTexts && (
                       <CollapsibleContent>
                         <div className="ml-6 pl-3 border-l border-border space-y-1 py-1">
-                          {topic.texts.map((text) => (
-                            <Link key={text.id} href={`/topic/${topic.id}`}>
-                              <div 
-                                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer transition-colors"
-                                data-testid={`text-${text.id}`}
-                              >
-                                <FileText className="h-3 w-3 shrink-0" />
-                                <span className="truncate">{text.title}</span>
-                              </div>
-                            </Link>
-                          ))}
+                          {topic.texts.map((text) => {
+                            const active = isTextActive(topic.id, text.id);
+                            return (
+                              <Link key={text.id} href={`/topic/${topic.id}/text/${text.id}`}>
+                                <div 
+                                  className={`flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer transition-colors ${
+                                    active 
+                                      ? "bg-primary text-primary-foreground font-medium" 
+                                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                  }`}
+                                  data-testid={`text-${text.id}`}
+                                >
+                                  <FileText className="h-3 w-3 shrink-0" />
+                                  <span className="truncate">{text.title}</span>
+                                </div>
+                              </Link>
+                            );
+                          })}
                         </div>
                       </CollapsibleContent>
                     )}
