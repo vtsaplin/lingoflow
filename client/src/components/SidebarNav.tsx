@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   BookOpen, 
@@ -7,7 +7,8 @@ import {
   ChevronRight,
   ChevronDown,
   FileText,
-  Podcast
+  Podcast,
+  GripVertical
 } from "lucide-react";
 import { useTopics } from "@/hooks/use-content";
 import { Button } from "@/components/ui/button";
@@ -23,13 +24,42 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
+const MIN_WIDTH = 200;
+const MAX_WIDTH = 500;
+const DEFAULT_WIDTH = 288;
+
 export function SidebarNav() {
   const { data: topics, isLoading } = useTopics();
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
+  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
+  const isResizing = useRef(false);
 
   const currentPath = location;
+
+  const startResizing = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", stopResizing);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing.current) return;
+    const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, e.clientX));
+    setSidebarWidth(newWidth);
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    isResizing.current = false;
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", stopResizing);
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }, [handleMouseMove]);
 
   const toggleTopic = (topicId: string) => {
     setExpandedTopics(prev => {
@@ -154,8 +184,20 @@ export function SidebarNav() {
 
   return (
     <>
-      <aside className="hidden md:block w-72 border-r bg-card h-screen sticky top-0">
-        <NavContent />
+      <aside 
+        className="hidden md:flex h-screen sticky top-0 bg-card"
+        style={{ width: sidebarWidth }}
+      >
+        <div className="flex-1 border-r overflow-hidden">
+          <NavContent />
+        </div>
+        <div
+          className="w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/30 transition-colors flex items-center justify-center group"
+          onMouseDown={startResizing}
+          data-testid="sidebar-resize-handle"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
+        </div>
       </aside>
 
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b p-4 flex items-center justify-between">
