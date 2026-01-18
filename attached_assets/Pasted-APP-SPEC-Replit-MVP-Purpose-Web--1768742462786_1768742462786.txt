@@ -1,0 +1,263 @@
+APP SPEC (Replit, MVP)
+
+Purpose
+Web-приложение для персонального изучения языка через чтение и аудирование.
+Фокус: тексты на немецком, произношение, перевод, словарные объяснения.
+Приложение однопользовательское, без аккаунтов и хранения прогресса.
+
+Tech stack
+Frontend: React + TypeScript
+Backend: TypeScript (Node.js, Replit runtime)
+Content: локальные файлы в репозитории
+AI: один LLM, развернутый в Azure
+Credentials: все необходимые credentials хранятся в Replit Secrets
+
+CONTENT MODEL
+
+Контент хранится в папке /content
+Один файл = одна тема
+
+Пример:
+content/
+01-education.md
+02-work.md
+
+Формат файла темы:
+
+Первый заголовок первого уровня (#) — название темы
+
+Текст между заголовком темы и первым подзаголовком — описание темы (опционально)
+
+Каждый подзаголовок второго уровня (##) — отдельный учебный текст
+
+Разделитель --- используется только визуально
+
+В теле текстов только обычные абзацы, без списков и форматирования
+
+Пример структуры файла:
+
+Education
+
+Topic description (optional).
+
+Opinion about education
+
+Text paragraphs...
+
+Problems in modern education
+
+Text paragraphs...
+
+Правила интерпретации:
+
+порядок тем берётся из префикса имени файла
+
+id темы берётся из имени файла
+
+id текста — slug от заголовка ##
+
+LANGUAGE RULES
+
+Все исходные тексты: немецкий язык
+
+Перевод: только на русский язык
+
+Языковая логика фиксирована, без переключателей
+
+UI CONCEPT
+
+Экран разделён на две основные части:
+
+Левая часть (sidebar):
+
+список тем
+
+внутри темы — список текстов
+
+Правая часть (main content):
+
+активный текст
+
+основной reader
+
+Reader — центральный элемент приложения.
+Пользователь не выделяет текст вручную.
+
+Концепция взаимодействия:
+
+есть режимы взаимодействия (весь текст / предложения / слова)
+
+при наведении подсвечивается логическая единица (предложение или слово)
+
+клик запускает действие (произношение или перевод)
+
+UI не хранит состояние обучения, не показывает статистику.
+
+BACKEND API
+
+Все endpoints разделены по функционалу.
+Payload минимальный, без универсальных объектов.
+
+Произношение (TTS)
+
+POST /api/tts
+
+Request:
+
+text: string
+
+Response:
+
+audio stream
+
+Перевод
+
+POST /api/translate
+
+Request:
+
+text: string
+
+Response:
+
+translation: string
+
+Перевод всегда с немецкого на русский.
+
+Словарь
+
+POST /api/dictionary
+
+Request:
+
+word: string
+
+Response:
+
+word
+
+translation
+
+partOfSpeech
+
+definition
+
+example_de
+
+example_ru
+
+Все три endpoint используют один и тот же Azure LLM (кроме TTS).
+
+SECURITY & CONFIGURATION
+
+Все credentials и ключи хранятся в Replit Secrets
+
+В коде отсутствуют захардкоженные секреты
+
+Конкретные имена и виды секретов не фиксируются в спецификации
+
+OUT OF SCOPE (MVP)
+
+Пользовательские аккаунты
+
+Хранение прогресса
+
+Кэширование аудио
+
+Упражнения и тесты
+
+Аналитика
+
+Расширенные настройки
+
+END OF APP SPEC
+===============================================================
+MOCKUPS GENERATION SPEC
+
+Goal
+Сгенерировать UI-макеты (lo-fi или mid-fi), отражающие общую концепцию приложения, без детальной проработки состояний.
+
+General layout
+
+Web application
+
+Two-column layout
+
+Fixed vertical sidebar on the left
+
+Main reading area on the right
+
+Left sidebar:
+
+Vertical list of topics
+
+Topics expandable
+
+Under each topic: list of text titles
+
+Active text visually highlighted
+
+Main content area:
+
+Text title at the top
+
+Optional topic description
+
+Reader area with text paragraphs
+
+Reader interaction (conceptual, not implementation):
+
+Visual mode switch (full text / sentences / words)
+
+Hover highlight for sentences or words
+
+Action icons near highlighted text:
+
+pronounce
+
+translate
+
+dictionary (only for single words)
+
+Popups / overlays:
+
+Translation and dictionary results shown as lightweight popover or side panel
+
+No modal dialogs required
+
+Style guidance:
+
+Clean, minimal, reading-focused
+
+No gamification
+
+Neutral colors
+
+Strong emphasis on text readability
+
+What mockups should include:
+
+Main layout
+
+Sidebar with topics/texts
+
+Reader view in sentence mode
+
+Reader view in word mode
+
+Example popover with translation/dictionary
+
+What mockups should NOT include:
+
+Login / signup
+
+Mobile layouts
+
+Settings screens
+
+Progress indicators
+
+Animations
+
+===============================================================
+END OF MOCKUPS SPEC
