@@ -27,14 +27,29 @@ import {
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 500;
 const DEFAULT_WIDTH = 288;
+const STORAGE_KEY = "lingoflow-sidebar-width";
+
+function getSavedWidth(): number {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const width = parseInt(saved, 10);
+      if (!isNaN(width) && width >= MIN_WIDTH && width <= MAX_WIDTH) {
+        return width;
+      }
+    }
+  } catch {}
+  return DEFAULT_WIDTH;
+}
 
 export function SidebarNav() {
   const { data: topics, isLoading } = useTopics();
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
-  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
+  const [sidebarWidth, setSidebarWidth] = useState(getSavedWidth);
   const isResizing = useRef(false);
+  const widthRef = useRef(sidebarWidth);
 
   const currentPath = location;
 
@@ -50,6 +65,7 @@ export function SidebarNav() {
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing.current) return;
     const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, e.clientX));
+    widthRef.current = newWidth;
     setSidebarWidth(newWidth);
   }, []);
 
@@ -59,6 +75,9 @@ export function SidebarNav() {
     document.removeEventListener("mouseup", stopResizing);
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
+    try {
+      localStorage.setItem(STORAGE_KEY, widthRef.current.toString());
+    } catch {}
   }, [handleMouseMove]);
 
   const toggleTopic = (topicId: string) => {
