@@ -60,7 +60,7 @@ export function registerPodcastRoutes(app: Express): void {
 <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
   <channel>
     <title>LingoFlow - German Learning Podcast</title>
-    <description>Read. Hear. Understand. German texts for language learners.</description>
+    <description>Read. Listen. Practice. German texts for language learners.</description>
     <language>de</language>
     <link>${baseUrl}</link>
     <itunes:author>LingoFlow</itunes:author>

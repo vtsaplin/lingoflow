@@ -222,7 +222,7 @@ export function SidebarNav() {
             <span>LingoFlow</span>
           </Link>
           <p className="mt-2 text-sm text-muted-foreground">
-            Read. Hear. Understand.
+            Read. Listen. Practice.
           </p>
           <a 
             href="/podcast/feed.xml" 

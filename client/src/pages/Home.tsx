@@ -8,7 +8,7 @@ export default function Home() {
           LingoFlow
         </h1>
         <p className="text-xl text-muted-foreground">
-          Read. Hear. Understand.
+          Read. Listen. Practice.
         </p>
       </div>
 
