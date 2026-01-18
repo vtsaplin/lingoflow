@@ -18,7 +18,7 @@ export async function registerRoutes(
   });
 
   app.get(api.content.getTopic.path, async (req, res) => {
-    const topic = await getTopic(req.params.id);
+    const topic = await getTopic(req.params.id as string);
     if (!topic) {
       return res.status(404).json({ message: "Topic not found" });
     }
