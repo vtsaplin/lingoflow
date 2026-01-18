@@ -219,29 +219,22 @@ export function Reader({ topicTitle, title, paragraphs }: ReaderProps) {
               )}
 
               {dictionaryMutation.isSuccess && (
-                <div className="space-y-3 animate-in fade-in">
-                  <div>
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <p className="text-lg font-bold">{dictionaryMutation.data.word}</p>
-                      {dictionaryMutation.data.partOfSpeech && (
-                        <span className="text-xs text-muted-foreground italic">{dictionaryMutation.data.partOfSpeech}</span>
-                      )}
-                    </div>
-                    <p className="text-foreground mt-1 font-medium">{dictionaryMutation.data.translation}</p>
+                <div className="animate-in fade-in space-y-2">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="font-bold">{dictionaryMutation.data.word}</span>
+                    {dictionaryMutation.data.partOfSpeech && (
+                      <span className="text-xs text-muted-foreground italic">{dictionaryMutation.data.partOfSpeech}</span>
+                    )}
+                    <span className="text-muted-foreground">—</span>
+                    <span className="font-medium">{dictionaryMutation.data.translation}</span>
                   </div>
                   
                   {dictionaryMutation.data.definition && (
-                    <div className="bg-muted/30 p-2 rounded text-sm">
-                      {dictionaryMutation.data.definition}
-                    </div>
+                    <p className="text-sm text-muted-foreground">{dictionaryMutation.data.definition}</p>
                   )}
 
-                  {(dictionaryMutation.data.example_de || dictionaryMutation.data.example_ru) && (
-                    <div className="text-sm space-y-1 pt-1">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Example</p>
-                      {dictionaryMutation.data.example_de && <p className="italic text-muted-foreground">"{dictionaryMutation.data.example_de}"</p>}
-                      {dictionaryMutation.data.example_ru && <p>"{dictionaryMutation.data.example_ru}"</p>}
-                    </div>
+                  {dictionaryMutation.data.example_de && (
+                    <p className="text-sm italic text-muted-foreground">"{dictionaryMutation.data.example_de}"</p>
                   )}
                 </div>
               )}
