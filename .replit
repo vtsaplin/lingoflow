@@ -41,3 +41,6 @@ waitForPort = 5000
 [userenv]
 
 [userenv.shared]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-9930c1ec-3f45-4bf7-9c86-6ec1a21ab78b"

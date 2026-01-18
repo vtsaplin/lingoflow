@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Topic, Text } from '@shared/schema';
 
-const CONTENT_DIR = path.join(process.cwd(), 'content');
+const CONTENT_DIR = path.join(process.cwd(), 'data');
 
 export async function getTopics(): Promise<Topic[]> {
   const files = await fs.readdir(CONTENT_DIR);
