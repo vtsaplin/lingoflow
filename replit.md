@@ -40,6 +40,17 @@ Preferred communication style: Simple, everyday language.
 - `GET /podcast/audio/:topicId/:textId.mp3` - Episode audio with caching
 - `POST /api/download-combined-mp3` - Batch download selected texts as single MP3
 
+### Practice Modes System
+- Four modes: Read (original interaction), Fill (drag & drop gap-fill), Order (sentence word reordering), Write (typing into gaps)
+- All practice exercises generated dynamically from text content without API calls
+- Fill mode: 20% of words become gaps, drag words from word bank to fill
+- Order mode: Shuffle sentence words, drag to reorder (min 3 words per sentence)
+- Write mode: 25% of words become gaps with first-letter hints
+- Strict validation with Check button (correct/incorrect feedback per gap/sentence)
+- Gap indexing uses stable gapId in templates with gapLookup for O(1) access
+- FillMode captures existingWordInTarget before setState to avoid stale reads during drag/drop
+- OrderMode uses useEffect for initialization to prevent crashes on empty sentences
+
 ### Batch MP3 Download Feature
 - Selection mode in sidebar allows selecting multiple texts/topics
 - Generates combined MP3 with spoken English intros before each text
