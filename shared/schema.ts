@@ -1,18 +1,40 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+// Content Models
+export const textSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.array(z.string()), // Paragraphs
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const topicSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  texts: z.array(textSchema),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type Topic = z.infer<typeof topicSchema>;
+export type Text = z.infer<typeof textSchema>;
+
+// API Schemas
+export const ttsRequestSchema = z.object({
+  text: z.string(),
+});
+
+export const translateRequestSchema = z.object({
+  text: z.string(),
+});
+
+export const dictionaryRequestSchema = z.object({
+  word: z.string(),
+});
+
+export const dictionaryResponseSchema = z.object({
+  word: z.string(),
+  translation: z.string(),
+  partOfSpeech: z.string().optional(),
+  definition: z.string().optional(),
+  example_de: z.string().optional(),
+  example_ru: z.string().optional(),
+});
