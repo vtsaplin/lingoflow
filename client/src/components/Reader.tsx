@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,12 +8,14 @@ import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
 type Mode = "word" | "sentence";
 
 interface ReaderProps {
+  topicId: string;
+  textId: string;
   topicTitle: string;
   title: string;
   paragraphs: string[];
 }
 
-export function Reader({ topicTitle, title, paragraphs }: ReaderProps) {
+export function Reader({ topicId, textId, topicTitle, title, paragraphs }: ReaderProps) {
   const [mode, setMode] = useState<Mode>("sentence");
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const [isReadingAll, setIsReadingAll] = useState(false);
@@ -171,6 +173,20 @@ export function Reader({ topicTitle, title, paragraphs }: ReaderProps) {
                       Read All
                     </>
                   )}
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  asChild
+                  data-testid="button-download-mp3"
+                >
+                  <a 
+                    href={`/podcast/audio/${topicId}/${textId}.mp3`}
+                    download={`${textId}.mp3`}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download MP3
+                  </a>
                 </Button>
               </div>
             </div>
