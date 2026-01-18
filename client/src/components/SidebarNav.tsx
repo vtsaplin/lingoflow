@@ -51,10 +51,10 @@ export function SidebarNav() {
       <div className="px-4">
         <Link href="/" className="flex items-center gap-2 font-serif text-2xl font-semibold text-primary">
           <Library className="h-6 w-6" />
-          <span>LinguaRead</span>
+          <span>LingoFlow</span>
         </Link>
         <p className="mt-2 text-sm text-muted-foreground">
-          German-Russian Learning Reader
+          Read. Hear. Understand.
         </p>
       </div>
 
@@ -150,7 +150,7 @@ export function SidebarNav() {
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b p-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-serif text-xl font-semibold">
           <Library className="h-5 w-5" />
-          <span>LinguaRead</span>
+          <span>LingoFlow</span>
         </Link>
         
         <Sheet open={open} onOpenChange={setOpen}>

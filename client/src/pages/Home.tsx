@@ -9,10 +9,10 @@ export default function Home() {
     <div className="max-w-4xl mx-auto py-12 px-6 sm:px-8">
       <div className="space-y-4 mb-12 text-center sm:text-left">
         <h1 className="text-4xl sm:text-5xl font-serif font-bold tracking-tight text-foreground">
-          Welcome to LinguaRead
+          LingoFlow
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl leading-relaxed">
-          Improve your German vocabulary through immersive reading. Click any word for a definition or sentence for translation.
+          Read. Hear. Understand.
         </p>
       </div>
 
@@ -28,16 +28,9 @@ export default function Home() {
                 <div className="p-3 bg-primary/5 rounded-lg text-primary">
                   <BookOpen className="h-6 w-6" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-serif font-semibold text-foreground">
-                    {topic.title}
-                  </h2>
-                  {topic.description && (
-                    <p className="text-muted-foreground text-sm mt-1">
-                      {topic.description}
-                    </p>
-                  )}
-                </div>
+                <h2 className="text-xl font-serif font-semibold text-foreground">
+                  {topic.title}
+                </h2>
               </div>
               
               <div className="space-y-2 ml-1">

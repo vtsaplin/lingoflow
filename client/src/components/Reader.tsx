@@ -8,11 +8,12 @@ import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
 type Mode = "word" | "sentence";
 
 interface ReaderProps {
+  topicTitle: string;
   title: string;
   paragraphs: string[];
 }
 
-export function Reader({ title, paragraphs }: ReaderProps) {
+export function Reader({ topicTitle, title, paragraphs }: ReaderProps) {
   const [mode, setMode] = useState<Mode>("sentence");
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const [isReadingAll, setIsReadingAll] = useState(false);
@@ -93,11 +94,14 @@ export function Reader({ title, paragraphs }: ReaderProps) {
         <div className="px-6 sm:px-8 pt-8 pb-4">
           <div className="max-w-3xl mx-auto">
             <div className="flex flex-col gap-4 mb-6">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm text-muted-foreground">{topicTitle}</p>
                 <h1 className="text-2xl sm:text-3xl font-serif font-semibold tracking-tight text-foreground">
                   {title}
                 </h1>
-                
+              </div>
+              
+              <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex bg-muted p-1 rounded-lg">
                   <button
                     onClick={() => setMode("word")}
@@ -122,27 +126,26 @@ export function Reader({ title, paragraphs }: ReaderProps) {
                     Sentence
                   </button>
                 </div>
-              </div>
 
-              <Button 
-                variant="outline" 
-                onClick={handleReadAll}
-                disabled={ttsMutation.isPending && isReadingAll}
-                data-testid="button-read-all"
-                className="self-start"
-              >
-                {isReadingAll ? (
-                  <>
-                    <StopCircle className="h-4 w-4 mr-2" />
-                    Stop
-                  </>
-                ) : (
-                  <>
-                    <PlayCircle className="h-4 w-4 mr-2" />
-                    Read All
-                  </>
-                )}
-              </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleReadAll}
+                  disabled={ttsMutation.isPending && isReadingAll}
+                  data-testid="button-read-all"
+                >
+                  {isReadingAll ? (
+                    <>
+                      <StopCircle className="h-4 w-4 mr-2" />
+                      Stop
+                    </>
+                  ) : (
+                    <>
+                      <PlayCircle className="h-4 w-4 mr-2" />
+                      Read All
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

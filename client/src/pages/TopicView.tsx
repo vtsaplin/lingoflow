@@ -60,6 +60,7 @@ export default function TopicView() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
       <Reader 
+        topicTitle={topic.title}
         title={activeText.title} 
         paragraphs={activeText.content} 
       />
