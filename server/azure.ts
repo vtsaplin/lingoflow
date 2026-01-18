@@ -14,7 +14,7 @@ function getChatClient() {
     return new OpenAI({
       apiKey,
       baseURL: `${endpoint}/openai/deployments/${deployment}`,
-      defaultQuery: { 'api-version': '2024-02-15-preview' },
+      defaultQuery: { 'api-version': '2024-12-01-preview' },
       defaultHeaders: { 'api-key': apiKey }
     });
   } else {
@@ -36,7 +36,7 @@ function getTTSClient() {
     return new OpenAI({
       apiKey,
       baseURL: `${endpoint}/openai/deployments/${deployment}`,
-      defaultQuery: { 'api-version': '2024-02-15-preview' },
+      defaultQuery: { 'api-version': '2024-12-01-preview' },
       defaultHeaders: { 'api-key': apiKey }
     });
   } else {
