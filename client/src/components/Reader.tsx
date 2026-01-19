@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,11 @@ import { Progress } from "@/components/ui/progress";
 import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
 import { usePracticeProgress } from "@/hooks/use-practice-progress";
 import { useFlashcards } from "@/hooks/use-flashcards";
+import { usePracticeState } from "@/hooks/use-practice-state";
 import { FillMode } from "@/components/practice/FillMode";
 import { OrderMode } from "@/components/practice/OrderMode";
 import { WriteMode } from "@/components/practice/WriteMode";
 import { CardsMode } from "@/components/practice/CardsMode";
-import { createInitialPracticeState, type PracticeState, type FillModeState, type OrderModeState, type WriteModeState } from "@/components/practice/types";
 
 type InteractionMode = "word" | "sentence";
 type PracticeMode = "read" | "cards" | "fill" | "order" | "write";
@@ -34,22 +34,21 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const [slowMode, setSlowMode] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  const [practiceState, setPracticeState] = useState<PracticeState>(createInitialPracticeState);
-  const textKey = `${topicId}-${textId}`;
-  const [activeTextKey, setActiveTextKey] = useState(textKey);
+  const { 
+    practiceState, 
+    updateFillState, 
+    updateOrderState, 
+    updateWriteState, 
+    resetPracticeState,
+    textKey,
+    activeTextKey 
+  } = usePracticeState(topicId, textId);
   
   const { setModeComplete, getCompletionCount, isTextComplete, getTextProgress, resetTextProgress } = usePracticeProgress();
   const completionCount = getCompletionCount(topicId, textId);
   const completionPercentage = Math.round((completionCount / 3) * 100);
   const textComplete = isTextComplete(topicId, textId);
   const progress = getTextProgress(topicId, textId);
-
-  useEffect(() => {
-    if (activeTextKey !== textKey) {
-      setActiveTextKey(textKey);
-      setPracticeState(createInitialPracticeState());
-    }
-  }, [textKey, activeTextKey]);
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
@@ -83,18 +82,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const { addFlashcard, hasFlashcard, getFlashcardsForText } = useFlashcards();
   
   const flashcardsForText = getFlashcardsForText(topicId, textId);
-
-  const updateFillState = useCallback((newState: FillModeState) => {
-    setPracticeState(prev => ({ ...prev, fill: newState }));
-  }, []);
-
-  const updateOrderState = useCallback((newState: OrderModeState) => {
-    setPracticeState(prev => ({ ...prev, order: newState }));
-  }, []);
-
-  const updateWriteState = useCallback((newState: WriteModeState) => {
-    setPracticeState(prev => ({ ...prev, write: newState }));
-  }, []);
 
   const playAudio = async (text: string) => {
     try {
@@ -209,7 +196,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         <AlertDialogAction
                           onClick={() => {
                             resetTextProgress(topicId, textId);
-                            setPracticeState(createInitialPracticeState());
+                            resetPracticeState();
                           }}
                         >
                           Reset

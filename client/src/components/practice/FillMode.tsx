@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useCallback } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, RotateCcw, CheckCircle2, XCircle } from "lucide-react";
 import type { FillModeState, ValidationState } from "./types";
@@ -72,6 +72,47 @@ export function FillMode({ paragraphs, state, onStateChange, isCompleted = false
   const { placedWords, availableWords, validationState, incorrectGaps } = state;
   const incorrectGapsSet = new Set(incorrectGaps);
 
+  const [selectedWord, setSelectedWord] = useState<{ word: string; index: number } | null>(null);
+
+  const handleWordBankClick = (word: string, index: number) => {
+    if (selectedWord?.index === index) {
+      setSelectedWord(null);
+    } else {
+      setSelectedWord({ word, index });
+    }
+  };
+
+  const handleGapClick = (gapId: number) => {
+    const existingWord = placedWords[gapId];
+    
+    if (selectedWord) {
+      let newAvailable = [...availableWords];
+      const idx = newAvailable.findIndex((w, i) => w === selectedWord.word && i === selectedWord.index);
+      if (idx !== -1) {
+        newAvailable.splice(idx, 1);
+      }
+      if (existingWord) {
+        newAvailable.push(existingWord);
+      }
+      onStateChange({
+        ...state,
+        placedWords: { ...placedWords, [gapId]: selectedWord.word },
+        availableWords: newAvailable,
+        validationState: "idle",
+        incorrectGaps: [],
+      });
+      setSelectedWord(null);
+    } else if (existingWord) {
+      onStateChange({
+        ...state,
+        placedWords: { ...placedWords, [gapId]: null },
+        availableWords: [...availableWords, existingWord],
+        validationState: "idle",
+        incorrectGaps: [],
+      });
+    }
+  };
+
   const handleDragStart = (e: React.DragEvent, word: string, fromGap?: number) => {
     e.dataTransfer.setData("text/plain", word);
     e.dataTransfer.setData("fromGap", fromGap !== undefined ? String(fromGap) : "");
@@ -119,19 +160,6 @@ export function FillMode({ paragraphs, state, onStateChange, isCompleted = false
     e.preventDefault();
   };
 
-  const handleReturnWord = (gapId: number) => {
-    const word = placedWords[gapId];
-    if (word) {
-      onStateChange({
-        ...state,
-        placedWords: { ...placedWords, [gapId]: null },
-        availableWords: [...availableWords, word],
-        validationState: "idle",
-        incorrectGaps: [],
-      });
-    }
-  };
-
   const handleCheck = () => {
     let allCorrect = true;
     const newIncorrect: number[] = [];
@@ -168,7 +196,7 @@ export function FillMode({ paragraphs, state, onStateChange, isCompleted = false
         <div className="px-6 sm:px-8 py-6">
           <div className="max-w-3xl mx-auto space-y-6">
             <p className="text-sm text-muted-foreground">
-              Drag words from the word bank below to fill in the gaps. Click a placed word to return it.
+              Click a word below to select it, then click a gap to place it. Or drag and drop words. Click a placed word to return it.
             </p>
             
             <div className="space-y-6 font-serif text-lg leading-relaxed text-foreground/90">
@@ -182,12 +210,13 @@ export function FillMode({ paragraphs, state, onStateChange, isCompleted = false
                     const placed = placedWords[gapId];
                     const isIncorrect = incorrectGapsSet.has(gapId);
 
+                    const isClickTarget = selectedWord && !placed;
                     return (
                       <span
                         key={tIdx}
                         onDrop={(e) => handleDrop(e, gapId)}
                         onDragOver={handleDragOver}
-                        onClick={() => placed && handleReturnWord(gapId)}
+                        onClick={() => handleGapClick(gapId)}
                         data-testid={`gap-${gapId}`}
                         className={`inline-flex items-center justify-center min-w-[60px] h-7 mx-0.5 px-2 rounded border-2 border-dashed transition-colors cursor-pointer ${
                           placed
@@ -196,7 +225,9 @@ export function FillMode({ paragraphs, state, onStateChange, isCompleted = false
                               : validationState === "correct"
                                 ? "bg-green-100 dark:bg-green-900/30 border-green-500 text-foreground"
                                 : "bg-primary/10 border-primary/50 text-foreground"
-                            : "bg-muted/50 border-muted-foreground/30 text-muted-foreground"
+                            : isClickTarget
+                              ? "bg-primary/20 border-primary animate-pulse"
+                              : "bg-muted/50 border-muted-foreground/30 text-muted-foreground"
                         }`}
                         draggable={!!placed}
                         onDragStart={(e) => placed && handleDragStart(e, placed, gapId)}
@@ -219,17 +250,25 @@ export function FillMode({ paragraphs, state, onStateChange, isCompleted = false
                 {availableWords.length === 0 && (
                   <span className="text-muted-foreground text-sm">All words placed</span>
                 )}
-                {availableWords.map((word, idx) => (
-                  <span
-                    key={`${word}-${idx}`}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, word)}
-                    data-testid={`word-bank-${idx}`}
-                    className="px-3 py-1.5 bg-background border rounded-md cursor-grab active:cursor-grabbing hover:bg-accent transition-colors text-base font-serif"
-                  >
-                    {word}
-                  </span>
-                ))}
+                {availableWords.map((word, idx) => {
+                  const isSelected = selectedWord?.index === idx;
+                  return (
+                    <span
+                      key={`${word}-${idx}`}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, word)}
+                      onClick={() => handleWordBankClick(word, idx)}
+                      data-testid={`word-bank-${idx}`}
+                      className={`px-3 py-1.5 border rounded-md cursor-pointer active:cursor-grabbing hover:bg-accent transition-colors text-base font-serif ${
+                        isSelected 
+                          ? "bg-primary text-primary-foreground border-primary ring-2 ring-primary/50" 
+                          : "bg-background"
+                      }`}
+                    >
+                      {word}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -44,7 +44,7 @@ Preferred communication style: Simple, everyday language.
 - Two phases: Study (read & listen to learn material) and Practice (Cards, Fill, Order, Write exercises)
 - Study mode: Click words for dictionary definitions, click sentences for translations, text-to-speech playback
 - Cards mode: Flashcard quiz - match German words to Russian translations (multiple choice, 4 options)
-- Fill mode: 20% of words become gaps, drag words from word bank to fill
+- Fill mode: 20% of words become gaps, click to select words from bank then click gaps to place (or drag/drop)
 - Order mode: Shuffle sentence words, drag to reorder (min 3 words per sentence)
 - Write mode: 25% of words become gaps with first-letter hints
 - Strict validation with Check button (correct/incorrect feedback per gap/sentence)
