@@ -163,13 +163,13 @@ export function FillMode({ paragraphs, state, onStateChange, isCompleted = false
   }, [allGapWords, onStateChange]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto px-6 sm:px-8 py-6">
+    <div className="flex flex-col h-full overflow-auto">
+      <div className="flex-1 px-6 sm:px-8 py-6">
         <div className="max-w-3xl mx-auto">
           <p className="text-sm text-muted-foreground mb-4">
             Drag words from the word bank below to fill in the gaps. Click a placed word to return it.
           </p>
-          <div className="space-y-6 font-serif text-lg leading-relaxed text-foreground/90">
+          <div className="space-y-6 font-serif text-lg leading-relaxed text-foreground/90 pb-40">
             {paragraphData.map((para, pIdx) => (
               <p key={pIdx}>
                 {para.template.map((item, tIdx) => {
@@ -209,36 +209,39 @@ export function FillMode({ paragraphs, state, onStateChange, isCompleted = false
         </div>
       </div>
 
-      <div className="border-t bg-card px-6 sm:px-8 py-4">
+      <div className="sticky bottom-0 left-0 right-0 z-50 border-t bg-card px-6 sm:px-8 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <div className="max-w-3xl mx-auto">
           {validationState === "correct" && (
-            <div className="flex items-center gap-2 mb-4 text-green-600 dark:text-green-400">
+            <div className="flex items-center gap-2 mb-3 text-green-600 dark:text-green-400">
               <CheckCircle2 className="h-5 w-5" />
               <span className="font-medium">All correct!</span>
             </div>
           )}
           {validationState === "incorrect" && (
-            <div className="flex items-center gap-2 mb-4 text-destructive">
+            <div className="flex items-center gap-2 mb-3 text-destructive">
               <XCircle className="h-5 w-5" />
               <span className="font-medium">Some answers are incorrect. Try again!</span>
             </div>
           )}
 
-          <div className="flex flex-wrap gap-2 mb-4 min-h-[44px] p-3 bg-muted/50 rounded-lg">
-            {availableWords.length === 0 && (
-              <span className="text-muted-foreground text-sm">All words placed</span>
-            )}
-            {availableWords.map((word, idx) => (
-              <span
-                key={`${word}-${idx}`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, word)}
-                data-testid={`word-bank-${idx}`}
-                className="px-3 py-1.5 bg-background border rounded-md cursor-grab active:cursor-grabbing hover:bg-accent transition-colors text-sm font-medium"
-              >
-                {word}
-              </span>
-            ))}
+          <div className="min-h-[60px] p-4 rounded-lg bg-muted/50 mb-4">
+            <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Available words:</p>
+            <div className="flex flex-wrap gap-2">
+              {availableWords.length === 0 && (
+                <span className="text-muted-foreground text-sm">All words placed</span>
+              )}
+              {availableWords.map((word, idx) => (
+                <span
+                  key={`${word}-${idx}`}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, word)}
+                  data-testid={`word-bank-${idx}`}
+                  className="px-3 py-1.5 bg-background border rounded-md cursor-grab active:cursor-grabbing hover:bg-accent transition-colors text-base font-serif"
+                >
+                  {word}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="flex gap-2">
