@@ -13,10 +13,12 @@ import {
   X,
   Check,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  FileDown
 } from "lucide-react";
 import { useTopics } from "@/hooks/use-content";
 import { usePracticeProgress } from "@/hooks/use-practice-progress";
+import { useFlashcards } from "@/hooks/use-flashcards";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -58,6 +60,7 @@ export function SidebarNav() {
   const { data: topics, isLoading } = useTopics();
   const [location] = useLocation();
   const { getCompletionCount, isTextComplete } = usePracticeProgress();
+  const { getFlashcardCount, exportToCSV } = useFlashcards();
   const [open, setOpen] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
   const [sidebarWidth, setSidebarWidth] = useState(getSavedWidth);
@@ -67,6 +70,21 @@ export function SidebarNav() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedTexts, setSelectedTexts] = useState<SelectedText[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
+  
+  const flashcardCount = getFlashcardCount();
+  
+  const handleExportFlashcards = () => {
+    const csv = exportToCSV();
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lingoflow-flashcards-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
   
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const savedScrollTop = useRef<number>(0);
@@ -227,7 +245,7 @@ export function SidebarNav() {
           <p className="mt-2 text-sm text-muted-foreground">
             Read. Listen. Practice.
           </p>
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-3 flex items-center gap-3 flex-wrap">
             <a 
               href="/podcast/feed.xml" 
               target="_blank"
@@ -252,6 +270,19 @@ export function SidebarNav() {
               <Download className="h-4 w-4" />
               <span>Download</span>
             </button>
+            {flashcardCount > 0 && (
+              <>
+                <span className="text-muted-foreground/30">|</span>
+                <button 
+                  onClick={handleExportFlashcards}
+                  className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  data-testid="button-export-flashcards"
+                >
+                  <FileDown className="h-4 w-4" />
+                  <span>Export Cards ({flashcardCount})</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
