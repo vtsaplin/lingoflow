@@ -100,18 +100,18 @@
 }
 
 .reader-highlight:hover {
-  @apply bg-yellow-100 dark:bg-yellow-900/40;
+  @apply bg-yellow-200 dark:bg-yellow-700/50;
 }
 
 .reader-highlight.active {
-  @apply bg-yellow-200 dark:bg-yellow-800/50;
+  @apply bg-yellow-300 dark:bg-yellow-600/60 ring-2 ring-yellow-400 dark:ring-yellow-500;
 }
 
-/* Subtle highlight for words saved in flashcard dictionary */
+/* Highlight for words saved in flashcard dictionary */
 .flashcard-word {
-  @apply underline decoration-primary/40 decoration-dotted underline-offset-4;
+  @apply underline decoration-primary decoration-2 underline-offset-4;
 }
 
 .flashcard-word:hover {
-  @apply decoration-primary/60;
+  @apply decoration-primary bg-primary/10;
 }
