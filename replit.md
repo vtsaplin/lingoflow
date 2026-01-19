@@ -43,11 +43,13 @@ Preferred communication style: Simple, everyday language.
 ### Practice Modes System
 - Two phases: Study (read & listen to learn material) and Practice (Cards, Fill, Order, Write exercises)
 - Study mode: Click words for dictionary definitions, click sentences for translations, text-to-speech playback
-- Cards mode: Flashcard quiz - match German words to Russian translations (multiple choice, 4 options)
-- Fill mode: 20% of words become gaps, click to select words from bank then click gaps to place (or drag/drop)
-- Order mode: Shuffle sentence words, drag to reorder (min 3 words per sentence)
-- Write mode: 25% of words become gaps with first-letter hints
+- Cards mode: Flashcard quiz - match German words to Russian translations (multiple choice, 4 options, requires 4+ flashcards)
+- Fill mode: Creates gaps ONLY for words in user's flashcard dictionary, click word bank to fill gaps
+- Order mode: Shuffle sentence words, drag to reorder (min 3 words per sentence, uses ALL text words)
+- Write mode: Creates gaps ONLY for flashcard dictionary words with first-letter hints
 - Strict validation with Check button (correct/incorrect feedback per gap/sentence)
+- Flashcard-dependent modes (Fill, Write, Cards) track flashcardCount to detect new additions
+- When flashcard count increases, modes reinitialize with new gaps/questions while preserving existing work
 - Gap indexing uses stable gapId in templates with gapLookup for O(1) access
 - FillMode captures existingWordInTarget before setState to avoid stale reads during drag/drop
 - OrderMode uses useEffect for initialization to prevent crashes on empty sentences
@@ -63,12 +65,15 @@ Preferred communication style: Simple, everyday language.
 
 ### Progress Tracking System
 - localStorage-backed progress persistence via `usePracticeProgress` hook
-- Progress keyed by `topicId-textId` with fill/order/write boolean completion states
-- A practice mode is marked complete when validationState becomes "correct"
+- Progress keyed by `topicId-textId` with fill/order/write/cards boolean completion states
+- 4 practice modes tracked: Fill, Order, Write, Cards
+- A practice mode is marked complete when validationState becomes "correct" (or 100% on Cards)
 - Order mode requires all sentences to be correct for completion
-- Progress displayed in Reader header (percentage bar, X/3 fraction, green checkmark when complete)
-- Sidebar shows progress indicators next to each text (X/3 or checkmark)
+- Progress displayed in Reader header (percentage bar, X/4 fraction, green checkmark when 4/4 complete)
+- Sidebar shows progress indicators next to each text (X/4 or checkmark)
 - Green checkmark badges on individual practice tabs when completed
+- Each practice tab has Reset button that clears both state and completion status
+- Completion auto-resets when new flashcards are added (count increases)
 
 ### Batch MP3 Download Feature
 - Selection mode in sidebar allows selecting multiple texts/topics
