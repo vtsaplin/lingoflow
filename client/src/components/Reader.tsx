@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -8,13 +8,15 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
 import { usePracticeProgress } from "@/hooks/use-practice-progress";
+import { useFlashcards } from "@/hooks/use-flashcards";
 import { FillMode } from "@/components/practice/FillMode";
 import { OrderMode } from "@/components/practice/OrderMode";
 import { WriteMode } from "@/components/practice/WriteMode";
+import { CardsMode } from "@/components/practice/CardsMode";
 import { createInitialPracticeState, type PracticeState, type FillModeState, type OrderModeState, type WriteModeState } from "@/components/practice/types";
 
 type InteractionMode = "word" | "sentence";
-type PracticeMode = "read" | "fill" | "order" | "write";
+type PracticeMode = "read" | "cards" | "fill" | "order" | "write";
 
 interface ReaderProps {
   topicId: string;
@@ -78,6 +80,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const ttsMutation = useTTS();
   const translateMutation = useTranslate();
   const dictionaryMutation = useDictionary();
+  const { addFlashcard, hasFlashcard, getFlashcardsForText } = useFlashcards();
+  
+  const flashcardsForText = getFlashcardsForText(topicId, textId);
 
   const updateFillState = useCallback((newState: FillModeState) => {
     setPracticeState(prev => ({ ...prev, fill: newState }));
@@ -222,7 +227,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               <div className="flex-1 text-center">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Study</span>
               </div>
-              <div className="flex-[3] text-center">
+              <div className="flex-[4] text-center">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Practice</span>
               </div>
             </div>
@@ -233,7 +238,14 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   <span className="hidden sm:inline">Study</span>
                 </TabsTrigger>
               </TabsList>
-              <TabsList className="flex-[3] grid grid-cols-3">
+              <TabsList className="flex-[4] grid grid-cols-4">
+                <TabsTrigger value="cards" data-testid="tab-cards" className="gap-1.5">
+                  <Layers className="h-4 w-4" />
+                  <span className="hidden sm:inline">Cards</span>
+                  {flashcardsForText.length > 0 && (
+                    <span className="text-xs text-muted-foreground hidden sm:inline">({flashcardsForText.length})</span>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="fill" data-testid="tab-fill" className="gap-1.5">
                   {progress.fill ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Puzzle className="h-4 w-4" />}
                   <span className="hidden sm:inline">Fill</span>
@@ -402,13 +414,49 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
                     {dictionaryMutation.isSuccess && (
                       <div className="animate-in fade-in space-y-2">
-                        <div className="flex items-baseline gap-2 flex-wrap">
-                          <span className="font-bold">{dictionaryMutation.data.word}</span>
-                          {dictionaryMutation.data.partOfSpeech && (
-                            <span className="text-xs text-muted-foreground italic">{dictionaryMutation.data.partOfSpeech}</span>
-                          )}
-                          <span className="text-muted-foreground">—</span>
-                          <span className="font-medium">{dictionaryMutation.data.translation}</span>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-baseline gap-2 flex-wrap">
+                            <span className="font-bold">{dictionaryMutation.data.word}</span>
+                            {dictionaryMutation.data.partOfSpeech && (
+                              <span className="text-xs text-muted-foreground italic">{dictionaryMutation.data.partOfSpeech}</span>
+                            )}
+                            <span className="text-muted-foreground">—</span>
+                            <span className="font-medium">{dictionaryMutation.data.translation}</span>
+                          </div>
+                          {(() => {
+                            const isSaved = hasFlashcard(dictionaryMutation.data.word, topicId, textId);
+                            return (
+                              <Button
+                                variant={isSaved ? "secondary" : "outline"}
+                                size="sm"
+                                onClick={() => {
+                                  if (!isSaved) {
+                                    addFlashcard(
+                                      dictionaryMutation.data.word,
+                                      dictionaryMutation.data.translation,
+                                      topicId,
+                                      textId
+                                    );
+                                  }
+                                }}
+                                disabled={isSaved}
+                                data-testid="button-save-flashcard"
+                                className="shrink-0"
+                              >
+                                {isSaved ? (
+                                  <>
+                                    <BookmarkCheck className="h-4 w-4 mr-1" />
+                                    Saved
+                                  </>
+                                ) : (
+                                  <>
+                                    <Bookmark className="h-4 w-4 mr-1" />
+                                    Save
+                                  </>
+                                )}
+                              </Button>
+                            );
+                          })()}
                         </div>
                         
                         {dictionaryMutation.data.definition && (
@@ -434,6 +482,13 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
           </div>
         )}
 
+        {practiceMode === "cards" && (
+          <CardsMode 
+            flashcards={flashcardsForText}
+            topicId={topicId}
+            textId={textId}
+          />
+        )}
         {practiceMode === "fill" && (
           <FillMode 
             paragraphs={paragraphs} 
