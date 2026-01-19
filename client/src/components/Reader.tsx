@@ -359,6 +359,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       mode={interactionMode} 
                       onInteract={handleInteraction}
                       selectedText={selectedText}
+                      flashcardWords={flashcardsForText.map(f => f.german)}
                     />
                   ))}
                 </div>
@@ -533,13 +534,17 @@ function Paragraph({
   text, 
   mode, 
   onInteract, 
-  selectedText 
+  selectedText,
+  flashcardWords = []
 }: { 
   text: string, 
   mode: InteractionMode, 
   onInteract: (t: string, e: React.MouseEvent) => void,
-  selectedText: string | null
+  selectedText: string | null,
+  flashcardWords?: string[]
 }) {
+  const flashcardSet = new Set(flashcardWords.map(w => w.toLowerCase()));
+  
   if (mode === "sentence") {
     const sentences = text.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [text];
     return (
@@ -549,7 +554,7 @@ function Paragraph({
             key={idx}
             onClick={(e) => onInteract(sentence.trim(), e)}
             data-testid={`sentence-${idx}`}
-            className={`reader-highlight px-1 mx-[-2px] py-0.5 rounded cursor-pointer ${selectedText === sentence.trim() ? 'active' : ''}`}
+            className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === sentence.trim() ? 'active' : ''}`}
           >
             {sentence}
           </span>
@@ -567,12 +572,14 @@ function Paragraph({
         const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()«»„"]/g, "");
         if (!cleanWord) return <span key={idx}>{word}</span>;
 
+        const isFlashcard = flashcardSet.has(cleanWord.toLowerCase());
+
         return (
           <span 
             key={idx}
             onClick={(e) => onInteract(cleanWord, e)}
             data-testid={`word-${idx}`}
-            className={`reader-highlight px-0.5 py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''}`}
+            className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isFlashcard ? 'flashcard-word' : ''}`}
           >
             {word}
           </span>

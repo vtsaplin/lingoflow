@@ -106,3 +106,12 @@
 .reader-highlight.active {
   @apply bg-yellow-200 dark:bg-yellow-800/50;
 }
+
+/* Subtle highlight for words saved in flashcard dictionary */
+.flashcard-word {
+  @apply underline decoration-primary/40 decoration-dotted underline-offset-4;
+}
+
+.flashcard-word:hover {
+  @apply decoration-primary/60;
+}
