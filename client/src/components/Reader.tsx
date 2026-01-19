@@ -232,7 +232,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                 <BookOpen className="h-4 w-4" />
                 <span className="hidden sm:inline">Study</span>
               </TabsTrigger>
-              <div className="w-[2px] bg-muted-foreground/30 my-1.5 rounded-full" />
+              <div className="w-[2px] bg-foreground/20 my-1 rounded-full" />
               <TabsTrigger value="fill" data-testid="tab-fill" className="gap-1.5">
                 {progress.fill ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Puzzle className="h-4 w-4" />}
                 <span className="hidden sm:inline">Fill</span>
