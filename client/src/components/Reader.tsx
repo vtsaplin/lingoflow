@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Trash2 } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Trash2, XCircle, Eraser, RefreshCw, Undo2, ListRestart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -179,19 +179,23 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       <span className="text-xs font-medium text-muted-foreground">{completionCount}/3</span>
                     </div>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                    onClick={() => {
-                      resetTextProgress(topicId, textId);
-                      setPracticeState(createInitialPracticeState());
-                    }}
-                    title="Reset progress"
-                    data-testid="button-reset-progress"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  <div className="flex items-center gap-1 ml-2 border-l pl-2">
+                    <Button variant="ghost" size="icon" className="h-6 w-6" title="1. XCircle" onClick={() => { resetTextProgress(topicId, textId); setPracticeState(createInitialPracticeState()); }}>
+                      <XCircle className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" title="2. Eraser" onClick={() => { resetTextProgress(topicId, textId); setPracticeState(createInitialPracticeState()); }}>
+                      <Eraser className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" title="3. RefreshCw" onClick={() => { resetTextProgress(topicId, textId); setPracticeState(createInitialPracticeState()); }}>
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" title="4. Undo2" onClick={() => { resetTextProgress(topicId, textId); setPracticeState(createInitialPracticeState()); }}>
+                      <Undo2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" title="5. ListRestart" onClick={() => { resetTextProgress(topicId, textId); setPracticeState(createInitialPracticeState()); }}>
+                      <ListRestart className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
