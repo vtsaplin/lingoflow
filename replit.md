@@ -61,6 +61,7 @@ Preferred communication style: Simple, everyday language.
 - Cards practice mode requires minimum 4 flashcards with unique translations
 - Quiz format: Shows German word, user selects correct Russian translation from 4 options
 - Results screen shows percentage correct with option to practice again
+- Mode marked complete when all questions are answered (not requiring 100% correct)
 - Export all flashcards to CSV via sidebar button (appears when flashcards exist)
 
 ### Progress Tracking System

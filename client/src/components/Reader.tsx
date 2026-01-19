@@ -76,13 +76,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   useEffect(() => {
     if (activeTextKey !== textKey) return;
     if (!practiceState.cards) return;
-    const { questions, showResults, initialized } = practiceState.cards;
+    const { showResults, initialized } = practiceState.cards;
     if (!initialized || !showResults || progress.cards) return;
-    const correctCount = questions.filter(q => q.isCorrect === true).length;
-    const percentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
-    if (percentage === 100) {
-      setModeComplete(topicId, textId, "cards");
-    }
+    setModeComplete(topicId, textId, "cards");
   }, [practiceState.cards, topicId, textId, setModeComplete, progress.cards, activeTextKey, textKey]);
 
   useEffect(() => {
