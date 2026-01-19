@@ -54,9 +54,8 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
 
   useEffect(() => {
     const flashcardCountChanged = state.initialized && flashcards.length > state.flashcardCount;
-    const shouldInitialize = !state.initialized || flashcardCountChanged;
     
-    if (shouldInitialize && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
+    if (!state.initialized && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
       onStateChange({
         questions: generateQuestions(flashcards),
         currentIndex: 0,
@@ -64,8 +63,36 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
         initialized: true,
         flashcardCount: flashcards.length
       });
+    } else if (flashcardCountChanged && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
+      const existingCardIds = new Set(state.questions.map(q => q.cardId));
+      const newFlashcards = flashcards.filter(f => !existingCardIds.has(f.id));
+      
+      if (newFlashcards.length > 0) {
+        const uniqueTranslations = Array.from(new Set(flashcards.map(f => f.translation)));
+        const newQuestions = newFlashcards.map(card => {
+          const wrongOptions = uniqueTranslations
+            .filter(t => t !== card.translation)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3);
+          const options = shuffleArray([card.translation, ...wrongOptions]);
+          return {
+            cardId: card.id,
+            germanWord: card.german,
+            correctAnswer: card.translation,
+            options,
+            selectedAnswer: null,
+            isCorrect: null
+          };
+        });
+        
+        onStateChange({
+          ...state,
+          questions: [...state.questions, ...newQuestions],
+          flashcardCount: flashcards.length
+        });
+      }
     }
-  }, [state.initialized, state.flashcardCount, flashcards, uniqueTranslationCount, onStateChange]);
+  }, [state.initialized, state.flashcardCount, flashcards, uniqueTranslationCount, onStateChange, state.questions]);
 
   if (flashcards.length === 0) {
     return (

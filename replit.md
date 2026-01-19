@@ -49,7 +49,7 @@ Preferred communication style: Simple, everyday language.
 - Write mode: Creates gaps ONLY for flashcard dictionary words with first-letter hints
 - Strict validation with Check button (correct/incorrect feedback per gap/sentence)
 - Flashcard-dependent modes (Fill, Order, Write, Cards) track flashcardCount to detect new additions
-- When flashcard count increases, modes reinitialize with new gaps/questions while preserving existing work
+- When flashcard count increases, Cards mode appends new questions without resetting progress; other modes reinitialize with new gaps while preserving work
 - Gap indexing uses stable gapId in templates with gapLookup for O(1) access
 - FillMode captures existingWordInTarget before setState to avoid stale reads during drag/drop
 - OrderMode uses useEffect for initialization to prevent crashes on empty sentences
