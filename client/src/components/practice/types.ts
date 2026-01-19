@@ -27,10 +27,28 @@ export interface WriteModeState {
   initialized: boolean;
 }
 
+export interface CardsQuestionState {
+  cardId: string;
+  germanWord: string;
+  correctAnswer: string;
+  options: string[];
+  selectedAnswer: string | null;
+  isCorrect: boolean | null;
+}
+
+export interface CardsModeState {
+  questions: CardsQuestionState[];
+  currentIndex: number;
+  showResults: boolean;
+  initialized: boolean;
+  flashcardCount: number;
+}
+
 export interface PracticeState {
   fill: FillModeState;
   order: OrderModeState;
   write: WriteModeState;
+  cards: CardsModeState;
 }
 
 export function createInitialPracticeState(): PracticeState {
@@ -52,6 +70,13 @@ export function createInitialPracticeState(): PracticeState {
       validationState: "idle",
       incorrectGaps: [],
       initialized: false,
+    },
+    cards: {
+      questions: [],
+      currentIndex: 0,
+      showResults: false,
+      initialized: false,
+      flashcardCount: 0,
     },
   };
 }

@@ -5,6 +5,7 @@ import type { WriteModeState } from "./types";
 
 interface WriteModeProps {
   paragraphs: string[];
+  flashcardWords: string[];
   state: WriteModeState;
   onStateChange: (state: WriteModeState) => void;
   isCompleted?: boolean;
@@ -30,10 +31,10 @@ interface GapLookup {
   [gapId: number]: GapInfo;
 }
 
-export function WriteMode({ paragraphs, state, onStateChange, isCompleted = false }: WriteModeProps) {
+export function WriteMode({ paragraphs, flashcardWords, state, onStateChange, isCompleted = false }: WriteModeProps) {
   const { paragraphData, gapLookup } = useMemo(
-    () => generateWriteGaps(paragraphs),
-    [paragraphs]
+    () => generateWriteGaps(paragraphs, flashcardWords),
+    [paragraphs, flashcardWords]
   );
 
   const totalGaps = Object.keys(gapLookup).length;
@@ -63,7 +64,12 @@ export function WriteMode({ paragraphs, state, onStateChange, isCompleted = fals
   if (totalGaps === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <p className="text-muted-foreground">No gaps could be generated from this text.</p>
+        <p className="text-muted-foreground text-center">
+          {flashcardWords.length === 0 
+            ? "Add words to your flashcard dictionary in Study mode to practice them here."
+            : "No matching words found in this text. Try adding more words to your dictionary."
+          }
+        </p>
       </div>
     );
   }
@@ -190,53 +196,29 @@ export function WriteMode({ paragraphs, state, onStateChange, isCompleted = fals
   );
 }
 
-function generateWriteGaps(paragraphs: string[]): {
+function generateWriteGaps(paragraphs: string[], flashcardWords: string[]): {
   paragraphData: ParagraphData[];
   gapLookup: GapLookup;
 } {
   let gapIdCounter = 0;
   const gapLookup: GapLookup = {};
 
-  const seed = paragraphs.join("").length;
-  let rng = seed;
-  const nextRandom = () => {
-    rng = (rng * 1103515245 + 12345) & 0x7fffffff;
-    return rng / 0x7fffffff;
-  };
+  const flashcardWordsLower = new Set(flashcardWords.map(w => w.toLowerCase()));
 
   const paragraphData = paragraphs.map((para) => {
     const words = para.split(/(\s+)/);
-    const contentWords: { word: string; index: number }[] = [];
-
-    words.forEach((w, i) => {
-      if (w.trim() && /[a-zA-ZäöüÄÖÜß]/.test(w)) {
-        contentWords.push({ word: w, index: i });
-      }
-    });
-
-    if (contentWords.length === 0) {
-      return { template: [{ type: "text" as const, content: para }] };
-    }
-
-    const gapCount = Math.max(1, Math.floor(contentWords.length * 0.25));
-    const gapIndices = new Set<number>();
-
-    while (gapIndices.size < Math.min(gapCount, contentWords.length)) {
-      const idx = Math.floor(nextRandom() * contentWords.length);
-      gapIndices.add(idx);
-    }
-
     const template: TemplateItem[] = [];
     let currentText = "";
 
-    words.forEach((w, i) => {
-      const contentIdx = contentWords.findIndex((cw) => cw.index === i);
-      if (contentIdx !== -1 && gapIndices.has(contentIdx)) {
+    words.forEach((w) => {
+      const cleanWord = w.replace(/[.,!?;:«»„"'"]/g, "").trim();
+      const isFlashcardWord = cleanWord && flashcardWordsLower.has(cleanWord.toLowerCase());
+
+      if (isFlashcardWord) {
         if (currentText) {
           template.push({ type: "text", content: currentText });
           currentText = "";
         }
-        const cleanWord = w.replace(/[.,!?;:«»„"'"]/g, "").trim();
         const hint = cleanWord.charAt(0) + "_".repeat(Math.max(1, cleanWord.length - 1));
         const gapId = gapIdCounter++;
         gapLookup[gapId] = { id: gapId, original: cleanWord, hint };

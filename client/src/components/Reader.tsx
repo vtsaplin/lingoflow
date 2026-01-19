@@ -38,7 +38,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     practiceState, 
     updateFillState, 
     updateOrderState, 
-    updateWriteState, 
+    updateWriteState,
+    updateCardsState,
     resetPracticeState,
     textKey,
     activeTextKey 
@@ -472,13 +473,16 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         {practiceMode === "cards" && (
           <CardsMode 
             flashcards={flashcardsForText}
+            state={practiceState.cards}
+            onStateChange={updateCardsState}
             topicId={topicId}
             textId={textId}
           />
         )}
         {practiceMode === "fill" && (
           <FillMode 
-            paragraphs={paragraphs} 
+            paragraphs={paragraphs}
+            flashcardWords={flashcardsForText.map(f => f.german)}
             state={practiceState.fill}
             onStateChange={updateFillState}
             isCompleted={progress.fill}
@@ -494,7 +498,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "write" && (
           <WriteMode 
-            paragraphs={paragraphs} 
+            paragraphs={paragraphs}
+            flashcardWords={flashcardsForText.map(f => f.german)}
             state={practiceState.write}
             onStateChange={updateWriteState}
             isCompleted={progress.write}

@@ -1,21 +1,15 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, RotateCcw, Layers } from "lucide-react";
 import type { Flashcard } from "@/hooks/use-flashcards";
+import type { CardsModeState, CardsQuestionState } from "./types";
 
 interface CardsModeProps {
   flashcards: Flashcard[];
+  state: CardsModeState;
+  onStateChange: (state: CardsModeState) => void;
   topicId: string;
   textId: string;
-}
-
-interface QuestionState {
-  cardId: string;
-  germanWord: string;
-  correctAnswer: string;
-  options: string[];
-  selectedAnswer: string | null;
-  isCorrect: boolean | null;
 }
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -27,7 +21,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-function generateQuestions(flashcards: Flashcard[]): QuestionState[] {
+function generateQuestions(flashcards: Flashcard[]): CardsQuestionState[] {
   if (flashcards.length === 0) return [];
   
   const uniqueTranslations = Array.from(new Set(flashcards.map(f => f.translation)));
@@ -51,18 +45,23 @@ function generateQuestions(flashcards: Flashcard[]): QuestionState[] {
   });
 }
 
-export function CardsMode({ flashcards, topicId, textId }: CardsModeProps) {
-  const [questions, setQuestions] = useState<QuestionState[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showResults, setShowResults] = useState(false);
+export function CardsMode({ flashcards, state, onStateChange, topicId, textId }: CardsModeProps) {
+  const uniqueTranslationCount = useMemo(() => 
+    new Set(flashcards.map(f => f.translation)).size,
+    [flashcards]
+  );
 
   useEffect(() => {
-    if (flashcards.length > 0) {
-      setQuestions(generateQuestions(flashcards));
-      setCurrentIndex(0);
-      setShowResults(false);
+    if (!state.initialized && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
+      onStateChange({
+        questions: generateQuestions(flashcards),
+        currentIndex: 0,
+        showResults: false,
+        initialized: true,
+        flashcardCount: flashcards.length
+      });
     }
-  }, [flashcards.length, topicId, textId]);
+  }, [state.initialized, flashcards, uniqueTranslationCount, onStateChange]);
 
   if (flashcards.length === 0) {
     return (
@@ -77,8 +76,6 @@ export function CardsMode({ flashcards, topicId, textId }: CardsModeProps) {
       </div>
     );
   }
-
-  const uniqueTranslationCount = new Set(flashcards.map(f => f.translation)).size;
   
   if (uniqueTranslationCount < 4) {
     return (
@@ -94,8 +91,10 @@ export function CardsMode({ flashcards, topicId, textId }: CardsModeProps) {
     );
   }
 
+  const { questions, currentIndex, showResults } = state;
+
   const handleSelectAnswer = (answer: string) => {
-    if (questions[currentIndex].selectedAnswer !== null) return;
+    if (questions[currentIndex]?.selectedAnswer !== null) return;
     
     const isCorrect = answer === questions[currentIndex].correctAnswer;
     const newQuestions = [...questions];
@@ -104,28 +103,41 @@ export function CardsMode({ flashcards, topicId, textId }: CardsModeProps) {
       selectedAnswer: answer,
       isCorrect
     };
-    setQuestions(newQuestions);
+    onStateChange({
+      ...state,
+      questions: newQuestions
+    });
   };
 
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+      onStateChange({
+        ...state,
+        currentIndex: currentIndex + 1
+      });
     } else {
-      setShowResults(true);
+      onStateChange({
+        ...state,
+        showResults: true
+      });
     }
   };
 
   const handleReset = () => {
-    setQuestions(generateQuestions(flashcards));
-    setCurrentIndex(0);
-    setShowResults(false);
+    onStateChange({
+      questions: generateQuestions(flashcards),
+      currentIndex: 0,
+      showResults: false,
+      initialized: true,
+      flashcardCount: flashcards.length
+    });
   };
 
   const correctCount = questions.filter(q => q.isCorrect === true).length;
   const currentQuestion = questions[currentIndex];
 
   if (showResults) {
-    const percentage = Math.round((correctCount / questions.length) * 100);
+    const percentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <div className="text-center">
