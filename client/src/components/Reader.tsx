@@ -509,9 +509,11 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "order" && (
           <OrderMode 
-            paragraphs={paragraphs} 
+            paragraphs={paragraphs}
+            flashcardWords={flashcardsForText.map(f => f.german)}
             state={practiceState.order}
             onStateChange={updateOrderState}
+            onResetProgress={() => resetModeProgress(topicId, textId, "order")}
             isCompleted={progress.order}
           />
         )}

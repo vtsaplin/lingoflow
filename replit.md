@@ -45,10 +45,10 @@ Preferred communication style: Simple, everyday language.
 - Study mode: Click words for dictionary definitions, click sentences for translations, text-to-speech playback
 - Cards mode: Flashcard quiz - match German words to Russian translations (multiple choice, 4 options, requires 4+ flashcards)
 - Fill mode: Creates gaps ONLY for words in user's flashcard dictionary, click word bank to fill gaps
-- Order mode: Shuffle sentence words, drag to reorder (min 3 words per sentence, uses ALL text words)
+- Order mode: Shows only sentences containing flashcard words, shuffle words to reorder (min 3 words per sentence)
 - Write mode: Creates gaps ONLY for flashcard dictionary words with first-letter hints
 - Strict validation with Check button (correct/incorrect feedback per gap/sentence)
-- Flashcard-dependent modes (Fill, Write, Cards) track flashcardCount to detect new additions
+- Flashcard-dependent modes (Fill, Order, Write, Cards) track flashcardCount to detect new additions
 - When flashcard count increases, modes reinitialize with new gaps/questions while preserving existing work
 - Gap indexing uses stable gapId in templates with gapLookup for O(1) access
 - FillMode captures existingWordInTarget before setState to avoid stale reads during drag/drop

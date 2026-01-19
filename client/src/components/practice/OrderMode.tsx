@@ -5,8 +5,10 @@ import type { OrderModeState, OrderSentenceState } from "./types";
 
 interface OrderModeProps {
   paragraphs: string[];
+  flashcardWords: string[];
   state: OrderModeState;
   onStateChange: (state: OrderModeState) => void;
+  onResetProgress?: () => void;
   isCompleted?: boolean;
 }
 
@@ -15,15 +17,28 @@ interface Sentence {
   words: string[];
 }
 
-export function OrderMode({ paragraphs, state, onStateChange, isCompleted = false }: OrderModeProps) {
-  const sentences = useMemo(() => extractSentences(paragraphs), [paragraphs]);
-  const { currentIndex, sentenceStates } = state;
+export function OrderMode({ paragraphs, flashcardWords, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
+  const flashcardSet = useMemo(() => new Set(flashcardWords.map(w => w.toLowerCase())), [flashcardWords]);
+  
+  const sentences = useMemo(() => {
+    const allSentences = extractSentences(paragraphs);
+    return allSentences.filter(sentence => 
+      sentence.words.some(word => {
+        const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()«»„"]/g, "").toLowerCase();
+        return flashcardSet.has(cleanWord);
+      })
+    );
+  }, [paragraphs, flashcardSet]);
+  
+  const { currentIndex, sentenceStates, flashcardCount } = state;
 
   useEffect(() => {
-    if (sentences.length > 0 && !state.initialized) {
+    const needsReinit = !state.initialized || (flashcardWords.length > flashcardCount && flashcardCount > 0);
+    
+    if (sentences.length > 0 && needsReinit) {
       const initialStates: Record<number, OrderSentenceState> = {};
       sentences.forEach((sentence, idx) => {
-        if (isCompleted) {
+        if (isCompleted && !needsReinit) {
           initialStates[idx] = {
             shuffledWords: [],
             orderedWords: [...sentence.words],
@@ -41,14 +56,27 @@ export function OrderMode({ paragraphs, state, onStateChange, isCompleted = fals
         currentIndex: 0,
         sentenceStates: initialStates,
         initialized: true,
+        flashcardCount: flashcardWords.length,
       });
     }
-  }, [sentences, state.initialized, onStateChange, isCompleted]);
+  }, [sentences, state.initialized, onStateChange, isCompleted, flashcardWords.length, flashcardCount]);
+
+  if (flashcardWords.length === 0) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <p className="text-muted-foreground text-center">
+          No flashcard words saved yet. Save words from Study mode to practice sentence ordering.
+        </p>
+      </div>
+    );
+  }
 
   if (sentences.length === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <p className="text-muted-foreground">No sentences could be extracted from this text.</p>
+        <p className="text-muted-foreground text-center">
+          No sentences contain your flashcard words in this text.
+        </p>
       </div>
     );
   }
@@ -304,8 +332,25 @@ export function OrderMode({ paragraphs, state, onStateChange, isCompleted = fals
             </Button>
             <Button variant="outline" onClick={handleReset} data-testid="button-reset">
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
+              Reset Sentence
             </Button>
+            {onResetProgress && (
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  onResetProgress();
+                  onStateChange({
+                    currentIndex: 0,
+                    sentenceStates: {},
+                    initialized: false,
+                    flashcardCount: flashcardWords.length,
+                  });
+                }} 
+                data-testid="button-reset-all"
+              >
+                Reset All
+              </Button>
+            )}
           </div>
         </div>
       </div>

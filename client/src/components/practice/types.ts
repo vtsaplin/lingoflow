@@ -19,6 +19,7 @@ export interface OrderModeState {
   currentIndex: number;
   sentenceStates: Record<number, OrderSentenceState>;
   initialized: boolean;
+  flashcardCount: number;
 }
 
 export interface WriteModeState {
@@ -67,6 +68,7 @@ export function createInitialPracticeState(): PracticeState {
       currentIndex: 0,
       sentenceStates: {},
       initialized: false,
+      flashcardCount: 0,
     },
     write: {
       inputs: {},
