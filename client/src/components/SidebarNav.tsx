@@ -333,7 +333,7 @@ export function SidebarNav() {
                             className="group flex-1 flex items-center justify-between px-3 py-2.5 rounded-md text-sm transition-colors cursor-pointer text-foreground hover:bg-muted"
                             data-testid={`topic-${topic.id}`}
                           >
-                            <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
                               <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
                               <span className="truncate font-medium">{topic.title}</span>
                             </div>
@@ -377,18 +377,18 @@ export function SidebarNav() {
                                     <Checkbox checked={textSelected} />
                                   </div>
                                   {selectionMode ? (
-                                    <span className="truncate">{text.title}</span>
+                                    <span className="truncate flex-1 min-w-0">{text.title}</span>
                                   ) : (
                                     <Link href={`/topic/${topic.id}/text/${text.id}`} className="flex-1 min-w-0">
                                       <div 
-                                        className={`flex items-center gap-2 px-2 py-1 rounded ${
+                                        className={`flex items-center gap-2 px-2 py-1 rounded overflow-hidden ${
                                           active 
                                             ? "bg-primary text-primary-foreground font-medium" 
                                             : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                         }`}
                                       >
                                         <FileText className="h-3 w-3 shrink-0" />
-                                        <span className="truncate flex-1">{text.title}</span>
+                                        <span className="truncate flex-1 min-w-0">{text.title}</span>
                                         {(() => {
                                           const count = getCompletionCount(topic.id, text.id);
                                           const complete = isTextComplete(topic.id, text.id);
