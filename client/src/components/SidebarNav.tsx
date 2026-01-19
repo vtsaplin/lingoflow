@@ -330,14 +330,14 @@ export function SidebarNav() {
                         </div>
                         <CollapsibleTrigger asChild>
                           <div 
-                            className="group flex-1 flex items-center justify-between px-3 py-2.5 rounded-md text-sm transition-colors cursor-pointer text-foreground hover:bg-muted"
+                            className="group flex-1 flex items-center justify-between gap-2 px-3 py-2.5 rounded-md text-sm transition-colors cursor-pointer text-foreground hover:bg-muted overflow-hidden min-w-0"
                             data-testid={`topic-${topic.id}`}
                           >
-                            <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1">
+                            <div className="flex items-center gap-3 overflow-hidden min-w-0">
                               <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
                               <span className="truncate font-medium">{topic.title}</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 shrink-0">
                               {hasTexts && (
                                 <span className="text-xs text-muted-foreground">
                                   {topic.texts.length}
