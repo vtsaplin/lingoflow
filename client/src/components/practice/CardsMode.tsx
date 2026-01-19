@@ -85,9 +85,14 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
           };
         });
         
+        const updatedQuestions = [...state.questions, ...newQuestions];
+        const firstNewIndex = state.questions.length;
+        
         onStateChange({
           ...state,
-          questions: [...state.questions, ...newQuestions],
+          questions: updatedQuestions,
+          currentIndex: state.showResults ? firstNewIndex : state.currentIndex,
+          showResults: false,
           flashcardCount: flashcards.length
         });
       }
