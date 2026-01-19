@@ -41,8 +41,8 @@ Preferred communication style: Simple, everyday language.
 - `POST /api/download-combined-mp3` - Batch download selected texts as single MP3
 
 ### Practice Modes System
-- Four modes: Read (original interaction), Fill (drag & drop gap-fill), Order (sentence word reordering), Write (typing into gaps)
-- All practice exercises generated dynamically from text content without API calls
+- Two phases: Study (read & listen to learn material) and Practice (Fill, Order, Write exercises)
+- Study mode: Click words for dictionary definitions, click sentences for translations, text-to-speech playback
 - Fill mode: 20% of words become gaps, drag words from word bank to fill
 - Order mode: Shuffle sentence words, drag to reorder (min 3 words per sentence)
 - Write mode: 25% of words become gaps with first-letter hints
@@ -50,6 +50,15 @@ Preferred communication style: Simple, everyday language.
 - Gap indexing uses stable gapId in templates with gapLookup for O(1) access
 - FillMode captures existingWordInTarget before setState to avoid stale reads during drag/drop
 - OrderMode uses useEffect for initialization to prevent crashes on empty sentences
+
+### Progress Tracking System
+- localStorage-backed progress persistence via `usePracticeProgress` hook
+- Progress keyed by `topicId-textId` with fill/order/write boolean completion states
+- A practice mode is marked complete when validationState becomes "correct"
+- Order mode requires all sentences to be correct for completion
+- Progress displayed in Reader header (percentage bar, X/3 fraction, green checkmark when complete)
+- Sidebar shows progress indicators next to each text (X/3 or checkmark)
+- Green checkmark badges on individual practice tabs when completed
 
 ### Batch MP3 Download Feature
 - Selection mode in sidebar allows selecting multiple texts/topics
