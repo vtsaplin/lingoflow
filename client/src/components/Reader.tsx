@@ -218,34 +218,36 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
           </div>
           
           <Tabs value={practiceMode} onValueChange={(v) => setPracticeMode(v as PracticeMode)}>
-            <div className="grid grid-cols-[1fr_2px_1fr_1fr_1fr] mb-1 px-1">
-              <div className="text-center">
+            <div className="flex gap-1 mb-1 px-1">
+              <div className="flex-1 text-center">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Study</span>
               </div>
-              <div />
-              <div className="col-span-3 text-center">
+              <div className="flex-[3] text-center">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Practice</span>
               </div>
             </div>
-            <TabsList className="grid w-full grid-cols-[1fr_2px_1fr_1fr_1fr] gap-0">
-              <TabsTrigger value="read" data-testid="tab-study" className="gap-2">
-                <BookOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">Study</span>
-              </TabsTrigger>
-              <div className="w-[2px] bg-foreground/20 my-1 rounded-full" />
-              <TabsTrigger value="fill" data-testid="tab-fill" className="gap-1.5">
-                {progress.fill ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Puzzle className="h-4 w-4" />}
-                <span className="hidden sm:inline">Fill</span>
-              </TabsTrigger>
-              <TabsTrigger value="order" data-testid="tab-order" className="gap-1.5">
-                {progress.order ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <ArrowUpDown className="h-4 w-4" />}
-                <span className="hidden sm:inline">Order</span>
-              </TabsTrigger>
-              <TabsTrigger value="write" data-testid="tab-write" className="gap-1.5">
-                {progress.write ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <PenLine className="h-4 w-4" />}
-                <span className="hidden sm:inline">Write</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex gap-1">
+              <TabsList className="flex-1">
+                <TabsTrigger value="read" data-testid="tab-study" className="gap-2 flex-1">
+                  <BookOpen className="h-4 w-4" />
+                  <span className="hidden sm:inline">Study</span>
+                </TabsTrigger>
+              </TabsList>
+              <TabsList className="flex-[3] grid grid-cols-3">
+                <TabsTrigger value="fill" data-testid="tab-fill" className="gap-1.5">
+                  {progress.fill ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Puzzle className="h-4 w-4" />}
+                  <span className="hidden sm:inline">Fill</span>
+                </TabsTrigger>
+                <TabsTrigger value="order" data-testid="tab-order" className="gap-1.5">
+                  {progress.order ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <ArrowUpDown className="h-4 w-4" />}
+                  <span className="hidden sm:inline">Order</span>
+                </TabsTrigger>
+                <TabsTrigger value="write" data-testid="tab-write" className="gap-1.5">
+                  {progress.write ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <PenLine className="h-4 w-4" />}
+                  <span className="hidden sm:inline">Write</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </Tabs>
         </div>
       </div>
