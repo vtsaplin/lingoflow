@@ -130,6 +130,9 @@ export function WriteMode({ paragraphs, state, onStateChange, isCompleted = fals
                   const isIncorrect = incorrectGapsSet.has(gapId);
                   const isCorrect = validationState === "correct";
 
+                  const wordLength = gap?.original?.length || 5;
+                  const inputWidth = Math.max(40, Math.min(wordLength * 10 + 16, 150));
+
                   return (
                     <span key={tIdx} className="inline-flex items-center mx-0.5">
                       <input
@@ -138,7 +141,8 @@ export function WriteMode({ paragraphs, state, onStateChange, isCompleted = fals
                         onChange={(e) => handleInputChange(gapId, e.target.value)}
                         placeholder={gap?.hint || "___"}
                         data-testid={`input-gap-${gapId}`}
-                        className={`inline-block w-16 px-1 py-0.5 text-center border-b-2 bg-transparent outline-none transition-colors font-serif text-base ${
+                        style={{ width: `${inputWidth}px` }}
+                        className={`inline-block px-1 py-0.5 text-center border-b-2 bg-transparent outline-none transition-colors font-serif text-base ${
                           isIncorrect
                             ? "border-destructive text-destructive"
                             : isCorrect
