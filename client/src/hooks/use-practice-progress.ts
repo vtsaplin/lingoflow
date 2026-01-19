@@ -137,16 +137,16 @@ export function usePracticeProgress() {
 
   const getCompletionCount = useCallback((topicId: string, textId: string): number => {
     const p = getTextProgress(topicId, textId);
-    return (p.fill ? 1 : 0) + (p.order ? 1 : 0) + (p.write ? 1 : 0);
+    return (p.fill ? 1 : 0) + (p.order ? 1 : 0) + (p.write ? 1 : 0) + (p.cards ? 1 : 0);
   }, [getTextProgress]);
 
   const isTextComplete = useCallback((topicId: string, textId: string): boolean => {
     const p = getTextProgress(topicId, textId);
-    return p.fill && p.order && p.write;
+    return p.fill && p.order && p.write && p.cards;
   }, [getTextProgress]);
 
   const getCompletionPercentage = useCallback((topicId: string, textId: string): number => {
-    return Math.round((getCompletionCount(topicId, textId) / 3) * 100);
+    return Math.round((getCompletionCount(topicId, textId) / 4) * 100);
   }, [getCompletionCount]);
 
   return {

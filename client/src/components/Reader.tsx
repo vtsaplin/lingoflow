@@ -47,7 +47,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   
   const { setModeComplete, resetModeProgress, updateFlashcardCount, getCompletionCount, isTextComplete, getTextProgress, resetTextProgress } = usePracticeProgress();
   const completionCount = getCompletionCount(topicId, textId);
-  const completionPercentage = Math.round((completionCount / 3) * 100);
+  const completionPercentage = Math.round((completionCount / 4) * 100);
   const textComplete = isTextComplete(topicId, textId);
   const progress = getTextProgress(topicId, textId);
   
@@ -75,6 +75,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
+    if (!practiceState.cards) return;
     const { questions, showResults, initialized } = practiceState.cards;
     if (!initialized || !showResults || progress.cards) return;
     const correctCount = questions.filter(q => q.isCorrect === true).length;
@@ -185,7 +186,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   ) : (
                     <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted">
                       <Progress value={completionPercentage} className="w-12 h-1.5" />
-                      <span className="text-xs font-medium text-muted-foreground">{completionCount}/3</span>
+                      <span className="text-xs font-medium text-muted-foreground">{completionCount}/4</span>
                     </div>
                   )}
                   <AlertDialog>
@@ -490,6 +491,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             flashcards={flashcardsForText}
             state={practiceState.cards}
             onStateChange={updateCardsState}
+            onResetProgress={() => resetModeProgress(topicId, textId, "cards")}
             topicId={topicId}
             textId={textId}
           />
@@ -500,6 +502,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             flashcardWords={flashcardsForText.map(f => f.german)}
             state={practiceState.fill}
             onStateChange={updateFillState}
+            onResetProgress={() => resetModeProgress(topicId, textId, "fill")}
             isCompleted={progress.fill}
           />
         )}
@@ -517,6 +520,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             flashcardWords={flashcardsForText.map(f => f.german)}
             state={practiceState.write}
             onStateChange={updateWriteState}
+            onResetProgress={() => resetModeProgress(topicId, textId, "write")}
             isCompleted={progress.write}
           />
         )}

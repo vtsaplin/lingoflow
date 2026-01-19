@@ -6,6 +6,7 @@ export interface FillModeState {
   validationState: ValidationState;
   incorrectGaps: number[];
   initialized: boolean;
+  flashcardCount: number;
 }
 
 export interface OrderSentenceState {
@@ -25,6 +26,7 @@ export interface WriteModeState {
   validationState: ValidationState;
   incorrectGaps: number[];
   initialized: boolean;
+  flashcardCount: number;
 }
 
 export interface CardsQuestionState {
@@ -59,6 +61,7 @@ export function createInitialPracticeState(): PracticeState {
       validationState: "idle",
       incorrectGaps: [],
       initialized: false,
+      flashcardCount: 0,
     },
     order: {
       currentIndex: 0,
@@ -70,6 +73,7 @@ export function createInitialPracticeState(): PracticeState {
       validationState: "idle",
       incorrectGaps: [],
       initialized: false,
+      flashcardCount: 0,
     },
     cards: {
       questions: [],

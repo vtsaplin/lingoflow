@@ -7,6 +7,16 @@ interface StoredPracticeStates {
   [textKey: string]: PracticeState;
 }
 
+function migrateState(stored: Partial<PracticeState>): PracticeState {
+  const defaults = createInitialPracticeState();
+  return {
+    fill: { ...defaults.fill, ...stored.fill },
+    order: { ...defaults.order, ...stored.order },
+    write: { ...defaults.write, ...stored.write },
+    cards: { ...defaults.cards, ...stored.cards },
+  };
+}
+
 function loadFromStorage(): StoredPracticeStates {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -28,7 +38,7 @@ export function usePracticeState(topicId: string, textId: string) {
   
   const [practiceState, setPracticeStateInternal] = useState<PracticeState>(() => {
     const stored = loadFromStorage();
-    return stored[textKey] || createInitialPracticeState();
+    return stored[textKey] ? migrateState(stored[textKey]) : createInitialPracticeState();
   });
 
   const [activeTextKey, setActiveTextKey] = useState(textKey);
@@ -37,7 +47,7 @@ export function usePracticeState(topicId: string, textId: string) {
     if (activeTextKey !== textKey) {
       setActiveTextKey(textKey);
       const stored = loadFromStorage();
-      setPracticeStateInternal(stored[textKey] || createInitialPracticeState());
+      setPracticeStateInternal(stored[textKey] ? migrateState(stored[textKey]) : createInitialPracticeState());
     }
   }, [textKey, activeTextKey]);
 

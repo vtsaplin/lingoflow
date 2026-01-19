@@ -8,6 +8,7 @@ interface WriteModeProps {
   flashcardWords: string[];
   state: WriteModeState;
   onStateChange: (state: WriteModeState) => void;
+  onResetProgress?: () => void;
   isCompleted?: boolean;
 }
 
@@ -31,7 +32,7 @@ interface GapLookup {
   [gapId: number]: GapInfo;
 }
 
-export function WriteMode({ paragraphs, flashcardWords, state, onStateChange, isCompleted = false }: WriteModeProps) {
+export function WriteMode({ paragraphs, flashcardWords, state, onStateChange, onResetProgress, isCompleted = false }: WriteModeProps) {
   const { paragraphData, gapLookup } = useMemo(
     () => generateWriteGaps(paragraphs, flashcardWords),
     [paragraphs, flashcardWords]
@@ -40,8 +41,10 @@ export function WriteMode({ paragraphs, flashcardWords, state, onStateChange, is
   const totalGaps = Object.keys(gapLookup).length;
 
   useEffect(() => {
-    if (!state.initialized && totalGaps > 0) {
-      if (isCompleted) {
+    const flashcardCountChanged = state.initialized && flashcardWords.length > state.flashcardCount;
+    
+    if ((!state.initialized || flashcardCountChanged) && totalGaps > 0) {
+      if (isCompleted && !flashcardCountChanged) {
         const correctInputs: Record<number, string> = {};
         Object.entries(gapLookup).forEach(([id, gap]) => {
           correctInputs[Number(id)] = gap.original;
@@ -51,15 +54,20 @@ export function WriteMode({ paragraphs, flashcardWords, state, onStateChange, is
           inputs: correctInputs,
           validationState: "correct",
           initialized: true,
+          flashcardCount: flashcardWords.length,
         });
       } else {
         onStateChange({
           ...state,
+          inputs: {},
+          validationState: "idle",
+          incorrectGaps: [],
           initialized: true,
+          flashcardCount: flashcardWords.length,
         });
       }
     }
-  }, [state.initialized, totalGaps, onStateChange, state, isCompleted, gapLookup]);
+  }, [state.initialized, state.flashcardCount, flashcardWords.length, totalGaps, onStateChange, state, isCompleted, gapLookup]);
 
   if (totalGaps === 0) {
     return (
@@ -114,7 +122,9 @@ export function WriteMode({ paragraphs, flashcardWords, state, onStateChange, is
       validationState: "idle",
       incorrectGaps: [],
       initialized: true,
+      flashcardCount: state.flashcardCount,
     });
+    onResetProgress?.();
   };
 
   return (

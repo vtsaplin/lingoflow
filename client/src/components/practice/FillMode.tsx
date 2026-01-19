@@ -8,6 +8,7 @@ interface FillModeProps {
   flashcardWords: string[];
   state: FillModeState;
   onStateChange: (state: FillModeState) => void;
+  onResetProgress?: () => void;
   isCompleted?: boolean;
 }
 
@@ -30,7 +31,7 @@ interface GapLookup {
   [gapId: number]: GapInfo;
 }
 
-export function FillMode({ paragraphs, flashcardWords, state, onStateChange, isCompleted = false }: FillModeProps) {
+export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onResetProgress, isCompleted = false }: FillModeProps) {
   const { paragraphData, gapLookup, allGapWords } = useMemo(
     () => generateGaps(paragraphs, flashcardWords),
     [paragraphs, flashcardWords]
@@ -39,8 +40,10 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, isC
   const totalGaps = Object.keys(gapLookup).length;
 
   useEffect(() => {
-    if (!state.initialized && totalGaps > 0) {
-      if (isCompleted) {
+    const flashcardCountChanged = state.initialized && flashcardWords.length > state.flashcardCount;
+    
+    if ((!state.initialized || flashcardCountChanged) && totalGaps > 0) {
+      if (isCompleted && !flashcardCountChanged) {
         const correctPlacements: Record<number, string> = {};
         Object.entries(gapLookup).forEach(([id, gap]) => {
           correctPlacements[Number(id)] = gap.original;
@@ -51,16 +54,21 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, isC
           availableWords: [],
           validationState: "correct",
           initialized: true,
+          flashcardCount: flashcardWords.length,
         });
       } else {
         onStateChange({
           ...state,
+          placedWords: {},
           availableWords: shuffleArray([...allGapWords]),
+          validationState: "idle",
+          incorrectGaps: [],
           initialized: true,
+          flashcardCount: flashcardWords.length,
         });
       }
     }
-  }, [state.initialized, totalGaps, allGapWords, onStateChange, state, isCompleted, gapLookup]);
+  }, [state.initialized, state.flashcardCount, flashcardWords.length, totalGaps, allGapWords, onStateChange, state, isCompleted, gapLookup]);
 
   if (totalGaps === 0) {
     return (
@@ -193,8 +201,10 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, isC
       validationState: "idle",
       incorrectGaps: [],
       initialized: true,
+      flashcardCount: state.flashcardCount,
     });
-  }, [allGapWords, onStateChange]);
+    onResetProgress?.();
+  }, [allGapWords, onStateChange, onResetProgress, state.flashcardCount]);
 
   return (
     <div className="flex flex-col h-full">

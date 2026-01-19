@@ -8,6 +8,7 @@ interface CardsModeProps {
   flashcards: Flashcard[];
   state: CardsModeState;
   onStateChange: (state: CardsModeState) => void;
+  onResetProgress?: () => void;
   topicId: string;
   textId: string;
 }
@@ -45,14 +46,17 @@ function generateQuestions(flashcards: Flashcard[]): CardsQuestionState[] {
   });
 }
 
-export function CardsMode({ flashcards, state, onStateChange, topicId, textId }: CardsModeProps) {
+export function CardsMode({ flashcards, state, onStateChange, onResetProgress, topicId, textId }: CardsModeProps) {
   const uniqueTranslationCount = useMemo(() => 
     new Set(flashcards.map(f => f.translation)).size,
     [flashcards]
   );
 
   useEffect(() => {
-    if (!state.initialized && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
+    const flashcardCountChanged = state.initialized && flashcards.length > state.flashcardCount;
+    const shouldInitialize = !state.initialized || flashcardCountChanged;
+    
+    if (shouldInitialize && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
       onStateChange({
         questions: generateQuestions(flashcards),
         currentIndex: 0,
@@ -61,7 +65,7 @@ export function CardsMode({ flashcards, state, onStateChange, topicId, textId }:
         flashcardCount: flashcards.length
       });
     }
-  }, [state.initialized, flashcards, uniqueTranslationCount, onStateChange]);
+  }, [state.initialized, state.flashcardCount, flashcards, uniqueTranslationCount, onStateChange]);
 
   if (flashcards.length === 0) {
     return (
@@ -131,6 +135,7 @@ export function CardsMode({ flashcards, state, onStateChange, topicId, textId }:
       initialized: true,
       flashcardCount: flashcards.length
     });
+    onResetProgress?.();
   };
 
   const correctCount = questions.filter(q => q.isCorrect === true).length;
