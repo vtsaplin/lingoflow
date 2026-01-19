@@ -332,6 +332,7 @@ function generateGaps(paragraphs: string[], flashcardWords: string[]): {
   const allGapWords: string[] = [];
 
   const flashcardWordsLower = new Set(flashcardWords.map(w => w.toLowerCase()));
+  const usedWords = new Set<string>();
 
   const paragraphData = paragraphs.map((para) => {
     const words = para.split(/(\s+)/);
@@ -340,9 +341,12 @@ function generateGaps(paragraphs: string[], flashcardWords: string[]): {
 
     words.forEach((w) => {
       const cleanWord = w.replace(/[.,!?;:«»„"'"]/g, "").trim();
-      const isFlashcardWord = cleanWord && flashcardWordsLower.has(cleanWord.toLowerCase());
+      const cleanWordLower = cleanWord.toLowerCase();
+      const isFlashcardWord = cleanWord && flashcardWordsLower.has(cleanWordLower);
+      const isFirstOccurrence = isFlashcardWord && !usedWords.has(cleanWordLower);
 
-      if (isFlashcardWord) {
+      if (isFirstOccurrence) {
+        usedWords.add(cleanWordLower);
         if (currentText) {
           template.push({ type: "text", content: currentText });
           currentText = "";

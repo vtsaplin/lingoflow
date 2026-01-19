@@ -44,9 +44,9 @@ Preferred communication style: Simple, everyday language.
 - Two phases: Study (read & listen to learn material) and Practice (Cards, Fill, Order, Write exercises)
 - Study mode: Click words for dictionary definitions, click sentences for translations, text-to-speech playback
 - Cards mode: Flashcard quiz - match German words to Russian translations (multiple choice, 4 options, requires 4+ flashcards)
-- Fill mode: Creates gaps ONLY for words in user's flashcard dictionary, click word bank to fill gaps
+- Fill mode: Creates gaps ONLY for words in user's flashcard dictionary (one gap per unique word), click word bank to fill gaps
 - Order mode: Shows only sentences containing flashcard words, shuffle words to reorder (min 3 words per sentence)
-- Write mode: Creates gaps ONLY for flashcard dictionary words with first-letter hints
+- Write mode: Creates gaps ONLY for flashcard dictionary words (one gap per unique word) with first-letter hints
 - Strict validation with Check button (correct/incorrect feedback per gap/sentence)
 - Flashcard-dependent modes (Fill, Order, Write, Cards) track flashcardCount to detect new additions
 - When flashcard count increases, Cards mode appends new questions without resetting progress; other modes reinitialize with new gaps while preserving work
