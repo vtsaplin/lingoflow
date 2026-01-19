@@ -245,43 +245,40 @@ export function SidebarNav() {
           <p className="mt-2 text-sm text-muted-foreground">
             Read. Listen. Practice.
           </p>
-          <div className="mt-3 flex items-center gap-3 flex-wrap">
+          <div className="mt-3 flex items-center gap-1">
             <a 
               href="/podcast/feed.xml" 
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               data-testid="link-podcast-feed"
+              title="Podcast RSS"
             >
               <Podcast className="h-4 w-4" />
-              <span>Podcast</span>
             </a>
-            <span className="text-muted-foreground/30">|</span>
             <button 
               onClick={enterSelectionMode}
               disabled={selectionMode}
-              className={`flex items-center gap-1.5 text-sm transition-colors ${
+              className={`p-2 rounded-md transition-colors ${
                 selectionMode 
                   ? "text-muted-foreground/40 cursor-not-allowed" 
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
               data-testid="button-enter-selection-mode"
+              title="Download MP3"
             >
               <Download className="h-4 w-4" />
-              <span>Download</span>
             </button>
             {flashcardCount > 0 && (
-              <>
-                <span className="text-muted-foreground/30">|</span>
-                <button 
-                  onClick={handleExportFlashcards}
-                  className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  data-testid="button-export-flashcards"
-                >
-                  <FileDown className="h-4 w-4" />
-                  <span>Export Cards ({flashcardCount})</span>
-                </button>
-              </>
+              <button 
+                onClick={handleExportFlashcards}
+                className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+                data-testid="button-export-flashcards"
+                title="Export flashcards to CSV"
+              >
+                <FileDown className="h-4 w-4" />
+                <span className="text-xs">{flashcardCount}</span>
+              </button>
             )}
           </div>
         </div>
