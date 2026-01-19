@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "lingoflow-practice-progress";
 
@@ -6,6 +6,8 @@ export interface TextProgress {
   fill: boolean;
   order: boolean;
   write: boolean;
+  cards: boolean;
+  flashcardCount: number;
 }
 
 interface ProgressStore {
@@ -44,9 +46,13 @@ function getSnapshot(): ProgressStore {
   return progressState;
 }
 
-function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" | "order" | "write") {
+function createDefaultProgress(): TextProgress {
+  return { fill: false, order: false, write: false, cards: false, flashcardCount: 0 };
+}
+
+function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards") {
   const key = `${topicId}-${textId}`;
-  const current = progressState[key] || { fill: false, order: false, write: false };
+  const current = progressState[key] || createDefaultProgress();
   if (current[mode]) return;
   
   progressState = {
@@ -55,6 +61,46 @@ function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" |
   };
   saveToStorage(progressState);
   notifyListeners();
+}
+
+function resetModeProgressInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards") {
+  const key = `${topicId}-${textId}`;
+  const current = progressState[key];
+  if (!current || !current[mode]) return;
+  
+  progressState = {
+    ...progressState,
+    [key]: { ...current, [mode]: false }
+  };
+  saveToStorage(progressState);
+  notifyListeners();
+}
+
+function updateFlashcardCountInternal(topicId: string, textId: string, count: number) {
+  const key = `${topicId}-${textId}`;
+  const current = progressState[key] || createDefaultProgress();
+  
+  if (count > current.flashcardCount) {
+    progressState = {
+      ...progressState,
+      [key]: { 
+        ...current, 
+        flashcardCount: count,
+        fill: false,
+        write: false,
+        cards: false
+      }
+    };
+    saveToStorage(progressState);
+    notifyListeners();
+  } else if (count !== current.flashcardCount) {
+    progressState = {
+      ...progressState,
+      [key]: { ...current, flashcardCount: count }
+    };
+    saveToStorage(progressState);
+    notifyListeners();
+  }
 }
 
 function resetTextProgressInternal(topicId: string, textId: string) {
@@ -70,11 +116,19 @@ export function usePracticeProgress() {
 
   const getTextProgress = useCallback((topicId: string, textId: string): TextProgress => {
     const key = `${topicId}-${textId}`;
-    return progress[key] || { fill: false, order: false, write: false };
+    return progress[key] || createDefaultProgress();
   }, [progress]);
 
-  const setModeComplete = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write") => {
+  const setModeComplete = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards") => {
     setModeCompleteInternal(topicId, textId, mode);
+  }, []);
+
+  const resetModeProgress = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards") => {
+    resetModeProgressInternal(topicId, textId, mode);
+  }, []);
+
+  const updateFlashcardCount = useCallback((topicId: string, textId: string, count: number) => {
+    updateFlashcardCountInternal(topicId, textId, count);
   }, []);
 
   const resetTextProgress = useCallback((topicId: string, textId: string) => {
@@ -98,6 +152,8 @@ export function usePracticeProgress() {
   return {
     getTextProgress,
     setModeComplete,
+    resetModeProgress,
+    updateFlashcardCount,
     resetTextProgress,
     getCompletionCount,
     isTextComplete,

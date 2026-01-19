@@ -45,11 +45,19 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     activeTextKey 
   } = usePracticeState(topicId, textId);
   
-  const { setModeComplete, getCompletionCount, isTextComplete, getTextProgress, resetTextProgress } = usePracticeProgress();
+  const { setModeComplete, resetModeProgress, updateFlashcardCount, getCompletionCount, isTextComplete, getTextProgress, resetTextProgress } = usePracticeProgress();
   const completionCount = getCompletionCount(topicId, textId);
   const completionPercentage = Math.round((completionCount / 3) * 100);
   const textComplete = isTextComplete(topicId, textId);
   const progress = getTextProgress(topicId, textId);
+  
+  const { addFlashcard, hasFlashcard, getFlashcardsForText } = useFlashcards();
+  const flashcardsForText = getFlashcardsForText(topicId, textId);
+
+  useEffect(() => {
+    if (activeTextKey !== textKey) return;
+    updateFlashcardCount(topicId, textId, flashcardsForText.length);
+  }, [flashcardsForText.length, topicId, textId, updateFlashcardCount, activeTextKey, textKey]);
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
@@ -67,6 +75,17 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
+    const { questions, showResults, initialized } = practiceState.cards;
+    if (!initialized || !showResults || progress.cards) return;
+    const correctCount = questions.filter(q => q.isCorrect === true).length;
+    const percentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
+    if (percentage === 100) {
+      setModeComplete(topicId, textId, "cards");
+    }
+  }, [practiceState.cards, topicId, textId, setModeComplete, progress.cards, activeTextKey, textKey]);
+
+  useEffect(() => {
+    if (activeTextKey !== textKey) return;
     const { sentenceStates, initialized } = practiceState.order;
     if (!initialized || !progress) return;
     const sentenceCount = Object.keys(sentenceStates).length;
@@ -80,10 +99,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const ttsMutation = useTTS();
   const translateMutation = useTranslate();
   const dictionaryMutation = useDictionary();
-  const { addFlashcard, hasFlashcard, getFlashcardsForText } = useFlashcards();
-  
-  const flashcardsForText = getFlashcardsForText(topicId, textId);
-
   const playAudio = async (text: string) => {
     try {
       if (audioRef.current) {
