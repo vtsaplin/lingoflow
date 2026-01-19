@@ -12,9 +12,11 @@ import {
   Download,
   X,
   Check,
-  Loader2
+  Loader2,
+  CheckCircle2
 } from "lucide-react";
 import { useTopics } from "@/hooks/use-content";
+import { usePracticeProgress } from "@/hooks/use-practice-progress";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -55,6 +57,7 @@ function getSavedWidth(): number {
 export function SidebarNav() {
   const { data: topics, isLoading } = useTopics();
   const [location] = useLocation();
+  const { getCompletionCount, isTextComplete } = usePracticeProgress();
   const [open, setOpen] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
   const [sidebarWidth, setSidebarWidth] = useState(getSavedWidth);
@@ -348,7 +351,17 @@ export function SidebarNav() {
                                         }`}
                                       >
                                         <FileText className="h-3 w-3 shrink-0" />
-                                        <span className="truncate">{text.title}</span>
+                                        <span className="truncate flex-1">{text.title}</span>
+                                        {(() => {
+                                          const count = getCompletionCount(topic.id, text.id);
+                                          const complete = isTextComplete(topic.id, text.id);
+                                          if (complete) {
+                                            return <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${active ? "text-primary-foreground" : "text-green-600 dark:text-green-500"}`} />;
+                                          } else if (count > 0) {
+                                            return <span className={`text-xs shrink-0 ${active ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{count}/3</span>;
+                                          }
+                                          return null;
+                                        })()}
                                       </div>
                                     </Link>
                                   )}

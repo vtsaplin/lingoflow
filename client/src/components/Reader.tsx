@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
+import { usePracticeProgress } from "@/hooks/use-practice-progress";
 import { FillMode } from "@/components/practice/FillMode";
 import { OrderMode } from "@/components/practice/OrderMode";
 import { WriteMode } from "@/components/practice/WriteMode";
@@ -31,6 +33,12 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   
   const [practiceState, setPracticeState] = useState<PracticeState>(createInitialPracticeState);
   const currentTextKey = useRef(`${topicId}-${textId}`);
+  
+  const { setModeComplete, getCompletionCount, isTextComplete, getTextProgress } = usePracticeProgress();
+  const completionCount = getCompletionCount(topicId, textId);
+  const completionPercentage = Math.round((completionCount / 3) * 100);
+  const textComplete = isTextComplete(topicId, textId);
+  const progress = getTextProgress(topicId, textId);
 
   useEffect(() => {
     const newKey = `${topicId}-${textId}`;
@@ -39,6 +47,29 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       setPracticeState(createInitialPracticeState());
     }
   }, [topicId, textId]);
+
+  useEffect(() => {
+    if (practiceState.fill.validationState === "correct" && !progress.fill) {
+      setModeComplete(topicId, textId, "fill");
+    }
+  }, [practiceState.fill.validationState, topicId, textId, setModeComplete, progress.fill]);
+
+  useEffect(() => {
+    if (practiceState.write.validationState === "correct" && !progress.write) {
+      setModeComplete(topicId, textId, "write");
+    }
+  }, [practiceState.write.validationState, topicId, textId, setModeComplete, progress.write]);
+
+  useEffect(() => {
+    const { sentenceStates, initialized } = practiceState.order;
+    if (!initialized || !progress) return;
+    const sentenceCount = Object.keys(sentenceStates).length;
+    if (sentenceCount === 0) return;
+    const allCorrect = Object.values(sentenceStates).every(s => s.validationState === "correct");
+    if (allCorrect && !progress.order) {
+      setModeComplete(topicId, textId, "order");
+    }
+  }, [practiceState.order, topicId, textId, setModeComplete, progress]);
   
   const ttsMutation = useTTS();
   const translateMutation = useTranslate();
@@ -128,28 +159,57 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         <div className="max-w-3xl mx-auto">
           <div className="flex flex-col gap-1 mb-4">
             <p className="text-sm text-muted-foreground">{topicTitle}</p>
-            <h1 className="text-2xl sm:text-3xl font-serif font-semibold tracking-tight text-foreground">
-              {title}
-            </h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-serif font-semibold tracking-tight text-foreground">
+                {title}
+              </h1>
+              {completionCount > 0 && (
+                <div className="flex items-center gap-2">
+                  {textComplete ? (
+                    <div className="flex items-center gap-1.5 text-green-600 dark:text-green-500">
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span className="text-sm font-medium">Complete</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Progress value={completionPercentage} className="w-20 h-2" />
+                      <span className="text-sm text-muted-foreground">{completionCount}/3</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           
           <Tabs value={practiceMode} onValueChange={(v) => setPracticeMode(v as PracticeMode)}>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Study</span>
+              </div>
+              <div className="flex-1 flex items-center gap-2">
+                <div className="w-px h-4 bg-border" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Practice</span>
+              </div>
+            </div>
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="read" data-testid="tab-read" className="gap-2">
+              <TabsTrigger value="read" data-testid="tab-study" className="gap-2">
                 <BookOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">Read</span>
+                <span className="hidden sm:inline">Study</span>
               </TabsTrigger>
-              <TabsTrigger value="fill" data-testid="tab-fill" className="gap-2">
+              <TabsTrigger value="fill" data-testid="tab-fill" className="gap-2 relative">
                 <Puzzle className="h-4 w-4" />
                 <span className="hidden sm:inline">Fill</span>
+                {progress.fill && <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-500 absolute -top-1 -right-1" />}
               </TabsTrigger>
-              <TabsTrigger value="order" data-testid="tab-order" className="gap-2">
+              <TabsTrigger value="order" data-testid="tab-order" className="gap-2 relative">
                 <ArrowUpDown className="h-4 w-4" />
                 <span className="hidden sm:inline">Order</span>
+                {progress.order && <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-500 absolute -top-1 -right-1" />}
               </TabsTrigger>
-              <TabsTrigger value="write" data-testid="tab-write" className="gap-2">
+              <TabsTrigger value="write" data-testid="tab-write" className="gap-2 relative">
                 <PenLine className="h-4 w-4" />
                 <span className="hidden sm:inline">Write</span>
+                {progress.write && <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-500 absolute -top-1 -right-1" />}
               </TabsTrigger>
             </TabsList>
           </Tabs>
