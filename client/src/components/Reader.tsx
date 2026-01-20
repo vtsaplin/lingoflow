@@ -242,9 +242,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             </div>
             <div className="flex gap-1">
               <TabsList className="flex-1">
-                <TabsTrigger value="read" data-testid="tab-study" className="gap-2 flex-1">
+                <TabsTrigger value="read" data-testid="tab-read" className="gap-2 flex-1">
                   <BookOpen className="h-4 w-4" />
-                  <span className="hidden sm:inline">Study</span>
+                  <span className="hidden sm:inline">Read</span>
                 </TabsTrigger>
               </TabsList>
               <TabsList className="flex-[4] grid grid-cols-4">
