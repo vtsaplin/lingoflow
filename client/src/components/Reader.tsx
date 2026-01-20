@@ -56,7 +56,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const { addFlashcard, removeFlashcard, hasFlashcard, getFlashcardByGerman, getFlashcardsForText } = useFlashcards();
   const flashcardsForText = getFlashcardsForText(topicId, textId);
   
-  const { getSentencesForText } = useSavedSentences();
+  const { getSentencesForText, addSentence, hasSentence, getSentenceByGerman, removeSentence } = useSavedSentences();
   const savedSentencesForText = getSentencesForText(topicId, textId);
   
 
@@ -445,19 +445,68 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   <Separator className="my-3" />
 
                   <div className="min-h-[60px]">
-                    {(translateMutation.isPending || dictionaryMutation.isPending) && (
+                    {interactionMode === "word" && dictionaryMutation.isPending && (
                       <div className="flex items-center py-2 text-muted-foreground">
                         <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                        <span>{interactionMode === "word" ? "Loading dictionary..." : "Translating..."}</span>
+                        <span>Loading dictionary...</span>
                       </div>
                     )}
 
-                    {translateMutation.isSuccess && selectedText && (
-                      <div className="animate-in fade-in">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Translation</p>
-                        <p className="text-base text-foreground">
-                          {translateMutation.data.translation}
-                        </p>
+                    {interactionMode === "sentence" && selectedText && (
+                      <div className="animate-in fade-in space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Translation</p>
+                          {(() => {
+                            const isSaved = hasSentence(selectedText, topicId, textId);
+                            const savedSentence = isSaved ? getSentenceByGerman(selectedText, topicId, textId) : null;
+                            return isSaved && savedSentence ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeSentence(savedSentence.id)}
+                                data-testid="button-delete-sentence"
+                                className="shrink-0 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Удалить
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (translateMutation.isSuccess && translateMutation.data) {
+                                    addSentence(selectedText, translateMutation.data.translation, topicId, textId);
+                                  }
+                                }}
+                                disabled={!translateMutation.isSuccess}
+                                data-testid="button-save-sentence"
+                                className="shrink-0"
+                              >
+                                {translateMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                ) : (
+                                  <Bookmark className="h-4 w-4 mr-1" />
+                                )}
+                                Сохранить
+                              </Button>
+                            );
+                          })()}
+                        </div>
+                        {translateMutation.isPending && (
+                          <div className="flex items-center py-1 text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            <span>Перевод...</span>
+                          </div>
+                        )}
+                        {translateMutation.isSuccess && (
+                          <p className="text-base text-foreground">
+                            {translateMutation.data.translation}
+                          </p>
+                        )}
+                        {translateMutation.isError && (
+                          <p className="text-sm text-destructive">Ошибка перевода. Попробуйте ещё раз.</p>
+                        )}
                       </div>
                     )}
 
@@ -518,9 +567,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       </div>
                     )}
                     
-                    {translateMutation.isError && (
-                      <p className="text-sm text-destructive">Translation failed. Please try again.</p>
-                    )}
                     {dictionaryMutation.isError && (
                       <p className="text-sm text-destructive">Could not find definition.</p>
                     )}
