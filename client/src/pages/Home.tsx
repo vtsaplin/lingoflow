@@ -13,55 +13,39 @@ export default function Home() {
       </div>
 
       <div className="bg-card border rounded-xl p-6 sm:p-8 shadow-sm">
-        <h2 className="text-xl font-semibold mb-6 text-foreground">How to use</h2>
+        <h2 className="text-xl font-semibold mb-6 text-foreground text-center">How to use</h2>
         
-        <div className="space-y-6">
-          <div className="flex gap-4">
-            <div className="p-3 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+        <div className="grid grid-cols-2 gap-6">
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="p-3 bg-primary/10 rounded-lg text-primary">
               <BookOpen className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="font-medium text-foreground mb-1">Choose a text</h3>
-              <p className="text-muted-foreground text-sm">
-                Select a topic from the sidebar and click on any text to start reading.
-              </p>
-            </div>
+            <h3 className="font-medium text-foreground">Choose a text</h3>
+            <p className="text-muted-foreground text-sm">Pick a topic from the sidebar</p>
           </div>
 
-          <div className="flex gap-4">
-            <div className="p-3 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="p-3 bg-primary/10 rounded-lg text-primary">
               <MousePointer2 className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="font-medium text-foreground mb-1">Click to learn</h3>
-              <p className="text-muted-foreground text-sm">
-                Click on any word for a dictionary definition, or click on a sentence for a full translation. Use the toggle to switch modes.
-              </p>
-            </div>
+            <h3 className="font-medium text-foreground">Click to learn</h3>
+            <p className="text-muted-foreground text-sm">Words or sentences — you choose</p>
           </div>
 
-          <div className="flex gap-4">
-            <div className="p-3 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="p-3 bg-primary/10 rounded-lg text-primary">
               <Volume2 className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="font-medium text-foreground mb-1">Listen and repeat</h3>
-              <p className="text-muted-foreground text-sm">
-                Each word or sentence is read aloud automatically. Use "Read All" to listen to the entire text.
-              </p>
-            </div>
+            <h3 className="font-medium text-foreground">Listen and repeat</h3>
+            <p className="text-muted-foreground text-sm">Audio plays automatically</p>
           </div>
 
-          <div className="flex gap-4">
-            <div className="p-3 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+          <div className="flex flex-col items-center text-center gap-2">
+            <div className="p-3 bg-primary/10 rounded-lg text-primary">
               <Languages className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="font-medium text-foreground mb-1">Native language support</h3>
-              <p className="text-muted-foreground text-sm">
-                All translations and definitions are provided in your native language to help you learn German naturally.
-              </p>
-            </div>
+            <h3 className="font-medium text-foreground">Your language</h3>
+            <p className="text-muted-foreground text-sm">Translations in Russian</p>
           </div>
         </div>
       </div>
