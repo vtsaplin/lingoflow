@@ -648,61 +648,68 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               </div>
             )}
 
-            {multiSelectMode && !selectedText && (
-              <div className="border-t bg-card animate-in slide-in-from-bottom-4">
-                <div className="max-w-4xl mx-auto px-6 sm:px-8 py-4">
-                  <div className="flex justify-between items-center gap-4">
-                    <span className="text-sm text-muted-foreground">
-                      <span className="font-medium text-foreground">{selectedWords.size}</span> words selected
-                    </span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {selectedWords.size === 0 && flashcardsForText.length > 0 && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setSelectedWords(new Set(flashcardsForText.map(f => f.german.toLowerCase())))}
-                          data-testid="button-select-all"
-                        >
-                          Select All
-                        </Button>
-                      )}
-                      {selectedWords.size > 0 && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setSelectedWords(new Set())}
-                          data-testid="button-clear-selection"
-                        >
-                          Clear
-                        </Button>
-                      )}
-                      {selectedWords.size > 0 && (
-                        <Button 
-                          variant="default" 
-                          size="sm"
-                          onClick={handleBatchSave}
-                          disabled={isBatchSaving}
-                          data-testid="button-batch-save"
-                          className="gap-2"
-                        >
-                          {isBatchSaving ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              <Check className="h-4 w-4" />
-                              Save
-                            </>
-                          )}
-                        </Button>
-                      )}
+            {multiSelectMode && !selectedText && (() => {
+              const existingSet = new Set(flashcardsForText.map(f => f.german.toLowerCase()));
+              const hasChanges = 
+                Array.from(selectedWords).some(w => !existingSet.has(w)) ||
+                Array.from(existingSet).some(w => !selectedWords.has(w));
+              
+              return (
+                <div className="border-t bg-card animate-in slide-in-from-bottom-4">
+                  <div className="max-w-4xl mx-auto px-6 sm:px-8 py-4">
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground">{selectedWords.size}</span> words selected
+                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {selectedWords.size === 0 && flashcardsForText.length > 0 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setSelectedWords(new Set(flashcardsForText.map(f => f.german.toLowerCase())))}
+                            data-testid="button-select-all"
+                          >
+                            Select All
+                          </Button>
+                        )}
+                        {selectedWords.size > 0 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setSelectedWords(new Set())}
+                            data-testid="button-clear-selection"
+                          >
+                            Clear
+                          </Button>
+                        )}
+                        {hasChanges && (
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={handleBatchSave}
+                            disabled={isBatchSaving}
+                            data-testid="button-batch-save"
+                            className="gap-2"
+                          >
+                            {isBatchSaving ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <Check className="h-4 w-4" />
+                                Save
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         )}
 
