@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, RotateCcw, Layers } from "lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2 } from "lucide-react";
 import type { Flashcard } from "@/hooks/use-flashcards";
 import type { CardsModeState, CardsQuestionState } from "./types";
 import { useTTS } from "@/hooks/use-services";
@@ -284,18 +284,45 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
       if (currentIndex < questions.length - 1) {
         onStateChange({
           ...latestState,
-          questions: newQuestions,
           currentIndex: currentIndex + 1
         });
       } else {
         onStateChange({
           ...latestState,
-          questions: newQuestions,
           showResults: true
         });
       }
     }, 1200);
   }, [onStateChange]);
+
+  const speakCurrentWord = useCallback(() => {
+    const { questions, currentIndex } = stateRef.current;
+    const currentQuestion = questions[currentIndex];
+    if (!currentQuestion) return;
+    
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+    
+    tts.mutate(
+      { text: currentQuestion.germanWord, speed: 1.0 },
+      {
+        onSuccess: (blob) => {
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          currentAudioRef.current = audio;
+          audio.play().catch(() => {});
+          audio.onended = () => {
+            URL.revokeObjectURL(url);
+            if (currentAudioRef.current === audio) {
+              currentAudioRef.current = null;
+            }
+          };
+        }
+      }
+    );
+  }, [tts]);
 
   const { questions, currentIndex, showResults } = state;
   const correctCount = questions.filter(q => q.isCorrect === true).length;
@@ -386,9 +413,21 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
         <div className="text-center mb-8">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">German</p>
-          <p className="text-3xl font-serif font-bold text-foreground">
-            {currentQuestion.germanWord}
-          </p>
+          <div className="flex items-center justify-center gap-3">
+            <p className="text-3xl font-serif font-bold text-foreground">
+              {currentQuestion.germanWord}
+            </p>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={speakCurrentWord}
+              disabled={tts.isPending}
+              className="h-9 w-9"
+              data-testid="button-speak-card-word"
+            >
+              <Volume2 className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         <div className="w-full max-w-md space-y-3">
