@@ -56,26 +56,23 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const flashcardsForText = getFlashcardsForText(topicId, textId);
   
 
+  const sentenceContainsFlashcardWord = (sentence: string): boolean => {
+    if (flashcardsForText.length === 0) return false;
+    const normalizedSentence = sentence.toLowerCase();
+    return flashcardsForText.some(card => {
+      const word = card.german.toLowerCase();
+      const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      return regex.test(normalizedSentence);
+    });
+  };
+
   const eligibleSentences = useMemo(() => {
-    if (flashcardsForText.length === 0) return [];
-    
-    const flashcardWordsLower = new Set(flashcardsForText.map(f => f.german.toLowerCase()));
     const allSentences: string[] = [];
-    
     paragraphs.forEach(p => {
       const sentences = p.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [];
       sentences.forEach(s => {
         const trimmed = s.trim();
-        if (!trimmed) return;
-        
-        const words = trimmed.split(/\s+/).filter(w => w.length > 0);
-        if (words.length < 3) return;
-        
-        const hasFlashcardWord = words.some(w => 
-          flashcardWordsLower.has(w.toLowerCase().replace(/[.,!?;:'"()]/g, ''))
-        );
-        
-        if (hasFlashcardWord) {
+        if (trimmed && sentenceContainsFlashcardWord(trimmed)) {
           allSentences.push(trimmed);
         }
       });
@@ -128,20 +125,13 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     if (activeTextKey !== textKey) return;
     const { sentenceStates, initialized } = practiceState.order;
     if (!initialized || !progress) return;
-    if (progress.order) return;
-    
     const sentenceCount = Object.keys(sentenceStates).length;
-    if (sentenceCount === 0) {
-      if (eligibleSentences.length === 0) {
-        setModeComplete(topicId, textId, "order");
-      }
-      return;
-    }
+    if (sentenceCount === 0) return;
     const allCorrect = Object.values(sentenceStates).every(s => s.validationState === "correct");
-    if (allCorrect) {
+    if (allCorrect && !progress.order) {
       setModeComplete(topicId, textId, "order");
     }
-  }, [practiceState.order, topicId, textId, setModeComplete, progress, activeTextKey, textKey, eligibleSentences.length]);
+  }, [practiceState.order, topicId, textId, setModeComplete, progress, activeTextKey, textKey]);
   
   const ttsMutation = useTTS();
   const translateMutation = useTranslate();
@@ -559,8 +549,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "order" && (
           <OrderMode 
-            paragraphs={paragraphs}
-            flashcardWords={flashcardsForText.map(f => f.german)}
+            sentences={eligibleSentences}
             state={practiceState.order}
             onStateChange={updateOrderState}
             onResetProgress={() => resetModeProgress(topicId, textId, "order")}
