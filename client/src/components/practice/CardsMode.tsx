@@ -537,6 +537,14 @@ export function CardsMode({
             <DirectionTabs />
             <span className="text-xs text-muted-foreground">{currentIndex + 1}/{questions.length}</span>
           </div>
+          <div className="flex-1 max-w-[200px] mx-4">
+            <div className="w-full bg-muted rounded-full h-1.5">
+              <div 
+                className="bg-primary h-1.5 rounded-full transition-all"
+                style={{ width: `${((correctCount + incorrectCount) / questions.length) * 100}%` }}
+              />
+            </div>
+          </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="text-green-600 dark:text-green-400">{correctCount}</span>
             <span>/</span>
