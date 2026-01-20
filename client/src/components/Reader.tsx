@@ -473,6 +473,16 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         <MousePointer2 className="h-4 w-4" />
                         {multiSelectMode ? "Cancel" : "Select"}
                       </Button>
+                      {multiSelectMode && selectedWords.size > 0 && (
+                        <Button 
+                          variant="ghost"
+                          onClick={() => setSelectedWords(new Set())}
+                          data-testid="button-deselect-all"
+                        >
+                          <Eraser className="h-4 w-4 mr-2" />
+                          Deselect All
+                        </Button>
+                      )}
                     </>
                   )}
 
