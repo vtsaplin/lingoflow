@@ -81,7 +81,7 @@ function updateFlashcardCountInternal(topicId: string, textId: string, count: nu
   const key = `${topicId}-${textId}`;
   const current = progressState[key] || createDefaultProgress();
   
-  if (count !== current.flashcardCount) {
+  if (count > current.flashcardCount) {
     progressState = {
       ...progressState,
       [key]: { 
@@ -94,6 +94,13 @@ function updateFlashcardCountInternal(topicId: string, textId: string, count: nu
     };
     saveToStorage(progressState);
     notifyListeners();
+  } else if (count !== current.flashcardCount) {
+    progressState = {
+      ...progressState,
+      [key]: { ...current, flashcardCount: count }
+    };
+    saveToStorage(progressState);
+    notifyListeners();
   }
 }
 
@@ -101,7 +108,7 @@ function updateSentenceCountInternal(topicId: string, textId: string, count: num
   const key = `${topicId}-${textId}`;
   const current = progressState[key] || createDefaultProgress();
   
-  if (count !== current.sentenceCount) {
+  if (count > current.sentenceCount) {
     progressState = {
       ...progressState,
       [key]: { 
@@ -109,6 +116,13 @@ function updateSentenceCountInternal(topicId: string, textId: string, count: num
         sentenceCount: count,
         order: false
       }
+    };
+    saveToStorage(progressState);
+    notifyListeners();
+  } else if (count !== current.sentenceCount) {
+    progressState = {
+      ...progressState,
+      [key]: { ...current, sentenceCount: count }
     };
     saveToStorage(progressState);
     notifyListeners();
