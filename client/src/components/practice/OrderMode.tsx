@@ -2,10 +2,10 @@ import { useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
 import type { OrderModeState, OrderSentenceState } from "./types";
+import type { SavedSentence } from "@/hooks/use-saved-sentences";
 
 interface OrderModeProps {
-  paragraphs: string[];
-  flashcardWords: string[];
+  savedSentences: SavedSentence[];
   state: OrderModeState;
   onStateChange: (state: OrderModeState) => void;
   onResetProgress?: () => void;
@@ -17,23 +17,18 @@ interface Sentence {
   words: string[];
 }
 
-export function OrderMode({ paragraphs, flashcardWords, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
-  const flashcardSet = useMemo(() => new Set(flashcardWords.map(w => w.toLowerCase())), [flashcardWords]);
-  
+export function OrderMode({ savedSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
   const sentences = useMemo(() => {
-    const allSentences = extractSentences(paragraphs);
-    return allSentences.filter(sentence => 
-      sentence.words.some(word => {
-        const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()«»„"]/g, "").toLowerCase();
-        return flashcardSet.has(cleanWord);
-      })
-    );
-  }, [paragraphs, flashcardSet]);
+    return savedSentences.map(s => ({
+      original: s.german,
+      words: extractWords(s.german)
+    })).filter(s => s.words.length >= 3);
+  }, [savedSentences]);
   
-  const { currentIndex, sentenceStates, flashcardCount } = state;
+  const { currentIndex, sentenceStates, flashcardCount: savedCount } = state;
 
   useEffect(() => {
-    const needsReinit = !state.initialized || (flashcardWords.length > flashcardCount && flashcardCount > 0);
+    const needsReinit = !state.initialized || (savedSentences.length > savedCount && savedCount > 0);
     
     if (sentences.length > 0 && needsReinit) {
       const initialStates: Record<number, OrderSentenceState> = {};
@@ -56,16 +51,16 @@ export function OrderMode({ paragraphs, flashcardWords, state, onStateChange, on
         currentIndex: 0,
         sentenceStates: initialStates,
         initialized: true,
-        flashcardCount: flashcardWords.length,
+        flashcardCount: savedSentences.length,
       });
     }
-  }, [sentences, state.initialized, onStateChange, isCompleted, flashcardWords.length, flashcardCount]);
+  }, [sentences, state.initialized, onStateChange, isCompleted, savedSentences.length, savedCount]);
 
-  if (flashcardWords.length === 0) {
+  if (savedSentences.length === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <p className="text-muted-foreground text-center">
-          No flashcard words saved yet. Save words from Study mode to practice sentence ordering.
+          No sentences saved yet. In Study mode (sentence interaction), click on sentences and save them to practice ordering.
         </p>
       </div>
     );
@@ -75,7 +70,7 @@ export function OrderMode({ paragraphs, flashcardWords, state, onStateChange, on
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <p className="text-muted-foreground text-center">
-          No sentences contain your flashcard words in this text.
+          Saved sentences are too short (need at least 3 words each).
         </p>
       </div>
     );
@@ -343,7 +338,7 @@ export function OrderMode({ paragraphs, flashcardWords, state, onStateChange, on
                     currentIndex: 0,
                     sentenceStates: {},
                     initialized: false,
-                    flashcardCount: flashcardWords.length,
+                    flashcardCount: savedSentences.length,
                   });
                 }} 
                 data-testid="button-reset-all"
@@ -384,4 +379,8 @@ function shuffleArray<T>(array: T[]): T[] {
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
+}
+
+function extractWords(text: string): string[] {
+  return text.split(/\s+/).filter(w => w.length > 0);
 }

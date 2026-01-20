@@ -45,14 +45,21 @@ Preferred communication style: Simple, everyday language.
 - Study mode: Click words for dictionary definitions, click sentences for translations, text-to-speech playback
 - Cards mode: Flashcard quiz - match German words to Russian translations (multiple choice, 4 options, requires 4+ flashcards)
 - Fill mode: Creates gaps ONLY for words in user's flashcard dictionary (one gap per unique word), click word bank to fill gaps
-- Order mode: Shows only sentences containing flashcard words, shuffle words to reorder (min 3 words per sentence)
+- Order mode: Uses saved sentences from Study mode (sentence interaction → Save button), shuffle words to reorder (min 3 words per sentence)
 - Write mode: Creates gaps ONLY for flashcard dictionary words (one gap per unique word) with first-letter hints
 - Strict validation with Check button (correct/incorrect feedback per gap/sentence)
-- Flashcard-dependent modes (Fill, Order, Write, Cards) track flashcardCount to detect new additions
+- Flashcard-dependent modes (Fill, Write, Cards) track flashcardCount to detect new additions
+- Order mode tracks saved sentence count separately
 - When flashcard count increases, Cards mode appends new questions without resetting progress; other modes reinitialize with new gaps while preserving work
 - Gap indexing uses stable gapId in templates with gapLookup for O(1) access
 - FillMode captures existingWordInTarget before setState to avoid stale reads during drag/drop
 - OrderMode uses useEffect for initialization to prevent crashes on empty sentences
+
+### Saved Sentences System
+- localStorage-backed sentence storage via `useSavedSentences` hook (key: "lingoflow-saved-sentences")
+- In Study mode (sentence interaction mode), click sentence → translation panel shows Save button
+- Saved sentence data: German text, Russian translation, source topicId/textId, timestamp
+- Order practice mode uses only saved sentences (not auto-filtered by flashcard words)
 
 ### Flashcard System
 - localStorage-backed flashcard storage via `useFlashcards` hook (key: "lingoflow-flashcards")
