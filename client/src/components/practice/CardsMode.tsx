@@ -107,11 +107,22 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
       });
     } else if (flashcardCountDecreased) {
       if (flashcards.length >= 4 && uniqueTranslationCount >= 4) {
+        const remainingCardIds = new Set(flashcards.map(f => f.id));
+        const filteredQuestions = state.questions.filter(q => remainingCardIds.has(q.cardId));
+        
+        let newCurrentIndex = state.currentIndex;
+        if (newCurrentIndex >= filteredQuestions.length) {
+          newCurrentIndex = Math.max(0, filteredQuestions.length - 1);
+        }
+        
+        const allAnswered = filteredQuestions.length > 0 && 
+          filteredQuestions.every(q => q.selectedAnswer !== null);
+        
         onStateChange({
-          questions: generateQuestions(flashcards),
-          currentIndex: 0,
-          showResults: false,
-          initialized: true,
+          ...state,
+          questions: filteredQuestions,
+          currentIndex: newCurrentIndex,
+          showResults: allAnswered ? true : state.showResults,
           flashcardCount: flashcards.length
         });
       } else {
