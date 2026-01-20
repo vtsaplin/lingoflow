@@ -106,10 +106,16 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   useEffect(() => {
     if (activeTextKey !== textKey) return;
     if (!practiceState.cards) return;
-    const { showResults, initialized } = practiceState.cards;
-    if (!initialized || !showResults || progress.cards) return;
+    const { showResults, initialized, flashcardCount: stateFlashcardCount } = practiceState.cards;
+    if (!initialized || !showResults) return;
+    // Only mark complete if the flashcard count in CardsMode state matches the current flashcard count
+    // This prevents re-marking complete after progress is reset due to new flashcards
+    if (stateFlashcardCount !== flashcardsForText.length) return;
+    // Check current progress state directly to avoid stale closures
+    const currentProgress = getTextProgress(topicId, textId);
+    if (currentProgress.cards) return;
     setModeComplete(topicId, textId, "cards");
-  }, [practiceState.cards, topicId, textId, setModeComplete, progress.cards, activeTextKey, textKey]);
+  }, [practiceState.cards, topicId, textId, setModeComplete, activeTextKey, textKey, flashcardsForText.length, getTextProgress]);
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;

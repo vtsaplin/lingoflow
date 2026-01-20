@@ -140,8 +140,11 @@ function resetTextProgressInternal(topicId: string, textId: string) {
 }
 
 export function usePracticeProgress() {
+  // Subscribe to store updates and get current state
+  // We use the returned progress to track which keys have changed
   const progress = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
+  // Read from the subscribed progress to ensure React detects changes
   const getTextProgress = useCallback((topicId: string, textId: string): TextProgress => {
     const key = `${topicId}-${textId}`;
     return progress[key] || createDefaultProgress();
