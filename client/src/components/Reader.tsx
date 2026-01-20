@@ -648,7 +648,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               </div>
             )}
 
-            {multiSelectMode && selectedWords.size > 0 && !selectedText && (
+            {multiSelectMode && (selectedWords.size > 0 || flashcardsForText.length > 0) && !selectedText && (
               <div className="border-t bg-card animate-in slide-in-from-bottom-4">
                 <div className="max-w-4xl mx-auto px-6 sm:px-8 py-4">
                   <div className="flex justify-between items-center gap-4">
