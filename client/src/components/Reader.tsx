@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -52,10 +52,10 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const textComplete = isTextComplete(topicId, textId);
   const progress = getTextProgress(topicId, textId);
   
-  const { addFlashcard, hasFlashcard, getFlashcardsForText } = useFlashcards();
+  const { addFlashcard, removeFlashcard, hasFlashcard, getFlashcardByGerman, getFlashcardsForText } = useFlashcards();
   const flashcardsForText = getFlashcardsForText(topicId, textId);
   
-  const { addSentence, hasSentence, getSentencesForText } = useSavedSentences();
+  const { addSentence, removeSentence, hasSentence, getSentenceByGerman, getSentencesForText } = useSavedSentences();
   const savedSentencesForText = getSentencesForText(topicId, textId);
 
   useEffect(() => {
@@ -415,35 +415,35 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Translation</p>
                           {(() => {
                             const isSaved = hasSentence(selectedText, topicId, textId);
-                            return (
+                            const savedSentence = isSaved ? getSentenceByGerman(selectedText, topicId, textId) : null;
+                            return isSaved && savedSentence ? (
                               <Button
-                                variant={isSaved ? "secondary" : "outline"}
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeSentence(savedSentence.id)}
+                                data-testid="button-delete-sentence"
+                                className="shrink-0 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  if (!isSaved) {
-                                    addSentence(
-                                      selectedText,
-                                      translateMutation.data.translation,
-                                      topicId,
-                                      textId
-                                    );
-                                  }
+                                  addSentence(
+                                    selectedText,
+                                    translateMutation.data.translation,
+                                    topicId,
+                                    textId
+                                  );
                                 }}
-                                disabled={isSaved}
                                 data-testid="button-save-sentence"
                                 className="shrink-0"
                               >
-                                {isSaved ? (
-                                  <>
-                                    <BookmarkCheck className="h-4 w-4 mr-1" />
-                                    Saved
-                                  </>
-                                ) : (
-                                  <>
-                                    <Bookmark className="h-4 w-4 mr-1" />
-                                    Save
-                                  </>
-                                )}
+                                <Bookmark className="h-4 w-4 mr-1" />
+                                Save
                               </Button>
                             );
                           })()}
@@ -467,35 +467,35 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                           </div>
                           {(() => {
                             const isSaved = hasFlashcard(dictionaryMutation.data.word, topicId, textId);
-                            return (
+                            const savedFlashcard = isSaved ? getFlashcardByGerman(dictionaryMutation.data.word, topicId, textId) : null;
+                            return isSaved && savedFlashcard ? (
                               <Button
-                                variant={isSaved ? "secondary" : "outline"}
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFlashcard(savedFlashcard.id)}
+                                data-testid="button-delete-flashcard"
+                                className="shrink-0 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  if (!isSaved) {
-                                    addFlashcard(
-                                      dictionaryMutation.data.word,
-                                      dictionaryMutation.data.translation,
-                                      topicId,
-                                      textId
-                                    );
-                                  }
+                                  addFlashcard(
+                                    dictionaryMutation.data.word,
+                                    dictionaryMutation.data.translation,
+                                    topicId,
+                                    textId
+                                  );
                                 }}
-                                disabled={isSaved}
                                 data-testid="button-save-flashcard"
                                 className="shrink-0"
                               >
-                                {isSaved ? (
-                                  <>
-                                    <BookmarkCheck className="h-4 w-4 mr-1" />
-                                    Saved
-                                  </>
-                                ) : (
-                                  <>
-                                    <Bookmark className="h-4 w-4 mr-1" />
-                                    Save
-                                  </>
-                                )}
+                                <Bookmark className="h-4 w-4 mr-1" />
+                                Save
                               </Button>
                             );
                           })()}

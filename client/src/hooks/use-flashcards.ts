@@ -111,6 +111,12 @@ export function useFlashcards() {
     );
   }, [state.cards]);
 
+  const getFlashcardByGerman = useCallback((german: string, topicId: string, textId: string): Flashcard | undefined => {
+    return state.cards.find(
+      c => c.german.toLowerCase() === german.toLowerCase() && c.topicId === topicId && c.textId === textId
+    );
+  }, [state.cards]);
+
   const clearFlashcardsForText = useCallback((topicId: string, textId: string) => {
     clearFlashcardsForTextInternal(topicId, textId);
   }, []);
@@ -138,6 +144,7 @@ export function useFlashcards() {
     getFlashcardsForText,
     getAllFlashcards,
     hasFlashcard,
+    getFlashcardByGerman,
     clearFlashcardsForText,
     getFlashcardCount,
     exportToCSV

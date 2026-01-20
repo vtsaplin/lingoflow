@@ -113,6 +113,13 @@ export function useSavedSentences() {
     );
   }, [state.sentences]);
 
+  const getSentenceByGerman = useCallback((german: string, topicId: string, textId: string): SavedSentence | undefined => {
+    const normalizedGerman = german.trim();
+    return state.sentences.find(
+      s => s.german === normalizedGerman && s.topicId === topicId && s.textId === textId
+    );
+  }, [state.sentences]);
+
   const clearSentencesForText = useCallback((topicId: string, textId: string) => {
     clearSentencesForTextInternal(topicId, textId);
   }, []);
@@ -128,6 +135,7 @@ export function useSavedSentences() {
     getSentencesForText,
     getAllSentences,
     hasSentence,
+    getSentenceByGerman,
     clearSentencesForText,
     getSentenceCount
   };
