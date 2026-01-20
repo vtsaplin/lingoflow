@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
 import { usePracticeProgress } from "@/hooks/use-practice-progress";
 import { useFlashcards } from "@/hooks/use-flashcards";
+import { useSavedSentences } from "@/hooks/use-saved-sentences";
 import { usePracticeState } from "@/hooks/use-practice-state";
 import { FillMode } from "@/components/practice/FillMode";
 import { OrderMode } from "@/components/practice/OrderMode";
@@ -53,6 +54,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   
   const { addFlashcard, hasFlashcard, getFlashcardsForText } = useFlashcards();
   const flashcardsForText = getFlashcardsForText(topicId, textId);
+  
+  const { addSentence, hasSentence, getSentencesForText } = useSavedSentences();
+  const savedSentencesForText = getSentencesForText(topicId, textId);
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
@@ -404,9 +408,45 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       </div>
                     )}
 
-                    {translateMutation.isSuccess && (
+                    {translateMutation.isSuccess && selectedText && (
                       <div className="animate-in fade-in">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Translation</p>
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Translation</p>
+                          {(() => {
+                            const isSaved = hasSentence(selectedText, topicId, textId);
+                            return (
+                              <Button
+                                variant={isSaved ? "secondary" : "outline"}
+                                size="sm"
+                                onClick={() => {
+                                  if (!isSaved) {
+                                    addSentence(
+                                      selectedText,
+                                      translateMutation.data.translation,
+                                      topicId,
+                                      textId
+                                    );
+                                  }
+                                }}
+                                disabled={isSaved}
+                                data-testid="button-save-sentence"
+                                className="shrink-0"
+                              >
+                                {isSaved ? (
+                                  <>
+                                    <BookmarkCheck className="h-4 w-4 mr-1" />
+                                    Saved
+                                  </>
+                                ) : (
+                                  <>
+                                    <Bookmark className="h-4 w-4 mr-1" />
+                                    Save
+                                  </>
+                                )}
+                              </Button>
+                            );
+                          })()}
+                        </div>
                         <p className="text-base text-foreground">
                           {translateMutation.data.translation}
                         </p>
