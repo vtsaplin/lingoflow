@@ -75,12 +75,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Progress Tracking System
 - localStorage-backed progress persistence via `usePracticeProgress` hook
-- Progress keyed by `topicId-textId` with fill/order/write/cards boolean completion states
-- 4 practice modes tracked: Fill, Order, Write, Cards
+- Progress keyed by `topicId-textId` with fill/order/write/cards/speak boolean completion states
+- 5 practice modes tracked: Fill, Order, Write, Cards, Speak
 - A practice mode is marked complete when validationState becomes "correct" (or 100% on Cards)
 - Order mode requires all sentences to be correct for completion
-- Progress displayed in Reader header (percentage bar, X/4 fraction, green checkmark when 4/4 complete)
-- Sidebar shows progress indicators next to each text (X/4 or checkmark)
+- Progress displayed in Reader header (percentage bar, X/5 fraction, green checkmark when 5/5 complete)
+- Sidebar shows progress indicators next to each text (X/5 or checkmark)
 - Green checkmark badges on individual practice tabs when completed
 - Each practice tab has Reset button that clears both state and completion status
 - Completion auto-resets when new flashcards are added (count increases)
