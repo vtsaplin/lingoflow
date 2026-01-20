@@ -198,11 +198,10 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   };
   
   const handleBatchSave = async () => {
-    if (selectedWords.size === 0) return;
-    
     setIsBatchSaving(true);
     const wordsArray = Array.from(selectedWords);
     let savedCount = 0;
+    let removedCount = 0;
     let errorCount = 0;
     
     try {
@@ -219,27 +218,38 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         }
       }
       
+      for (const flashcard of flashcardsForText) {
+        if (!selectedWords.has(flashcard.german.toLowerCase())) {
+          removeFlashcard(flashcard.id);
+          removedCount++;
+        }
+      }
+      
       setSelectedWords(new Set());
       setMultiSelectMode(false);
       
-      if (savedCount > 0) {
+      const messages: string[] = [];
+      if (savedCount > 0) messages.push(`added ${savedCount}`);
+      if (removedCount > 0) messages.push(`removed ${removedCount}`);
+      
+      if (messages.length > 0) {
         toast({
-          title: "Карточки сохранены",
-          description: `Добавлено ${savedCount} слов в карточки`,
+          title: "Flashcards updated",
+          description: messages.join(', ') + ' words',
         });
       }
       
       if (errorCount > 0) {
         toast({
-          title: "Ошибка",
-          description: `Не удалось сохранить ${errorCount} слов`,
+          title: "Error",
+          description: `Failed to save ${errorCount} words`,
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось сохранить карточки",
+        title: "Error",
+        description: "Failed to save flashcards",
         variant: "destructive",
       });
     } finally {
@@ -250,6 +260,11 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const toggleMultiSelectMode = () => {
     if (multiSelectMode) {
       setSelectedWords(new Set());
+    } else {
+      const existingFlashcardWords = new Set(
+        flashcardsForText.map(f => f.german.toLowerCase())
+      );
+      setSelectedWords(existingFlashcardWords);
     }
     setMultiSelectMode(!multiSelectMode);
     setSelectedText(null);
@@ -456,15 +471,18 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   </div>
 
                   {interactionMode === "word" && (
-                    <Button 
-                      variant={multiSelectMode ? "default" : "outline"}
-                      onClick={toggleMultiSelectMode}
-                      data-testid="button-multi-select"
-                      className="gap-2"
-                    >
-                      <MousePointer2 className="h-4 w-4" />
-                      {multiSelectMode ? "Отменить" : "Выбрать"}
-                    </Button>
+                    <>
+                      <Separator orientation="vertical" className="h-6" />
+                      <Button 
+                        variant={multiSelectMode ? "default" : "outline"}
+                        onClick={toggleMultiSelectMode}
+                        data-testid="button-multi-select"
+                        className="gap-2"
+                      >
+                        <MousePointer2 className="h-4 w-4" />
+                        {multiSelectMode ? "Cancel" : "Select"}
+                      </Button>
+                    </>
                   )}
 
                   <Button 
@@ -488,7 +506,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                 </div>
                 <p className="text-sm text-muted-foreground mt-3">
                   {multiSelectMode 
-                    ? `Выберите слова для добавления в карточки (выбрано: ${selectedWords.size})`
+                    ? `Click words to select them for saving (${selectedWords.size} selected)`
                     : `Click on ${interactionMode === "word" ? "words" : "sentences"} to hear pronunciation and see ${interactionMode === "word" ? "definitions" : "translations"}.`
                   }
                 </p>
@@ -547,7 +565,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                             className="shrink-0 text-destructive hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
-                            Удалить
+                            Delete
                           </Button>
                         ) : (
                           <Button
@@ -572,7 +590,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                             ) : (
                               <Bookmark className="h-4 w-4 mr-1" />
                             )}
-                            Сохранить
+                            Save
                           </Button>
                         );
                       })()}
@@ -643,14 +661,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               <div className="border-t bg-card animate-in slide-in-from-bottom-4">
                 <div className="max-w-4xl mx-auto px-6 sm:px-8 py-4">
                   <div className="flex justify-between items-center gap-4">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="text-sm text-muted-foreground">
-                        Выбрано слов: <span className="font-medium text-foreground">{selectedWords.size}</span>
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({Array.from(selectedWords).slice(0, 5).join(', ')}{selectedWords.size > 5 ? '...' : ''})
-                      </span>
-                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{selectedWords.size}</span> words selected
+                    </span>
                     <div className="flex items-center gap-2 shrink-0">
                       <Button 
                         variant="ghost" 
@@ -658,7 +671,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         onClick={() => setSelectedWords(new Set())}
                         data-testid="button-clear-selection"
                       >
-                        Очистить
+                        Clear
                       </Button>
                       <Button 
                         variant="default" 
@@ -671,12 +684,12 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         {isBatchSaving ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Сохранение...
+                            Saving...
                           </>
                         ) : (
                           <>
                             <Check className="h-4 w-4" />
-                            Сохранить все
+                            Save All
                           </>
                         )}
                       </Button>
@@ -798,7 +811,7 @@ function Paragraph({
       {words.map((word, idx) => {
         if (word.trim().length === 0) return <span key={idx}>{word}</span>;
         
-        const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()«»„"]/g, "");
+        const cleanWord = word.replace(/[.,?!/#$%^&*;:{}=\-_`~()«»„"]/g, "");
         if (!cleanWord) return <span key={idx}>{word}</span>;
 
         const isFlashcard = flashcardSet.has(cleanWord.toLowerCase());

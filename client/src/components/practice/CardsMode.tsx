@@ -459,12 +459,12 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
                 disabled={showFeedback}
                 data-testid={`button-option-${idx}`}
               >
-                <span className="flex-1">{option}</span>
+                <span className="flex-1 line-clamp-2 text-left">{option}</span>
                 {showFeedback && isCorrectOption && (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 ml-2" />
+                  <CheckCircle2 className="h-5 w-5 text-green-500 ml-2 shrink-0" />
                 )}
                 {showFeedback && isSelected && !isCorrectOption && (
-                  <XCircle className="h-5 w-5 text-destructive ml-2" />
+                  <XCircle className="h-5 w-5 text-destructive ml-2 shrink-0" />
                 )}
               </Button>
             );
