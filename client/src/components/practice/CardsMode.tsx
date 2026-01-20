@@ -138,6 +138,34 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
   }, [state.currentIndex, state.questions, state.showResults, tts]);
 
   useEffect(() => {
+    const { questions, currentIndex, showResults } = state;
+    const currentQuestion = questions[currentIndex];
+    
+    if (
+      currentQuestion && 
+      !showResults && 
+      currentQuestion.selectedAnswer !== null &&
+      !autoAdvanceTimerRef.current
+    ) {
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        autoAdvanceTimerRef.current = null;
+        const latestState = stateRef.current;
+        if (currentIndex < questions.length - 1) {
+          onStateChange({
+            ...latestState,
+            currentIndex: currentIndex + 1
+          });
+        } else {
+          onStateChange({
+            ...latestState,
+            showResults: true
+          });
+        }
+      }, 300);
+    }
+  }, [state.currentIndex, state.questions, state.showResults, onStateChange]);
+
+  useEffect(() => {
     const flashcardCountIncreased = state.initialized && flashcards.length > state.flashcardCount;
     const flashcardCountDecreased = state.initialized && flashcards.length < state.flashcardCount;
     
