@@ -481,17 +481,22 @@ export function CardsMode({
     const percentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
     return (
       <div className="flex flex-col h-full">
-        <div className="px-6 sm:px-8 py-4 border-b">
-          <div className="max-w-4xl mx-auto flex items-center gap-3 flex-wrap">
-            <DirectionTabs />
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              data-testid="button-reset-cards"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
-            </Button>
+        <div className="px-6 sm:px-8 py-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-3 flex-wrap">
+              <DirectionTabs />
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                data-testid="button-reset-cards"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Reset
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground mt-3">
+              {percentage === 100 ? "Perfect score! Try the other direction." : "Practice makes perfect!"}
+            </p>
           </div>
         </div>
         
@@ -530,34 +535,41 @@ export function CardsMode({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 sm:px-8 py-4 border-b">
-        <div className="max-w-4xl mx-auto flex items-center gap-3 flex-wrap">
-          <DirectionTabs />
-          
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{currentIndex + 1}/{questions.length}</span>
-            <div className="w-24 bg-muted rounded-full h-1.5">
-              <div 
-                className="bg-primary h-1.5 rounded-full transition-all"
-                style={{ width: `${((correctCount + incorrectCount) / questions.length) * 100}%` }}
-              />
+      <div className="px-6 sm:px-8 py-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 flex-wrap">
+            <DirectionTabs />
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{currentIndex + 1}/{questions.length}</span>
+              <div className="w-24 bg-muted rounded-full h-1.5">
+                <div 
+                  className="bg-primary h-1.5 rounded-full transition-all"
+                  style={{ width: `${((correctCount + incorrectCount) / questions.length) * 100}%` }}
+                />
+              </div>
             </div>
+            
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-green-600 dark:text-green-400">{correctCount}</span>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-destructive">{incorrectCount}</span>
+            </div>
+            
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              data-testid="button-reset-cards"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
           </div>
-          
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-green-600 dark:text-green-400">{correctCount}</span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-destructive">{incorrectCount}</span>
-          </div>
-          
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            data-testid="button-reset-cards"
-          >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Reset
-          </Button>
+          <p className="text-sm text-muted-foreground mt-3">
+            {isDeRu 
+              ? "Select the correct Russian translation for the German word."
+              : "Select the correct German word for the Russian translation."}
+          </p>
         </div>
       </div>
 
