@@ -39,14 +39,16 @@ Preferred communication style: Simple, everyday language.
 - `GET /podcast/feed.xml` - RSS podcast feed
 - `GET /podcast/audio/:topicId/:textId.mp3` - Episode audio with caching
 - `POST /api/download-combined-mp3` - Batch download selected texts as single MP3
+- `POST /api/transcribe` - Audio transcription via Whisper API (for Speak mode)
 
 ### Practice Modes System
-- Two phases: Study (read & listen to learn material) and Practice (Cards, Fill, Order, Write exercises)
+- Two phases: Study (read & listen to learn material) and Practice (Cards, Fill, Order, Write, Speak exercises)
 - Study mode: Click words for dictionary definitions, click sentences for translations, text-to-speech playback
 - Cards mode: Flashcard quiz - match German words to Russian translations (multiple choice, 4 options, requires 4+ flashcards)
 - Fill mode: Creates gaps ONLY for words in user's flashcard dictionary (one gap per unique word), click word bank to fill gaps
 - Order mode: Uses saved sentences from Study mode (sentence interaction → Save button), shuffle words to reorder (min 3 words per sentence)
 - Write mode: Creates gaps ONLY for flashcard dictionary words (one gap per unique word) with first-letter hints
+- Speak mode: Pronunciation practice - plays German sentence via TTS, user repeats into microphone, Whisper transcribes, compares word-by-word with color-coded feedback (green=correct, red=incorrect)
 - Strict validation with Check button (correct/incorrect feedback per gap/sentence)
 - Flashcard-dependent modes (Fill, Write, Cards) track flashcardCount to detect new additions
 - Order mode tracks saved sentence count separately

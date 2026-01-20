@@ -4,11 +4,15 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Volume2, Mic, MicOff, RotateCcw, ArrowRight, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useTTS } from "@/hooks/use-services";
+import { api } from "@shared/routes";
 
 interface SpeakModeProps {
   sentences: string[];
   topicId: string;
   textId: string;
+  onComplete?: () => void;
+  onResetProgress?: () => void;
+  isCompleted?: boolean;
 }
 
 type SentenceState = "listening" | "recording" | "processing" | "result";
@@ -45,60 +49,122 @@ function compareTexts(expected: string, actual: string): ComparisonResult {
   return { expected, actual, isCorrect, wordResults };
 }
 
-export function SpeakMode({ sentences, topicId, textId }: SpeakModeProps) {
+export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgress, isCompleted }: SpeakModeProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [state, setState] = useState<SentenceState>("listening");
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
+  const processingRef = useRef(false);
   
   const ttsMutation = useTTS();
   
   const currentSentence = sentences[currentIndex] || "";
   const progressValue = sentences.length > 0 ? ((currentIndex) / sentences.length) * 100 : 0;
 
+  const stopCurrentAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
+    setIsPlaying(false);
+  }, []);
+
+  const stopCurrentRecording = useCallback(() => {
+    if (mediaRecorderRef.current) {
+      try {
+        mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+      } catch {}
+      mediaRecorderRef.current = null;
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    processingRef.current = false;
+    setIsRecording(false);
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      stopCurrentAudio();
+      stopCurrentRecording();
+    };
+  }, [stopCurrentAudio, stopCurrentRecording]);
+
   const playCurrentSentence = useCallback(async () => {
     if (!currentSentence || isPlaying) return;
     
+    stopCurrentAudio();
+    
     try {
       setIsPlaying(true);
+      setError(null);
       const blob = await ttsMutation.mutateAsync({ text: currentSentence });
+      
+      if (!mountedRef.current) return;
+      
       const url = URL.createObjectURL(blob);
+      audioUrlRef.current = url;
       const audio = new Audio(url);
       audioRef.current = audio;
       
       audio.onended = () => {
-        setIsPlaying(false);
-        URL.revokeObjectURL(url);
+        if (mountedRef.current) {
+          setIsPlaying(false);
+        }
       };
       
       audio.onerror = () => {
-        setIsPlaying(false);
-        URL.revokeObjectURL(url);
+        if (mountedRef.current) {
+          setIsPlaying(false);
+          setError("Ошибка воспроизведения");
+        }
       };
       
       await audio.play();
     } catch (err) {
+      if (!mountedRef.current) return;
       setIsPlaying(false);
+      setError("Ошибка синтеза речи");
       console.error("TTS error:", err);
     }
-  }, [currentSentence, isPlaying, ttsMutation]);
+  }, [currentSentence, isPlaying, stopCurrentAudio, ttsMutation]);
 
   useEffect(() => {
-    if (state === "listening" && currentSentence) {
+    if (state === "listening" && currentSentence && shouldAutoPlay) {
       playCurrentSentence();
+      setShouldAutoPlay(false);
     }
-  }, [currentIndex]);
+  }, [state, currentSentence, shouldAutoPlay, playCurrentSentence]);
 
   const startRecording = async () => {
+    if (isRecording || processingRef.current || mediaRecorderRef.current) return;
+    
     try {
       setError(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      if (!mountedRef.current) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
+      
       const recorder = new MediaRecorder(stream, {
         mimeType: "audio/webm;codecs=opus",
       });
@@ -112,6 +178,7 @@ export function SpeakMode({ sentences, topicId, textId }: SpeakModeProps) {
       
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop());
+        if (!mountedRef.current) return;
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         await processRecording(blob);
       };
@@ -134,6 +201,9 @@ export function SpeakMode({ sentences, topicId, textId }: SpeakModeProps) {
   };
 
   const processRecording = async (blob: Blob) => {
+    if (processingRef.current || !mountedRef.current) return;
+    processingRef.current = true;
+    
     try {
       const reader = new FileReader();
       const base64Audio = await new Promise<string>((resolve, reject) => {
@@ -145,37 +215,58 @@ export function SpeakMode({ sentences, topicId, textId }: SpeakModeProps) {
         reader.readAsDataURL(blob);
       });
 
-      const response = await fetch("/api/transcribe", {
-        method: "POST",
+      if (!mountedRef.current) return;
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      const validated = api.services.transcribe.input.parse({ audio: base64Audio });
+      const response = await fetch(api.services.transcribe.path, {
+        method: api.services.transcribe.method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio: base64Audio }),
+        body: JSON.stringify(validated),
+        signal: controller.signal,
       });
+
+      if (!mountedRef.current) return;
 
       if (!response.ok) {
         throw new Error("Transcription failed");
       }
 
-      const { transcript } = await response.json();
-      const result = compareTexts(currentSentence, transcript);
+      const data = api.services.transcribe.responses[200].parse(await response.json());
+      
+      if (!mountedRef.current) return;
+      
+      const result = compareTexts(currentSentence, data.transcript);
       setComparison(result);
       setState("result");
     } catch (err) {
+      if (!mountedRef.current) return;
+      if ((err as Error).name === "AbortError") return;
       setError("Ошибка распознавания речи");
       console.error("Transcription error:", err);
       setState("listening");
+    } finally {
+      processingRef.current = false;
+      abortControllerRef.current = null;
     }
   };
 
   const nextSentence = () => {
     if (currentIndex < sentences.length - 1) {
+      stopCurrentAudio();
       setCurrentIndex(currentIndex + 1);
       setComparison(null);
+      setShouldAutoPlay(true);
       setState("listening");
     }
   };
 
   const resetCurrent = () => {
+    stopCurrentAudio();
     setComparison(null);
+    setShouldAutoPlay(true);
     setState("listening");
   };
 
@@ -190,6 +281,22 @@ export function SpeakMode({ sentences, topicId, textId }: SpeakModeProps) {
   }
 
   const isComplete = currentIndex >= sentences.length - 1 && state === "result";
+
+  useEffect(() => {
+    if (isComplete && !isCompleted && onComplete) {
+      onComplete();
+    }
+  }, [isComplete, isCompleted, onComplete]);
+
+  const handleReset = () => {
+    setCurrentIndex(0);
+    setComparison(null);
+    setShouldAutoPlay(true);
+    setState("listening");
+    if (onResetProgress) {
+      onResetProgress();
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 p-4 max-w-2xl mx-auto">
@@ -300,10 +407,16 @@ export function SpeakMode({ sentences, topicId, textId }: SpeakModeProps) {
                   </Button>
                 )}
                 {isComplete && (
-                  <Button variant="default" disabled>
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Завершено
-                  </Button>
+                  <>
+                    <Button variant="default" disabled>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Завершено
+                    </Button>
+                    <Button variant="outline" onClick={handleReset} data-testid="button-reset-speak">
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Сначала
+                    </Button>
+                  </>
                 )}
               </div>
             </div>

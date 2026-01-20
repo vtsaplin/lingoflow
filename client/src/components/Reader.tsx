@@ -48,7 +48,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   
   const { setModeComplete, resetModeProgress, updateFlashcardCount, updateSentenceCount, getCompletionCount, isTextComplete, getTextProgress, resetTextProgress } = usePracticeProgress();
   const completionCount = getCompletionCount(topicId, textId);
-  const completionPercentage = Math.round((completionCount / 4) * 100);
+  const completionPercentage = Math.round((completionCount / 5) * 100);
   const textComplete = isTextComplete(topicId, textId);
   const progress = getTextProgress(topicId, textId);
   
@@ -219,7 +219,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   ) : (
                     <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted">
                       <Progress value={completionPercentage} className="w-12 h-1.5" />
-                      <span className="text-xs font-medium text-muted-foreground">{completionCount}/4</span>
+                      <span className="text-xs font-medium text-muted-foreground">{completionCount}/5</span>
                     </div>
                   )}
                   <AlertDialog>
@@ -296,7 +296,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   <span className="hidden sm:inline">Write</span>
                 </TabsTrigger>
                 <TabsTrigger value="speak" data-testid="tab-speak" className="gap-1.5">
-                  <Mic className="h-4 w-4" />
+                  {progress.speak ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Mic className="h-4 w-4" />}
                   <span className="hidden sm:inline">Speak</span>
                 </TabsTrigger>
               </TabsList>
@@ -568,6 +568,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             sentences={eligibleSentences}
             topicId={topicId}
             textId={textId}
+            onComplete={() => setModeComplete(topicId, textId, "speak")}
+            onResetProgress={() => resetModeProgress(topicId, textId, "speak")}
+            isCompleted={progress.speak}
           />
         )}
       </div>

@@ -7,6 +7,7 @@ export interface TextProgress {
   order: boolean;
   write: boolean;
   cards: boolean;
+  speak: boolean;
   flashcardCount: number;
   sentenceCount: number;
 }
@@ -48,10 +49,10 @@ function getSnapshot(): ProgressStore {
 }
 
 function createDefaultProgress(): TextProgress {
-  return { fill: false, order: false, write: false, cards: false, flashcardCount: 0, sentenceCount: 0 };
+  return { fill: false, order: false, write: false, cards: false, speak: false, flashcardCount: 0, sentenceCount: 0 };
 }
 
-function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards") {
+function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "speak") {
   const key = `${topicId}-${textId}`;
   const current = progressState[key] || createDefaultProgress();
   if (current[mode]) return;
@@ -64,7 +65,7 @@ function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" |
   notifyListeners();
 }
 
-function resetModeProgressInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards") {
+function resetModeProgressInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "speak") {
   const key = `${topicId}-${textId}`;
   const current = progressState[key];
   if (!current || !current[mode]) return;
@@ -150,11 +151,11 @@ export function usePracticeProgress() {
     return progress[key] || createDefaultProgress();
   }, [progress]);
 
-  const setModeComplete = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards") => {
+  const setModeComplete = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "speak") => {
     setModeCompleteInternal(topicId, textId, mode);
   }, []);
 
-  const resetModeProgress = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards") => {
+  const resetModeProgress = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "speak") => {
     resetModeProgressInternal(topicId, textId, mode);
   }, []);
 
@@ -172,16 +173,16 @@ export function usePracticeProgress() {
 
   const getCompletionCount = useCallback((topicId: string, textId: string): number => {
     const p = getTextProgress(topicId, textId);
-    return (p.fill ? 1 : 0) + (p.order ? 1 : 0) + (p.write ? 1 : 0) + (p.cards ? 1 : 0);
+    return (p.fill ? 1 : 0) + (p.order ? 1 : 0) + (p.write ? 1 : 0) + (p.cards ? 1 : 0) + (p.speak ? 1 : 0);
   }, [getTextProgress]);
 
   const isTextComplete = useCallback((topicId: string, textId: string): boolean => {
     const p = getTextProgress(topicId, textId);
-    return p.fill && p.order && p.write && p.cards;
+    return p.fill && p.order && p.write && p.cards && p.speak;
   }, [getTextProgress]);
 
   const getCompletionPercentage = useCallback((topicId: string, textId: string): number => {
-    return Math.round((getCompletionCount(topicId, textId) / 4) * 100);
+    return Math.round((getCompletionCount(topicId, textId) / 5) * 100);
   }, [getCompletionCount]);
 
   return {

@@ -48,6 +48,14 @@ export const api = {
       responses: {
         200: dictionaryResponseSchema,
       }
+    },
+    transcribe: {
+      method: 'POST' as const,
+      path: '/api/transcribe',
+      input: z.object({ audio: z.string() }),
+      responses: {
+        200: z.object({ transcript: z.string() }),
+      }
     }
   }
 };

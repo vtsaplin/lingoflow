@@ -392,7 +392,7 @@ export function SidebarNav() {
                                           if (complete) {
                                             return <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${active ? "text-primary-foreground" : "text-green-600 dark:text-green-500"}`} />;
                                           } else if (count > 0) {
-                                            return <span className={`text-xs shrink-0 ${active ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{count}/4</span>;
+                                            return <span className={`text-xs shrink-0 ${active ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{count}/5</span>;
                                           }
                                           return null;
                                         })()}
