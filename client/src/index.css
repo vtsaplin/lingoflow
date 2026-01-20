@@ -118,7 +118,7 @@
 
 /* Highlight for sentences containing flashcard words */
 .eligible-sentence {
-  @apply underline decoration-dashed decoration-foreground decoration-1 underline-offset-4;
+  @apply underline decoration-solid decoration-foreground decoration-1 underline-offset-4;
 }
 
 /* Multi-select mode selected words */
