@@ -573,8 +573,8 @@ export function CardsMode({
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
-        <div className="text-center mb-8">
+      <div className="flex-1 flex flex-col items-center justify-start px-6 pt-8">
+        <div className="text-center mb-6">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
             {isDeRu ? "German" : "Russian"}
           </p>
