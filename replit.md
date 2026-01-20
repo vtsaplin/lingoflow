@@ -66,6 +66,7 @@ Preferred communication style: Simple, everyday language.
 ### Flashcard System
 - localStorage-backed flashcard storage via `useFlashcards` hook (key: "lingoflow-flashcards")
 - In Study mode (word interaction mode), click words → Save button appears in dictionary panel
+- Multi-select mode: Click "Выбрать" button → click multiple words to select (highlighted with ring) → "Сохранить все" button batch-saves all selected words as flashcards
 - Flashcard data: German word, Russian translation, source topicId/textId, timestamp
 - Cards practice mode requires minimum 4 flashcards with unique translations
 - Quiz format: Shows German word, user selects correct Russian translation from 4 options
