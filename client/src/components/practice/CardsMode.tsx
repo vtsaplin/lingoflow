@@ -481,18 +481,17 @@ export function CardsMode({
     const percentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
     return (
       <div className="flex flex-col h-full">
-        <div className="px-6 sm:px-8 py-4 border-b">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-2 border-b">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
             <DirectionTabs />
             <Button
               variant="ghost"
               size="sm"
               onClick={handleReset}
-              className="h-7 px-2 text-muted-foreground hover:text-foreground"
+              className="h-6 px-1.5 text-muted-foreground hover:text-foreground"
               data-testid="button-reset-cards"
             >
-              <RotateCcw className="h-3.5 w-3.5 mr-1" />
-              Reset
+              <RotateCcw className="h-3 w-3" />
             </Button>
           </div>
         </div>
@@ -532,33 +531,25 @@ export function CardsMode({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 sm:px-8 py-4 border-b">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-3">
+      <div className="px-4 sm:px-6 py-2 border-b">
+        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
             <DirectionTabs />
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="text-green-600 dark:text-green-400">{correctCount} correct</span>
-              <span className="text-destructive">{incorrectCount} incorrect</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleReset}
-                className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                data-testid="button-reset-cards"
-              >
-                <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                Reset
-              </Button>
-            </div>
+            <span className="text-xs text-muted-foreground">{currentIndex + 1}/{questions.length}</span>
           </div>
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-            <span>Card {currentIndex + 1} of {questions.length}</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-1.5">
-            <div 
-              className="bg-primary h-1.5 rounded-full transition-all"
-              style={{ width: `${((correctCount + incorrectCount) / questions.length) * 100}%` }}
-            />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="text-green-600 dark:text-green-400">{correctCount}</span>
+            <span>/</span>
+            <span className="text-destructive">{incorrectCount}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              className="h-6 px-1.5 text-muted-foreground hover:text-foreground"
+              data-testid="button-reset-cards"
+            >
+              <RotateCcw className="h-3 w-3" />
+            </Button>
           </div>
         </div>
       </div>
