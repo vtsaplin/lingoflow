@@ -169,7 +169,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 sm:px-8 pt-6 pb-4 border-b">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="flex flex-col gap-1 mb-4">
             <p className="text-sm text-muted-foreground">{topicTitle}</p>
             <div className="flex items-center gap-3 flex-wrap">
@@ -272,7 +272,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         {practiceMode === "read" && (
           <div className="flex flex-col h-full">
             <div className="px-6 sm:px-8 py-4">
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="flex bg-muted p-1 rounded-lg">
                     <button
@@ -350,7 +350,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             </div>
 
             <ScrollArea className="flex-1 px-6 sm:px-8">
-              <div className="max-w-3xl mx-auto pb-8">
+              <div className="max-w-4xl mx-auto pb-8">
                 <div className="space-y-6 font-serif prose-text text-foreground/90 text-lg leading-relaxed">
                   {paragraphs.map((para, i) => (
                     <Paragraph 
@@ -368,7 +368,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
             {selectedText && (
               <div className="border-t bg-card animate-in slide-in-from-bottom-4">
-                <div className="max-w-3xl mx-auto px-6 sm:px-8 py-4">
+                <div className="max-w-4xl mx-auto px-6 sm:px-8 py-4">
                   <div className="flex justify-between items-start gap-4 mb-3">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
                       {ttsMutation.isPending && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0 mt-1" />}
