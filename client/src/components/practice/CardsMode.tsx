@@ -1,8 +1,8 @@
 import { useMemo, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2 } from "lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2, Check } from "lucide-react";
 import type { Flashcard } from "@/hooks/use-flashcards";
-import type { CardsModeState, CardsQuestionState } from "./types";
+import type { CardsModeState, CardsDirectionState, CardsQuestionState, CardsDirection } from "./types";
 import { useTTS } from "@/hooks/use-services";
 
 function playSound(correct: boolean) {
@@ -38,9 +38,12 @@ interface CardsModeProps {
   flashcards: Flashcard[];
   state: CardsModeState;
   onStateChange: (state: CardsModeState) => void;
-  onResetProgress?: () => void;
+  onResetProgress?: (direction: CardsDirection) => void;
+  onDirectionComplete?: (direction: CardsDirection) => void;
   topicId: string;
   textId: string;
+  deRuComplete: boolean;
+  ruDeComplete: boolean;
 }
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -52,23 +55,27 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-function generateQuestions(flashcards: Flashcard[]): CardsQuestionState[] {
+function generateQuestions(flashcards: Flashcard[], direction: CardsDirection): CardsQuestionState[] {
   if (flashcards.length === 0) return [];
   
-  const uniqueTranslations = Array.from(new Set(flashcards.map(f => f.translation)));
+  const isDeRu = direction === "de-ru";
+  const uniqueAnswers = Array.from(new Set(flashcards.map(f => isDeRu ? f.translation : f.german)));
   
   return shuffleArray(flashcards).map(card => {
-    const wrongOptions = uniqueTranslations
-      .filter(t => t !== card.translation)
+    const questionWord = isDeRu ? card.german : card.translation;
+    const correctAnswer = isDeRu ? card.translation : card.german;
+    
+    const wrongOptions = uniqueAnswers
+      .filter(t => t !== correctAnswer)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3);
     
-    const options = shuffleArray([card.translation, ...wrongOptions]);
+    const options = shuffleArray([correctAnswer, ...wrongOptions]);
     
     return {
       cardId: card.id,
-      germanWord: card.german,
-      correctAnswer: card.translation,
+      questionWord,
+      correctAnswer,
       options,
       selectedAnswer: null,
       isCorrect: null
@@ -76,9 +83,37 @@ function generateQuestions(flashcards: Flashcard[]): CardsQuestionState[] {
   });
 }
 
-export function CardsMode({ flashcards, state, onStateChange, onResetProgress, topicId, textId }: CardsModeProps) {
+function createInitialDirectionState(): CardsDirectionState {
+  return {
+    questions: [],
+    currentIndex: 0,
+    showResults: false,
+    initialized: false,
+    flashcardCount: 0,
+  };
+}
+
+export function CardsMode({ 
+  flashcards, 
+  state, 
+  onStateChange, 
+  onResetProgress, 
+  onDirectionComplete,
+  topicId, 
+  textId,
+  deRuComplete,
+  ruDeComplete
+}: CardsModeProps) {
+  const { direction } = state;
+  const currentDirectionState = direction === "de-ru" ? state.deRu : state.ruDe;
+  
   const uniqueTranslationCount = useMemo(() => 
     new Set(flashcards.map(f => f.translation)).size,
+    [flashcards]
+  );
+  
+  const uniqueGermanCount = useMemo(() => 
+    new Set(flashcards.map(f => f.german)).size,
     [flashcards]
   );
 
@@ -101,8 +136,11 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
     };
   }, []);
 
+  // Auto-speak German words in DE→RU mode
   useEffect(() => {
-    const { questions, currentIndex, showResults } = state;
+    if (direction !== "de-ru") return;
+    
+    const { questions, currentIndex, showResults } = currentDirectionState;
     const currentQuestion = questions[currentIndex];
     
     if (
@@ -118,7 +156,7 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
       
       lastSpokenCardIdRef.current = currentQuestion.cardId;
       tts.mutate(
-        { text: currentQuestion.germanWord, speed: 1.0 },
+        { text: currentQuestion.questionWord, speed: 1.0 },
         {
           onSuccess: (blob) => {
             const url = URL.createObjectURL(blob);
@@ -135,54 +173,50 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
         }
       );
     }
-  }, [state.currentIndex, state.questions, state.showResults, tts]);
+  }, [direction, currentDirectionState.currentIndex, currentDirectionState.questions, currentDirectionState.showResults, tts]);
 
+  // Check for 100% completion - only if flashcard count matches
   useEffect(() => {
-    const { questions, currentIndex, showResults } = state;
-    const currentQuestion = questions[currentIndex];
-    
-    if (
-      currentQuestion && 
-      !showResults && 
-      currentQuestion.selectedAnswer !== null &&
-      !autoAdvanceTimerRef.current
-    ) {
-      autoAdvanceTimerRef.current = setTimeout(() => {
-        autoAdvanceTimerRef.current = null;
-        const latestState = stateRef.current;
-        if (currentIndex < questions.length - 1) {
-          onStateChange({
-            ...latestState,
-            currentIndex: currentIndex + 1
-          });
-        } else {
-          onStateChange({
-            ...latestState,
-            showResults: true
-          });
-        }
-      }, 300);
+    const { questions, showResults, flashcardCount: stateFlashcardCount } = currentDirectionState;
+    // Guard: only mark complete if flashcard count hasn't changed since questions were generated
+    if (stateFlashcardCount !== flashcards.length) return;
+    if (showResults && questions.length > 0) {
+      const correctCount = questions.filter(q => q.isCorrect === true).length;
+      if (correctCount === questions.length) {
+        onDirectionComplete?.(direction);
+      }
     }
-  }, [state.currentIndex, state.questions, state.showResults, onStateChange]);
+  }, [currentDirectionState.showResults, currentDirectionState.questions, currentDirectionState.flashcardCount, flashcards.length, direction, onDirectionComplete]);
 
+  const updateDirectionState = useCallback((newDirectionState: CardsDirectionState) => {
+    const latestState = stateRef.current;
+    if (latestState.direction === "de-ru") {
+      onStateChange({ ...latestState, deRu: newDirectionState });
+    } else {
+      onStateChange({ ...latestState, ruDe: newDirectionState });
+    }
+  }, [onStateChange]);
+
+  // Initialize questions when needed
   useEffect(() => {
-    const flashcardCountIncreased = state.initialized && flashcards.length > state.flashcardCount;
-    const flashcardCountDecreased = state.initialized && flashcards.length < state.flashcardCount;
+    const minUnique = direction === "de-ru" ? uniqueTranslationCount : uniqueGermanCount;
+    const flashcardCountIncreased = currentDirectionState.initialized && flashcards.length > currentDirectionState.flashcardCount;
+    const flashcardCountDecreased = currentDirectionState.initialized && flashcards.length < currentDirectionState.flashcardCount;
     
-    if (!state.initialized && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
-      onStateChange({
-        questions: generateQuestions(flashcards),
+    if (!currentDirectionState.initialized && flashcards.length >= 4 && minUnique >= 4) {
+      updateDirectionState({
+        questions: generateQuestions(flashcards, direction),
         currentIndex: 0,
         showResults: false,
         initialized: true,
         flashcardCount: flashcards.length
       });
     } else if (flashcardCountDecreased) {
-      if (flashcards.length >= 4 && uniqueTranslationCount >= 4) {
+      if (flashcards.length >= 4 && minUnique >= 4) {
         const remainingCardIds = new Set(flashcards.map(f => f.id));
-        const filteredQuestions = state.questions.filter(q => remainingCardIds.has(q.cardId));
+        const filteredQuestions = currentDirectionState.questions.filter(q => remainingCardIds.has(q.cardId));
         
-        let newCurrentIndex = state.currentIndex;
+        let newCurrentIndex = currentDirectionState.currentIndex;
         if (newCurrentIndex >= filteredQuestions.length) {
           newCurrentIndex = Math.max(0, filteredQuestions.length - 1);
         }
@@ -190,15 +224,15 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
         const allAnswered = filteredQuestions.length > 0 && 
           filteredQuestions.every(q => q.selectedAnswer !== null);
         
-        onStateChange({
-          ...state,
+        updateDirectionState({
+          ...currentDirectionState,
           questions: filteredQuestions,
           currentIndex: newCurrentIndex,
-          showResults: allAnswered ? true : state.showResults,
+          showResults: allAnswered ? true : currentDirectionState.showResults,
           flashcardCount: flashcards.length
         });
       } else {
-        onStateChange({
+        updateDirectionState({
           questions: [],
           currentIndex: 0,
           showResults: false,
@@ -206,57 +240,101 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
           flashcardCount: flashcards.length
         });
       }
-    } else if (flashcardCountIncreased && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
-      const existingCardIds = new Set(state.questions.map(q => q.cardId));
+    } else if (flashcardCountIncreased && flashcards.length >= 4 && minUnique >= 4) {
+      const existingCardIds = new Set(currentDirectionState.questions.map(q => q.cardId));
       const newFlashcards = flashcards.filter(f => !existingCardIds.has(f.id));
       
       if (newFlashcards.length > 0) {
-        const uniqueTranslations = Array.from(new Set(flashcards.map(f => f.translation)));
+        const isDeRu = direction === "de-ru";
+        const uniqueAnswers = Array.from(new Set(flashcards.map(f => isDeRu ? f.translation : f.german)));
+        
         const newQuestions = newFlashcards.map(card => {
-          const wrongOptions = uniqueTranslations
-            .filter(t => t !== card.translation)
+          const questionWord = isDeRu ? card.german : card.translation;
+          const correctAnswer = isDeRu ? card.translation : card.german;
+          
+          const wrongOptions = uniqueAnswers
+            .filter(t => t !== correctAnswer)
             .sort(() => Math.random() - 0.5)
             .slice(0, 3);
-          const options = shuffleArray([card.translation, ...wrongOptions]);
+          const options = shuffleArray([correctAnswer, ...wrongOptions]);
           return {
             cardId: card.id,
-            germanWord: card.german,
-            correctAnswer: card.translation,
+            questionWord,
+            correctAnswer,
             options,
             selectedAnswer: null,
             isCorrect: null
           };
         });
         
-        const updatedQuestions = [...state.questions, ...newQuestions];
-        const firstNewIndex = state.questions.length;
+        const updatedQuestions = [...currentDirectionState.questions, ...newQuestions];
+        const firstNewIndex = currentDirectionState.questions.length;
         
-        onStateChange({
-          ...state,
+        updateDirectionState({
+          ...currentDirectionState,
           questions: updatedQuestions,
-          currentIndex: state.showResults ? firstNewIndex : state.currentIndex,
+          currentIndex: currentDirectionState.showResults ? firstNewIndex : currentDirectionState.currentIndex,
           showResults: false,
           flashcardCount: flashcards.length
         });
       }
     }
-  }, [state.initialized, state.flashcardCount, flashcards, uniqueTranslationCount, onStateChange, state.questions]);
+  }, [currentDirectionState.initialized, currentDirectionState.flashcardCount, flashcards, uniqueTranslationCount, uniqueGermanCount, direction, updateDirectionState, currentDirectionState]);
+
+  const handleDirectionChange = useCallback((newDirection: CardsDirection) => {
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+    lastSpokenCardIdRef.current = null;
+    
+    const currentState = stateRef.current;
+    const targetDirState = newDirection === "de-ru" ? currentState.deRu : currentState.ruDe;
+    
+    // Check if the target direction needs reinitialization due to flashcard count change
+    if (targetDirState.initialized && targetDirState.flashcardCount !== flashcards.length) {
+      const minUnique = newDirection === "de-ru" ? uniqueTranslationCount : uniqueGermanCount;
+      if (flashcards.length >= 4 && minUnique >= 4) {
+        // Reinitialize the target direction with current flashcards
+        const newDirState: CardsDirectionState = {
+          questions: generateQuestions(flashcards, newDirection),
+          currentIndex: 0,
+          showResults: false,
+          initialized: true,
+          flashcardCount: flashcards.length
+        };
+        if (newDirection === "de-ru") {
+          onStateChange({ ...currentState, direction: newDirection, deRu: newDirState });
+        } else {
+          onStateChange({ ...currentState, direction: newDirection, ruDe: newDirState });
+        }
+        return;
+      }
+    }
+    
+    onStateChange({ ...currentState, direction: newDirection });
+  }, [onStateChange, flashcards, uniqueTranslationCount, uniqueGermanCount]);
 
   const handleReset = useCallback(() => {
     lastSpokenCardIdRef.current = null;
-    onStateChange({
-      questions: generateQuestions(flashcards),
+    updateDirectionState({
+      questions: generateQuestions(flashcards, direction),
       currentIndex: 0,
       showResults: false,
       initialized: true,
       flashcardCount: flashcards.length
     });
-    onResetProgress?.();
-  }, [flashcards, onStateChange, onResetProgress]);
+    onResetProgress?.(direction);
+  }, [flashcards, direction, updateDirectionState, onResetProgress]);
 
   const handleSelectAnswer = useCallback((answer: string) => {
     const currentState = stateRef.current;
-    const { questions, currentIndex } = currentState;
+    const dirState = currentState.direction === "de-ru" ? currentState.deRu : currentState.ruDe;
+    const { questions, currentIndex } = dirState;
     
     if (questions[currentIndex]?.selectedAnswer !== null) return;
     
@@ -268,8 +346,8 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
       isCorrect
     };
     
-    onStateChange({
-      ...currentState,
+    updateDirectionState({
+      ...dirState,
       questions: newQuestions
     });
     
@@ -281,24 +359,35 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
     
     autoAdvanceTimerRef.current = setTimeout(() => {
       const latestState = stateRef.current;
+      const latestDirState = latestState.direction === "de-ru" ? latestState.deRu : latestState.ruDe;
       if (currentIndex < questions.length - 1) {
-        onStateChange({
-          ...latestState,
-          currentIndex: currentIndex + 1
-        });
+        if (latestState.direction === "de-ru") {
+          onStateChange({ ...latestState, deRu: { ...latestDirState, currentIndex: currentIndex + 1 } });
+        } else {
+          onStateChange({ ...latestState, ruDe: { ...latestDirState, currentIndex: currentIndex + 1 } });
+        }
       } else {
-        onStateChange({
-          ...latestState,
-          showResults: true
-        });
+        if (latestState.direction === "de-ru") {
+          onStateChange({ ...latestState, deRu: { ...latestDirState, showResults: true } });
+        } else {
+          onStateChange({ ...latestState, ruDe: { ...latestDirState, showResults: true } });
+        }
       }
+      autoAdvanceTimerRef.current = null;
     }, 1200);
-  }, [onStateChange]);
+  }, [updateDirectionState, onStateChange]);
 
   const speakCurrentWord = useCallback(() => {
-    const { questions, currentIndex } = stateRef.current;
-    const currentQuestion = questions[currentIndex];
+    const currentState = stateRef.current;
+    const dirState = currentState.direction === "de-ru" ? currentState.deRu : currentState.ruDe;
+    const currentQuestion = dirState.questions[dirState.currentIndex];
     if (!currentQuestion) return;
+    
+    // For DE→RU, speak the German question word
+    // For RU→DE, speak the correct German answer after selection
+    const textToSpeak = currentState.direction === "de-ru" 
+      ? currentQuestion.questionWord 
+      : currentQuestion.correctAnswer;
     
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
@@ -306,7 +395,7 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
     }
     
     tts.mutate(
-      { text: currentQuestion.germanWord, speed: 1.0 },
+      { text: textToSpeak, speed: 1.0 },
       {
         onSuccess: (blob) => {
           const url = URL.createObjectURL(blob);
@@ -324,10 +413,11 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
     );
   }, [tts]);
 
-  const { questions, currentIndex, showResults } = state;
+  const { questions, currentIndex, showResults } = currentDirectionState;
   const correctCount = questions.filter(q => q.isCorrect === true).length;
   const incorrectCount = questions.filter(q => q.isCorrect === false).length;
   const currentQuestion = questions[currentIndex];
+  const minUnique = direction === "de-ru" ? uniqueTranslationCount : uniqueGermanCount;
 
   if (flashcards.length === 0) {
     return (
@@ -343,7 +433,7 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
     );
   }
   
-  if (uniqueTranslationCount < 4) {
+  if (minUnique < 4) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <Layers className="h-12 w-12 text-muted-foreground mb-4" />
@@ -351,30 +441,86 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
           You need at least 4 flashcards with different translations to practice.
         </p>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Currently saved: {flashcards.length} card{flashcards.length !== 1 ? "s" : ""} ({uniqueTranslationCount} unique)
+          Currently saved: {flashcards.length} card{flashcards.length !== 1 ? "s" : ""} ({minUnique} unique)
         </p>
       </div>
     );
   }
 
+  // Direction tabs
+  const DirectionTabs = () => (
+    <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+      <button
+        onClick={() => handleDirectionChange("de-ru")}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          direction === "de-ru" 
+            ? "bg-background shadow-sm text-foreground" 
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        data-testid="button-direction-de-ru"
+      >
+        DE → RU
+        {deRuComplete && <Check className="h-3.5 w-3.5 text-green-500" />}
+      </button>
+      <button
+        onClick={() => handleDirectionChange("ru-de")}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          direction === "ru-de" 
+            ? "bg-background shadow-sm text-foreground" 
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        data-testid="button-direction-ru-de"
+      >
+        RU → DE
+        {ruDeComplete && <Check className="h-3.5 w-3.5 text-green-500" />}
+      </button>
+    </div>
+  );
+
   if (showResults) {
     const percentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
     return (
-      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <div className="text-center">
-          <div className={`text-6xl font-bold mb-4 ${percentage >= 70 ? "text-green-500" : percentage >= 50 ? "text-yellow-500" : "text-destructive"}`}>
-            {percentage}%
+      <div className="flex flex-col h-full">
+        <div className="px-6 sm:px-8 py-4 border-b">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <DirectionTabs />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              className="h-7 px-2 text-muted-foreground hover:text-foreground"
+              data-testid="button-reset-cards"
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1" />
+              Reset
+            </Button>
           </div>
-          <p className="text-xl text-foreground mb-2">
-            {correctCount} of {questions.length} correct
-          </p>
-          <p className="text-muted-foreground mb-6">
-            {percentage >= 90 ? "Excellent!" : percentage >= 70 ? "Good job!" : percentage >= 50 ? "Keep practicing!" : "Try again!"}
-          </p>
-          <Button onClick={handleReset} data-testid="button-restart-cards">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Practice Again
-          </Button>
+        </div>
+        
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <div className="text-center">
+            <div className={`text-6xl font-bold mb-4 ${percentage >= 70 ? "text-green-500" : percentage >= 50 ? "text-yellow-500" : "text-destructive"}`}>
+              {percentage}%
+            </div>
+            <p className="text-xl text-foreground mb-2">
+              {correctCount} of {questions.length} correct
+            </p>
+            <p className="text-muted-foreground mb-6">
+              {percentage === 100 
+                ? "Perfect! Direction complete!" 
+                : percentage >= 90 
+                  ? "Excellent!" 
+                  : percentage >= 70 
+                    ? "Good job!" 
+                    : percentage >= 50 
+                      ? "Keep practicing!" 
+                      : "Try again!"}
+            </p>
+            <Button onClick={handleReset} data-testid="button-restart-cards">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Practice Again
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -382,13 +528,15 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
 
   if (!currentQuestion) return null;
 
+  const isDeRu = direction === "de-ru";
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 sm:px-8 py-4 border-b">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-            <span>Card {currentIndex + 1} of {questions.length}</span>
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between mb-3">
+            <DirectionTabs />
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <span className="text-green-600 dark:text-green-400">{correctCount} correct</span>
               <span className="text-destructive">{incorrectCount} incorrect</span>
               <Button
@@ -403,6 +551,9 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
               </Button>
             </div>
           </div>
+          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+            <span>Card {currentIndex + 1} of {questions.length}</span>
+          </div>
           <div className="w-full bg-muted rounded-full h-1.5">
             <div 
               className="bg-primary h-1.5 rounded-full transition-all"
@@ -414,27 +565,31 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
         <div className="text-center mb-8">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">German</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+            {isDeRu ? "German" : "Russian"}
+          </p>
           <div className="flex items-center justify-center gap-3">
             <p className="text-3xl font-serif font-bold text-foreground">
-              {currentQuestion.germanWord}
+              {currentQuestion.questionWord}
             </p>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={speakCurrentWord}
-              disabled={tts.isPending}
-              className="h-9 w-9"
-              data-testid="button-speak-card-word"
-            >
-              <Volume2 className="h-5 w-5" />
-            </Button>
+            {isDeRu && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={speakCurrentWord}
+                disabled={tts.isPending}
+                className="h-9 w-9"
+                data-testid="button-speak-card-word"
+              >
+                <Volume2 className="h-5 w-5" />
+              </Button>
+            )}
           </div>
         </div>
 
         <div className="w-full max-w-md space-y-3">
           <p className="text-xs text-muted-foreground uppercase tracking-wider text-center mb-4">
-            Select the correct translation
+            Select the correct {isDeRu ? "translation" : "German word"}
           </p>
           {currentQuestion.options.map((option, idx) => {
             const isSelected = currentQuestion.selectedAnswer === option;
@@ -469,6 +624,23 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
               </Button>
             );
           })}
+          
+          {/* Show speaker button for RU→DE after answer is revealed */}
+          {!isDeRu && currentQuestion.selectedAnswer !== null && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={speakCurrentWord}
+                disabled={tts.isPending}
+                className="text-muted-foreground"
+                data-testid="button-speak-answer"
+              >
+                <Volume2 className="h-4 w-4 mr-2" />
+                Listen to German
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

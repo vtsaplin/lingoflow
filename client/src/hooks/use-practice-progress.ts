@@ -7,6 +7,8 @@ export interface TextProgress {
   order: boolean;
   write: boolean;
   cards: boolean;
+  cardsDeRu: boolean;
+  cardsRuDe: boolean;
   speak: boolean;
   flashcardCount: number;
   sentenceCount: number;
@@ -49,30 +51,44 @@ function getSnapshot(): ProgressStore {
 }
 
 function createDefaultProgress(): TextProgress {
-  return { fill: false, order: false, write: false, cards: false, speak: false, flashcardCount: 0, sentenceCount: 0 };
+  return { fill: false, order: false, write: false, cards: false, cardsDeRu: false, cardsRuDe: false, speak: false, flashcardCount: 0, sentenceCount: 0 };
 }
 
-function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "speak") {
+function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "cardsDeRu" | "cardsRuDe" | "speak") {
   const key = `${topicId}-${textId}`;
   const current = progressState[key] || createDefaultProgress();
   if (current[mode]) return;
   
+  const updated = { ...current, [mode]: true };
+  
+  // Cards is complete when both directions are done
+  if (mode === "cardsDeRu" || mode === "cardsRuDe") {
+    updated.cards = updated.cardsDeRu && updated.cardsRuDe;
+  }
+  
   progressState = {
     ...progressState,
-    [key]: { ...current, [mode]: true }
+    [key]: updated
   };
   saveToStorage(progressState);
   notifyListeners();
 }
 
-function resetModeProgressInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "speak") {
+function resetModeProgressInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "cardsDeRu" | "cardsRuDe" | "speak") {
   const key = `${topicId}-${textId}`;
   const current = progressState[key];
   if (!current || !current[mode]) return;
   
+  const updated = { ...current, [mode]: false };
+  
+  // If resetting a cards direction, also reset the overall cards status
+  if (mode === "cardsDeRu" || mode === "cardsRuDe") {
+    updated.cards = false;
+  }
+  
   progressState = {
     ...progressState,
-    [key]: { ...current, [mode]: false }
+    [key]: updated
   };
   saveToStorage(progressState);
   notifyListeners();
@@ -83,7 +99,8 @@ function updateFlashcardCountInternal(topicId: string, textId: string, count: nu
   const current = progressState[key] || createDefaultProgress();
   const currentFlashcardCount = current.flashcardCount ?? 0;
   
-  if (count > currentFlashcardCount) {
+  if (count !== currentFlashcardCount) {
+    // Reset flashcard-dependent modes when count changes (increase or decrease)
     progressState = {
       ...progressState,
       [key]: { 
@@ -91,15 +108,10 @@ function updateFlashcardCountInternal(topicId: string, textId: string, count: nu
         flashcardCount: count,
         fill: false,
         write: false,
-        cards: false
+        cards: false,
+        cardsDeRu: false,
+        cardsRuDe: false
       }
-    };
-    saveToStorage(progressState);
-    notifyListeners();
-  } else if (count !== currentFlashcardCount) {
-    progressState = {
-      ...progressState,
-      [key]: { ...current, flashcardCount: count }
     };
     saveToStorage(progressState);
     notifyListeners();
@@ -151,11 +163,11 @@ export function usePracticeProgress() {
     return progress[key] || createDefaultProgress();
   }, [progress]);
 
-  const setModeComplete = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "speak") => {
+  const setModeComplete = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "cardsDeRu" | "cardsRuDe" | "speak") => {
     setModeCompleteInternal(topicId, textId, mode);
   }, []);
 
-  const resetModeProgress = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "speak") => {
+  const resetModeProgress = useCallback((topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "cardsDeRu" | "cardsRuDe" | "speak") => {
     resetModeProgressInternal(topicId, textId, mode);
   }, []);
 

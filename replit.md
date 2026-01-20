@@ -44,7 +44,12 @@ Preferred communication style: Simple, everyday language.
 ### Practice Modes System
 - Two phases: Study (read & listen to learn material) and Practice (Cards, Fill, Order, Write, Speak exercises)
 - Study mode: Click words for dictionary definitions, click sentences for translations, text-to-speech playback
-- Cards mode: Flashcard quiz - match German words to Russian translations (multiple choice, 4 options, requires 4+ flashcards)
+- Cards mode: Bidirectional flashcard quiz with two sub-modes:
+  - DE→RU: Shows German word, pick correct Russian translation
+  - RU→DE: Shows Russian translation, pick correct German word
+  - Each direction tracks progress separately; Cards is complete when both directions pass at 100%
+  - Tab indicator shows "½" when one direction complete, checkmark when both complete
+  - Requires 4+ flashcards with unique translations/German words
 - Fill mode: Creates gaps ONLY for words in user's flashcard dictionary (one gap per unique word), click word bank to fill gaps
 - Order mode: Uses saved sentences from Study mode (sentence interaction → Save button), displays Russian translation as hint, shuffle German words to reorder (min 3 words per sentence)
 - Write mode: Creates gaps ONLY for flashcard dictionary words (one gap per unique word) with first-letter hints

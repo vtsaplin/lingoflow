@@ -30,16 +30,18 @@ export interface WriteModeState {
   flashcardCount: number;
 }
 
+export type CardsDirection = "de-ru" | "ru-de";
+
 export interface CardsQuestionState {
   cardId: string;
-  germanWord: string;
+  questionWord: string;
   correctAnswer: string;
   options: string[];
   selectedAnswer: string | null;
   isCorrect: boolean | null;
 }
 
-export interface CardsModeState {
+export interface CardsDirectionState {
   questions: CardsQuestionState[];
   currentIndex: number;
   showResults: boolean;
@@ -47,11 +49,27 @@ export interface CardsModeState {
   flashcardCount: number;
 }
 
+export interface CardsModeState {
+  direction: CardsDirection;
+  deRu: CardsDirectionState;
+  ruDe: CardsDirectionState;
+}
+
 export interface PracticeState {
   fill: FillModeState;
   order: OrderModeState;
   write: WriteModeState;
   cards: CardsModeState;
+}
+
+function createInitialCardsDirectionState(): CardsDirectionState {
+  return {
+    questions: [],
+    currentIndex: 0,
+    showResults: false,
+    initialized: false,
+    flashcardCount: 0,
+  };
 }
 
 export function createInitialPracticeState(): PracticeState {
@@ -78,11 +96,9 @@ export function createInitialPracticeState(): PracticeState {
       flashcardCount: 0,
     },
     cards: {
-      questions: [],
-      currentIndex: 0,
-      showResults: false,
-      initialized: false,
-      flashcardCount: 0,
+      direction: "de-ru",
+      deRu: createInitialCardsDirectionState(),
+      ruDe: createInitialCardsDirectionState(),
     },
   };
 }

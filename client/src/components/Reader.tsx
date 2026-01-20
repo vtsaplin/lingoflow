@@ -115,22 +115,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     }
   }, [practiceState.write.validationState, topicId, textId, setModeComplete, progress.write, activeTextKey, textKey]);
 
-  useEffect(() => {
-    if (activeTextKey !== textKey) return;
-    if (!practiceState.cards) return;
-    const { showResults, initialized, flashcardCount: stateFlashcardCount, questions } = practiceState.cards;
-    if (!initialized || !showResults) return;
-    // Only mark complete if the flashcard count in CardsMode state matches the current flashcard count
-    // This prevents re-marking complete after progress is reset due to new flashcards
-    if (stateFlashcardCount !== flashcardsForText.length) return;
-    // Only mark complete if ALL questions are answered correctly (100%)
-    const allCorrect = questions.length > 0 && questions.every(q => q.isCorrect === true);
-    if (!allCorrect) return;
-    // Check current progress state directly to avoid stale closures
-    const currentProgress = getTextProgress(topicId, textId);
-    if (currentProgress.cards) return;
-    setModeComplete(topicId, textId, "cards");
-  }, [practiceState.cards, topicId, textId, setModeComplete, activeTextKey, textKey, flashcardsForText.length, getTextProgress]);
+  // Cards progress is now handled via onDirectionComplete callback in CardsMode
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
@@ -386,7 +371,13 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               </TabsList>
               <TabsList className="flex-[5] grid grid-cols-5">
                 <TabsTrigger value="cards" data-testid="tab-cards" className="gap-1.5">
-                  {progress.cards ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Layers className="h-4 w-4" />}
+                  {progress.cards ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" />
+                  ) : (progress.cardsDeRu || progress.cardsRuDe) ? (
+                    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">½</span>
+                  ) : (
+                    <Layers className="h-4 w-4" />
+                  )}
                   <span className="hidden sm:inline">Cards</span>
                   {flashcardsForText.length > 0 && (
                     <span className="text-xs text-muted-foreground hidden sm:inline">({flashcardsForText.length})</span>
@@ -706,9 +697,12 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             flashcards={flashcardsForText}
             state={practiceState.cards}
             onStateChange={updateCardsState}
-            onResetProgress={() => resetModeProgress(topicId, textId, "cards")}
+            onResetProgress={(dir) => resetModeProgress(topicId, textId, dir === "de-ru" ? "cardsDeRu" : "cardsRuDe")}
+            onDirectionComplete={(dir) => setModeComplete(topicId, textId, dir === "de-ru" ? "cardsDeRu" : "cardsRuDe")}
             topicId={topicId}
             textId={textId}
+            deRuComplete={progress.cardsDeRu ?? false}
+            ruDeComplete={progress.cardsRuDe ?? false}
           />
         )}
         {practiceMode === "fill" && (
