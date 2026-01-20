@@ -46,7 +46,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     activeTextKey 
   } = usePracticeState(topicId, textId);
   
-  const { setModeComplete, resetModeProgress, updateFlashcardCount, getCompletionCount, isTextComplete, getTextProgress, resetTextProgress } = usePracticeProgress();
+  const { setModeComplete, resetModeProgress, updateFlashcardCount, updateSentenceCount, getCompletionCount, isTextComplete, getTextProgress, resetTextProgress } = usePracticeProgress();
   const completionCount = getCompletionCount(topicId, textId);
   const completionPercentage = Math.round((completionCount / 4) * 100);
   const textComplete = isTextComplete(topicId, textId);
@@ -62,6 +62,11 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     if (activeTextKey !== textKey) return;
     updateFlashcardCount(topicId, textId, flashcardsForText.length);
   }, [flashcardsForText.length, topicId, textId, updateFlashcardCount, activeTextKey, textKey]);
+
+  useEffect(() => {
+    if (activeTextKey !== textKey) return;
+    updateSentenceCount(topicId, textId, savedSentencesForText.length);
+  }, [savedSentencesForText.length, topicId, textId, updateSentenceCount, activeTextKey, textKey]);
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;

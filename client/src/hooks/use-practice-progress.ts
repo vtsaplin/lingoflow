@@ -8,6 +8,7 @@ export interface TextProgress {
   write: boolean;
   cards: boolean;
   flashcardCount: number;
+  sentenceCount: number;
 }
 
 interface ProgressStore {
@@ -47,7 +48,7 @@ function getSnapshot(): ProgressStore {
 }
 
 function createDefaultProgress(): TextProgress {
-  return { fill: false, order: false, write: false, cards: false, flashcardCount: 0 };
+  return { fill: false, order: false, write: false, cards: false, flashcardCount: 0, sentenceCount: 0 };
 }
 
 function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards") {
@@ -80,7 +81,7 @@ function updateFlashcardCountInternal(topicId: string, textId: string, count: nu
   const key = `${topicId}-${textId}`;
   const current = progressState[key] || createDefaultProgress();
   
-  if (count > current.flashcardCount) {
+  if (count !== current.flashcardCount) {
     progressState = {
       ...progressState,
       [key]: { 
@@ -93,10 +94,21 @@ function updateFlashcardCountInternal(topicId: string, textId: string, count: nu
     };
     saveToStorage(progressState);
     notifyListeners();
-  } else if (count !== current.flashcardCount) {
+  }
+}
+
+function updateSentenceCountInternal(topicId: string, textId: string, count: number) {
+  const key = `${topicId}-${textId}`;
+  const current = progressState[key] || createDefaultProgress();
+  
+  if (count !== current.sentenceCount) {
     progressState = {
       ...progressState,
-      [key]: { ...current, flashcardCount: count }
+      [key]: { 
+        ...current, 
+        sentenceCount: count,
+        order: false
+      }
     };
     saveToStorage(progressState);
     notifyListeners();
@@ -131,6 +143,10 @@ export function usePracticeProgress() {
     updateFlashcardCountInternal(topicId, textId, count);
   }, []);
 
+  const updateSentenceCount = useCallback((topicId: string, textId: string, count: number) => {
+    updateSentenceCountInternal(topicId, textId, count);
+  }, []);
+
   const resetTextProgress = useCallback((topicId: string, textId: string) => {
     resetTextProgressInternal(topicId, textId);
   }, []);
@@ -154,6 +170,7 @@ export function usePracticeProgress() {
     setModeComplete,
     resetModeProgress,
     updateFlashcardCount,
+    updateSentenceCount,
     resetTextProgress,
     getCompletionCount,
     isTextComplete,
