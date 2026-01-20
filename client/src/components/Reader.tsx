@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
 import { usePracticeProgress } from "@/hooks/use-practice-progress";
 import { useFlashcards } from "@/hooks/use-flashcards";
+import { useSavedSentences } from "@/hooks/use-saved-sentences";
 import { usePracticeState } from "@/hooks/use-practice-state";
 import { FillMode } from "@/components/practice/FillMode";
 import { OrderMode } from "@/components/practice/OrderMode";
@@ -54,6 +55,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   
   const { addFlashcard, removeFlashcard, hasFlashcard, getFlashcardByGerman, getFlashcardsForText } = useFlashcards();
   const flashcardsForText = getFlashcardsForText(topicId, textId);
+  
+  const { getSentencesForText } = useSavedSentences();
+  const savedSentencesForText = getSentencesForText(topicId, textId);
   
 
   const sentenceContainsFlashcardWord = (sentence: string): boolean => {
@@ -549,7 +553,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "order" && (
           <OrderMode 
-            sentences={eligibleSentences}
+            sentences={savedSentencesForText}
             state={practiceState.order}
             onStateChange={updateOrderState}
             onResetProgress={() => resetModeProgress(topicId, textId, "order")}

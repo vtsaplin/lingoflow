@@ -2,9 +2,10 @@ import { useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown } from "lucide-react";
 import type { OrderModeState, OrderSentenceState } from "./types";
+import type { SavedSentence } from "@/hooks/use-saved-sentences";
 
 interface OrderModeProps {
-  sentences: string[];
+  sentences: SavedSentence[];
   state: OrderModeState;
   onStateChange: (state: OrderModeState) => void;
   onResetProgress?: () => void;
@@ -13,14 +14,16 @@ interface OrderModeProps {
 
 interface SentenceWithWords {
   original: string;
+  translation: string;
   words: string[];
 }
 
 export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
   const sentences = useMemo(() => {
     return inputSentences.map(s => ({
-      original: s,
-      words: extractWords(s)
+      original: s.german,
+      translation: s.translation,
+      words: extractWords(s.german)
     })).filter(s => s.words.length >= 3);
   }, [inputSentences]);
   
@@ -69,10 +72,10 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
-          No sentences with flashcard words found.
+          Нет сохранённых предложений.
         </p>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Add words to your flashcard dictionary in Read mode to unlock Order practice.
+          В режиме чтения (предложения) нажмите на предложение и сохраните его для практики.
         </p>
       </div>
     );
@@ -83,10 +86,10 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
-          Saved sentences are too short.
+          Сохранённые предложения слишком короткие.
         </p>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Sentences need at least 3 words each for word ordering practice.
+          Для практики нужны предложения минимум из 3 слов.
         </p>
       </div>
     );
@@ -224,7 +227,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
           <p className="text-sm text-muted-foreground mb-4">
             Arrange the words in the correct order to form the sentence. Click or drag words to move them.
           </p>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-muted-foreground">
               Sentence {currentIndex + 1} of {sentences.length}
             </span>
@@ -248,6 +251,11 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
+          </div>
+          
+          <div className="mb-6 p-4 bg-muted/30 rounded-lg border" data-testid="text-translation-hint">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Translation:</p>
+            <p className="text-base font-medium">{currentSentence.translation}</p>
           </div>
 
           <div className="space-y-6">
@@ -274,7 +282,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                 )}
                 {orderedWords.map((word, idx) => (
                   <span
-                    key={`${word}-${idx}`}
+                    key={`ordered-${idx}`}
                     draggable
                     onClick={() => handleWordClick(word, true)}
                     onDragStart={(e) => handleDragStart(e, word, true, idx)}
@@ -305,7 +313,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                 )}
                 {shuffledWords.map((word, idx) => (
                   <span
-                    key={`${word}-${idx}`}
+                    key={`shuffled-${idx}`}
                     draggable
                     onClick={() => handleWordClick(word, false)}
                     onDragStart={(e) => handleDragStart(e, word, false, idx)}
@@ -367,25 +375,6 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       </div>
     </div>
   );
-}
-
-function extractSentences(paragraphs: string[]): SentenceWithWords[] {
-  const sentences: SentenceWithWords[] = [];
-
-  paragraphs.forEach((para) => {
-    const matches = para.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [para];
-    matches.forEach((sentence) => {
-      const trimmed = sentence.trim();
-      if (trimmed.length > 0) {
-        const words = trimmed.split(/\s+/).filter((w) => w.length > 0);
-        if (words.length >= 3) {
-          sentences.push({ original: trimmed, words });
-        }
-      }
-    });
-  });
-
-  return sentences;
 }
 
 function shuffleArray<T>(array: T[]): T[] {
