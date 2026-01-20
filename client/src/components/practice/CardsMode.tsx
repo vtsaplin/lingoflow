@@ -275,24 +275,20 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 sm:px-8 py-4 border-b">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            Card {currentIndex + 1} of {questions.length}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {correctCount} correct
-          </span>
-        </div>
-        <div className="w-full bg-muted rounded-full h-1.5 mt-2">
-          <div 
-            className="bg-primary h-1.5 rounded-full transition-all"
-            style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
-          />
-        </div>
-      </div>
-
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+        <div className="w-full max-w-md mb-6">
+          <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+            <span>Card {currentIndex + 1} of {questions.length}</span>
+            <span>{correctCount} correct</span>
+          </div>
+          <div className="w-full bg-muted rounded-full h-1.5">
+            <div 
+              className="bg-primary h-1.5 rounded-full transition-all"
+              style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+            />
+          </div>
+        </div>
+
         <div className="text-center mb-8">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">German</p>
           <p className="text-3xl font-serif font-bold text-foreground">
