@@ -406,7 +406,7 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
           <div className="w-full bg-muted rounded-full h-1.5">
             <div 
               className="bg-primary h-1.5 rounded-full transition-all"
-              style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+              style={{ width: `${((correctCount + incorrectCount) / questions.length) * 100}%` }}
             />
           </div>
         </div>
