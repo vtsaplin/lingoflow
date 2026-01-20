@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
+import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown } from "lucide-react";
 import type { OrderModeState, OrderSentenceState } from "./types";
 import type { SavedSentence } from "@/hooks/use-saved-sentences";
 
@@ -59,8 +59,12 @@ export function OrderMode({ savedSentences, state, onStateChange, onResetProgres
   if (savedSentences.length === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
-          No sentences saved yet. In Study mode (sentence interaction), click on sentences and save them to practice ordering.
+          No sentences saved for this text yet.
+        </p>
+        <p className="text-sm text-muted-foreground text-center mt-2">
+          Switch to Study mode, select sentence interaction, and click on sentences to save them.
         </p>
       </div>
     );
@@ -69,8 +73,12 @@ export function OrderMode({ savedSentences, state, onStateChange, onResetProgres
   if (sentences.length === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
-          Saved sentences are too short (need at least 3 words each).
+          Saved sentences are too short.
+        </p>
+        <p className="text-sm text-muted-foreground text-center mt-2">
+          Sentences need at least 3 words each for word ordering practice.
         </p>
       </div>
     );

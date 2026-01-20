@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, RotateCcw, CheckCircle2, XCircle } from "lucide-react";
+import { Check, RotateCcw, CheckCircle2, XCircle, PenLine } from "lucide-react";
 import type { WriteModeState } from "./types";
 
 interface WriteModeProps {
@@ -72,10 +72,17 @@ export function WriteMode({ paragraphs, flashcardWords, state, onStateChange, on
   if (totalGaps === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <PenLine className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
           {flashcardWords.length === 0 
-            ? "Add words to your flashcard dictionary in Study mode to practice them here."
-            : "No matching words found in this text. Try adding more words to your dictionary."
+            ? "No flashcards saved for this text yet."
+            : "No matching words found in this text."
+          }
+        </p>
+        <p className="text-sm text-muted-foreground text-center mt-2">
+          {flashcardWords.length === 0 
+            ? "Switch to Study mode and click on words to save them to your flashcards."
+            : "Try adding more words from this text to your dictionary."
           }
         </p>
       </div>
