@@ -244,7 +244,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               </TabsList>
               <TabsList className="flex-[4] grid grid-cols-4">
                 <TabsTrigger value="cards" data-testid="tab-cards" className="gap-1.5">
-                  <Layers className="h-4 w-4" />
+                  {progress.cards ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Layers className="h-4 w-4" />}
                   <span className="hidden sm:inline">Cards</span>
                   {flashcardsForText.length > 0 && (
                     <span className="text-xs text-muted-foreground hidden sm:inline">({flashcardsForText.length})</span>
