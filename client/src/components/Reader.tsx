@@ -107,11 +107,14 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   useEffect(() => {
     if (activeTextKey !== textKey) return;
     if (!practiceState.cards) return;
-    const { showResults, initialized, flashcardCount: stateFlashcardCount } = practiceState.cards;
+    const { showResults, initialized, flashcardCount: stateFlashcardCount, questions } = practiceState.cards;
     if (!initialized || !showResults) return;
     // Only mark complete if the flashcard count in CardsMode state matches the current flashcard count
     // This prevents re-marking complete after progress is reset due to new flashcards
     if (stateFlashcardCount !== flashcardsForText.length) return;
+    // Only mark complete if ALL questions are answered correctly (100%)
+    const allCorrect = questions.length > 0 && questions.every(q => q.isCorrect === true);
+    if (!allCorrect) return;
     // Check current progress state directly to avoid stale closures
     const currentProgress = getTextProgress(topicId, textId);
     if (currentProgress.cards) return;
