@@ -326,6 +326,7 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
 
   const { questions, currentIndex, showResults } = state;
   const correctCount = questions.filter(q => q.isCorrect === true).length;
+  const incorrectCount = questions.filter(q => q.isCorrect === false).length;
   const currentQuestion = questions[currentIndex];
 
   if (flashcards.length === 0) {
@@ -388,7 +389,8 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
             <span>Card {currentIndex + 1} of {questions.length}</span>
             <div className="flex items-center gap-3">
-              <span>{correctCount} correct</span>
+              <span className="text-green-600 dark:text-green-400">{correctCount} correct</span>
+              <span className="text-destructive">{incorrectCount} incorrect</span>
               <Button
                 variant="ghost"
                 size="sm"
