@@ -7,7 +7,8 @@ import { translate, dictionary, tts } from "./azure";
 import { registerPodcastRoutes } from "./podcast";
 import { generateCombinedMp3 } from "./combined-mp3";
 import { z } from "zod";
-import { speechToText, convertWebmToWav } from "./replit_integrations/audio/client";
+import { convertWebmToWav } from "./replit_integrations/audio/client";
+import { transcribeWithAzureWhisper } from "./azure-whisper";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -81,8 +82,8 @@ export async function registerRoutes(
       // Convert WebM to WAV (browser records in WebM format)
       const wavBuffer = await convertWebmToWav(audioBuffer);
       
-      // Transcribe using OpenAI
-      const transcript = await speechToText(wavBuffer, "wav");
+      // Transcribe using Azure Whisper
+      const transcript = await transcribeWithAzureWhisper(wavBuffer);
       
       res.json({ transcript });
     } catch (err) {
