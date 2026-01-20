@@ -310,7 +310,7 @@ export function SidebarNav() {
                       open={selectionMode || isExpanded || hasActiveText}
                       onOpenChange={() => !selectionMode && toggleTopic(topic.id)}
                     >
-                      <div className="flex items-center">
+                      <div className="flex items-center overflow-hidden">
                         <div 
                           className={`w-8 flex-shrink-0 flex items-center justify-center py-2.5 ${selectionMode ? 'cursor-pointer' : 'opacity-0 pointer-events-none'}`}
                           onClick={(e) => {
