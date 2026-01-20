@@ -7,6 +7,7 @@ import { translate, dictionary, tts } from "./azure";
 import { registerPodcastRoutes } from "./podcast";
 import { generateCombinedMp3 } from "./combined-mp3";
 import { z } from "zod";
+import { speechToText, convertWebmToWav } from "./replit_integrations/audio/client";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -64,6 +65,31 @@ export async function registerRoutes(
   });
 
   registerPodcastRoutes(app);
+
+  // Speech-to-text transcription endpoint for Speak mode
+  const transcribeSchema = z.object({
+    audio: z.string(), // base64 encoded audio
+  });
+
+  app.post("/api/transcribe", async (req, res) => {
+    try {
+      const { audio } = transcribeSchema.parse(req.body);
+      
+      // Convert base64 to buffer
+      const audioBuffer = Buffer.from(audio, "base64");
+      
+      // Convert WebM to WAV (browser records in WebM format)
+      const wavBuffer = await convertWebmToWav(audioBuffer);
+      
+      // Transcribe using OpenAI
+      const transcript = await speechToText(wavBuffer, "wav");
+      
+      res.json({ transcript });
+    } catch (err) {
+      console.error("Transcription failed:", err);
+      res.status(500).json({ message: "Transcription failed" });
+    }
+  });
 
   const combinedMp3Schema = z.object({
     texts: z.array(z.object({

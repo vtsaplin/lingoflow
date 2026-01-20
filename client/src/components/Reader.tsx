@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2 } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -14,9 +14,10 @@ import { FillMode } from "@/components/practice/FillMode";
 import { OrderMode } from "@/components/practice/OrderMode";
 import { WriteMode } from "@/components/practice/WriteMode";
 import { CardsMode } from "@/components/practice/CardsMode";
+import { SpeakMode } from "@/components/practice/SpeakMode";
 
 type InteractionMode = "word" | "sentence";
-type PracticeMode = "read" | "cards" | "fill" | "order" | "write";
+type PracticeMode = "read" | "cards" | "fill" | "order" | "write" | "speak";
 
 interface ReaderProps {
   topicId: string;
@@ -274,7 +275,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   <span className="hidden sm:inline">Read</span>
                 </TabsTrigger>
               </TabsList>
-              <TabsList className="flex-[4] grid grid-cols-4">
+              <TabsList className="flex-[5] grid grid-cols-5">
                 <TabsTrigger value="cards" data-testid="tab-cards" className="gap-1.5">
                   {progress.cards ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Layers className="h-4 w-4" />}
                   <span className="hidden sm:inline">Cards</span>
@@ -293,6 +294,10 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                 <TabsTrigger value="write" data-testid="tab-write" className="gap-1.5">
                   {progress.write ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500" /> : <PenLine className="h-4 w-4" />}
                   <span className="hidden sm:inline">Write</span>
+                </TabsTrigger>
+                <TabsTrigger value="speak" data-testid="tab-speak" className="gap-1.5">
+                  <Mic className="h-4 w-4" />
+                  <span className="hidden sm:inline">Speak</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -556,6 +561,13 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             onStateChange={updateWriteState}
             onResetProgress={() => resetModeProgress(topicId, textId, "write")}
             isCompleted={progress.write}
+          />
+        )}
+        {practiceMode === "speak" && (
+          <SpeakMode 
+            sentences={eligibleSentences}
+            topicId={topicId}
+            textId={textId}
           />
         )}
       </div>

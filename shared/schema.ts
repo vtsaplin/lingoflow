@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// Re-export chat models for AI integrations
+export * from "./models/chat";
+
 // Content Models
 export const textSchema = z.object({
   id: z.string(),
