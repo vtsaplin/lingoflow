@@ -1,8 +1,37 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, RotateCcw, Layers } from "lucide-react";
 import type { Flashcard } from "@/hooks/use-flashcards";
 import type { CardsModeState, CardsQuestionState } from "./types";
+
+function playSound(correct: boolean) {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    if (correct) {
+      oscillator.frequency.setValueAtTime(523, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } else {
+      oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(150, audioContext.currentTime + 0.15);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    }
+  } catch (e) {
+    // Audio not supported, ignore
+  }
+}
 
 interface CardsModeProps {
   flashcards: Flashcard[];
@@ -128,6 +157,29 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
   }
 
   const { questions, currentIndex, showResults } = state;
+  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < questions.length - 1) {
+      onStateChange({
+        ...state,
+        currentIndex: currentIndex + 1
+      });
+    } else {
+      onStateChange({
+        ...state,
+        showResults: true
+      });
+    }
+  }, [currentIndex, questions.length, onStateChange, state]);
 
   const handleSelectAnswer = (answer: string) => {
     if (questions[currentIndex]?.selectedAnswer !== null) return;
@@ -143,20 +195,24 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
       ...state,
       questions: newQuestions
     });
-  };
-
-  const handleNext = () => {
-    if (currentIndex < questions.length - 1) {
-      onStateChange({
-        ...state,
-        currentIndex: currentIndex + 1
-      });
-    } else {
-      onStateChange({
-        ...state,
-        showResults: true
-      });
-    }
+    
+    playSound(isCorrect);
+    
+    autoAdvanceTimerRef.current = setTimeout(() => {
+      if (currentIndex < questions.length - 1) {
+        onStateChange({
+          ...state,
+          questions: newQuestions,
+          currentIndex: currentIndex + 1
+        });
+      } else {
+        onStateChange({
+          ...state,
+          questions: newQuestions,
+          showResults: true
+        });
+      }
+    }, 1200);
   };
 
   const handleReset = () => {
@@ -263,16 +319,6 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
             );
           })}
         </div>
-
-        {currentQuestion.selectedAnswer !== null && (
-          <Button 
-            className="mt-8" 
-            onClick={handleNext}
-            data-testid="button-next-card"
-          >
-            {currentIndex < questions.length - 1 ? "Next Card" : "See Results"}
-          </Button>
-        )}
       </div>
     </div>
   );
