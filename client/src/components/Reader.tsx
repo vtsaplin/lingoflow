@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic, MousePointer2, Check } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -7,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { usePracticeProgress } from "@/hooks/use-practice-progress";
 import { useFlashcards } from "@/hooks/use-flashcards";
 import { useSavedSentences } from "@/hooks/use-saved-sentences";
@@ -34,6 +36,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const [isReadingAll, setIsReadingAll] = useState(false);
   const [slowMode, setSlowMode] = useState(false);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
+  const [isBatchSaving, setIsBatchSaving] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { 
@@ -58,6 +63,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   
   const { getSentencesForText } = useSavedSentences();
   const savedSentencesForText = getSentencesForText(topicId, textId);
+  
+  const { toast } = useToast();
   
 
   const sentenceContainsFlashcardWord = (sentence: string): boolean => {
@@ -161,6 +168,21 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
   const handleInteraction = async (text: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (multiSelectMode && interactionMode === "word") {
+      const normalizedText = text.toLowerCase();
+      setSelectedWords(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(normalizedText)) {
+          newSet.delete(normalizedText);
+        } else {
+          newSet.add(normalizedText);
+        }
+        return newSet;
+      });
+      return;
+    }
+    
     setSelectedText(text);
     
     translateMutation.reset();
@@ -174,6 +196,71 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       translateMutation.mutate({ text });
     }
   };
+  
+  const handleBatchSave = async () => {
+    if (selectedWords.size === 0) return;
+    
+    setIsBatchSaving(true);
+    const wordsArray = Array.from(selectedWords);
+    let savedCount = 0;
+    let errorCount = 0;
+    
+    try {
+      for (const word of wordsArray) {
+        if (flashcardsForText.some(f => f.german.toLowerCase() === word)) continue;
+        
+        try {
+          const response = await apiRequest('POST', '/api/dictionary', { word });
+          const data = await response.json();
+          addFlashcard(data.word, data.translation, topicId, textId);
+          savedCount++;
+        } catch {
+          errorCount++;
+        }
+      }
+      
+      setSelectedWords(new Set());
+      setMultiSelectMode(false);
+      
+      if (savedCount > 0) {
+        toast({
+          title: "Карточки сохранены",
+          description: `Добавлено ${savedCount} слов в карточки`,
+        });
+      }
+      
+      if (errorCount > 0) {
+        toast({
+          title: "Ошибка",
+          description: `Не удалось сохранить ${errorCount} слов`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось сохранить карточки",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBatchSaving(false);
+    }
+  };
+  
+  const toggleMultiSelectMode = () => {
+    if (multiSelectMode) {
+      setSelectedWords(new Set());
+    }
+    setMultiSelectMode(!multiSelectMode);
+    setSelectedText(null);
+  };
+  
+  useEffect(() => {
+    if (interactionMode === "sentence" && multiSelectMode) {
+      setMultiSelectMode(false);
+      setSelectedWords(new Set());
+    }
+  }, [interactionMode, multiSelectMode]);
 
   const handleReadAll = async () => {
     if (isReadingAll) {
@@ -368,6 +455,18 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                     </button>
                   </div>
 
+                  {interactionMode === "word" && (
+                    <Button 
+                      variant={multiSelectMode ? "default" : "outline"}
+                      onClick={toggleMultiSelectMode}
+                      data-testid="button-multi-select"
+                      className="gap-2"
+                    >
+                      <MousePointer2 className="h-4 w-4" />
+                      {multiSelectMode ? "Отменить" : "Выбрать"}
+                    </Button>
+                  )}
+
                   <Button 
                     variant="outline" 
                     onClick={handleReadAll}
@@ -388,7 +487,10 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground mt-3">
-                  Click on {interactionMode === "word" ? "words" : "sentences"} to hear pronunciation and see {interactionMode === "word" ? "definitions" : "translations"}.
+                  {multiSelectMode 
+                    ? `Выберите слова для добавления в карточки (выбрано: ${selectedWords.size})`
+                    : `Click on ${interactionMode === "word" ? "words" : "sentences"} to hear pronunciation and see ${interactionMode === "word" ? "definitions" : "translations"}.`
+                  }
                 </p>
               </div>
             </div>
@@ -404,6 +506,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       onInteract={handleInteraction}
                       selectedText={selectedText}
                       flashcardWords={flashcardsForText.map(f => f.german)}
+                      multiSelectMode={multiSelectMode}
+                      selectedWords={selectedWords}
                     />
                   ))}
                 </div>
@@ -534,6 +638,53 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                 </div>
               </div>
             )}
+
+            {multiSelectMode && selectedWords.size > 0 && !selectedText && (
+              <div className="border-t bg-card animate-in slide-in-from-bottom-4">
+                <div className="max-w-4xl mx-auto px-6 sm:px-8 py-4">
+                  <div className="flex justify-between items-center gap-4">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="text-sm text-muted-foreground">
+                        Выбрано слов: <span className="font-medium text-foreground">{selectedWords.size}</span>
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({Array.from(selectedWords).slice(0, 5).join(', ')}{selectedWords.size > 5 ? '...' : ''})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setSelectedWords(new Set())}
+                        data-testid="button-clear-selection"
+                      >
+                        Очистить
+                      </Button>
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={handleBatchSave}
+                        disabled={isBatchSaving}
+                        data-testid="button-batch-save"
+                        className="gap-2"
+                      >
+                        {isBatchSaving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Сохранение...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4" />
+                            Сохранить все
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -596,13 +747,17 @@ function Paragraph({
   mode, 
   onInteract, 
   selectedText,
-  flashcardWords = []
+  flashcardWords = [],
+  multiSelectMode = false,
+  selectedWords = new Set()
 }: { 
   text: string, 
   mode: InteractionMode, 
   onInteract: (t: string, e: React.MouseEvent) => void,
   selectedText: string | null,
-  flashcardWords?: string[]
+  flashcardWords?: string[],
+  multiSelectMode?: boolean,
+  selectedWords?: Set<string>
 }) {
   const flashcardSet = new Set(flashcardWords.map(w => w.toLowerCase()));
   
@@ -647,13 +802,14 @@ function Paragraph({
         if (!cleanWord) return <span key={idx}>{word}</span>;
 
         const isFlashcard = flashcardSet.has(cleanWord.toLowerCase());
+        const isMultiSelected = multiSelectMode && selectedWords.has(cleanWord.toLowerCase());
 
         return (
           <span 
             key={idx}
             onClick={(e) => onInteract(cleanWord, e)}
             data-testid={`word-${idx}`}
-            className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isFlashcard ? 'flashcard-word' : ''}`}
+            className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isFlashcard ? 'flashcard-word' : ''} ${isMultiSelected ? 'multi-selected' : ''}`}
           >
             {word}
           </span>

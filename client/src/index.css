@@ -121,6 +121,11 @@
   @apply underline decoration-dashed decoration-foreground decoration-1 underline-offset-4;
 }
 
+/* Multi-select mode selected words */
+.multi-selected {
+  @apply bg-primary/20 dark:bg-primary/30 ring-2 ring-primary/50;
+}
+
 .eligible-sentence:hover {
   @apply bg-muted/50;
 }
