@@ -215,6 +215,7 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
   }, [state.initialized, state.flashcardCount, flashcards, uniqueTranslationCount, onStateChange, state.questions]);
 
   const handleReset = useCallback(() => {
+    lastSpokenCardIdRef.current = null;
     onStateChange({
       questions: generateQuestions(flashcards),
       currentIndex: 0,
@@ -331,7 +332,19 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
             <span>Card {currentIndex + 1} of {questions.length}</span>
-            <span>{correctCount} correct</span>
+            <div className="flex items-center gap-3">
+              <span>{correctCount} correct</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                data-testid="button-reset-cards"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                Reset
+              </Button>
+            </div>
           </div>
           <div className="w-full bg-muted rounded-full h-1.5">
             <div 
