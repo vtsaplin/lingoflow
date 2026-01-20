@@ -115,3 +115,12 @@
 .flashcard-word:hover {
   @apply decoration-primary bg-primary/10;
 }
+
+/* Highlight for saved sentences */
+.saved-sentence {
+  @apply underline decoration-primary decoration-2 underline-offset-4;
+}
+
+.saved-sentence:hover {
+  @apply decoration-primary;
+}

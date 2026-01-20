@@ -360,6 +360,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       onInteract={handleInteraction}
                       selectedText={selectedText}
                       flashcardWords={flashcardsForText.map(f => f.german)}
+                      savedSentences={savedSentencesForText.map(s => s.german)}
                     />
                   ))}
                 </div>
@@ -572,30 +573,37 @@ function Paragraph({
   mode, 
   onInteract, 
   selectedText,
-  flashcardWords = []
+  flashcardWords = [],
+  savedSentences = []
 }: { 
   text: string, 
   mode: InteractionMode, 
   onInteract: (t: string, e: React.MouseEvent) => void,
   selectedText: string | null,
-  flashcardWords?: string[]
+  flashcardWords?: string[],
+  savedSentences?: string[]
 }) {
   const flashcardSet = new Set(flashcardWords.map(w => w.toLowerCase()));
+  const savedSentenceSet = new Set(savedSentences);
   
   if (mode === "sentence") {
     const sentences = text.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [text];
     return (
       <p>
-        {sentences.map((sentence, idx) => (
-          <span 
-            key={idx}
-            onClick={(e) => onInteract(sentence.trim(), e)}
-            data-testid={`sentence-${idx}`}
-            className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === sentence.trim() ? 'active' : ''}`}
-          >
-            {sentence}
-          </span>
-        ))}
+        {sentences.map((sentence, idx) => {
+          const trimmedSentence = sentence.trim();
+          const isSaved = savedSentenceSet.has(trimmedSentence);
+          return (
+            <span 
+              key={idx}
+              onClick={(e) => onInteract(trimmedSentence, e)}
+              data-testid={`sentence-${idx}`}
+              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === trimmedSentence ? 'active' : ''} ${isSaved ? 'saved-sentence' : ''}`}
+            >
+              {sentence}
+            </span>
+          );
+        })}
       </p>
     );
   }
