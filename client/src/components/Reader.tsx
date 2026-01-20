@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,30 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const { addSentence, removeSentence, hasSentence, getSentenceByGerman, getSentencesForText } = useSavedSentences();
   const savedSentencesForText = getSentencesForText(topicId, textId);
 
+  const sentenceContainsFlashcardWord = (sentence: string): boolean => {
+    if (flashcardsForText.length === 0) return false;
+    const normalizedSentence = sentence.toLowerCase();
+    return flashcardsForText.some(card => {
+      const word = card.german.toLowerCase();
+      const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      return regex.test(normalizedSentence);
+    });
+  };
+
+  const eligibleSentences = useMemo(() => {
+    const allSentences: string[] = [];
+    paragraphs.forEach(p => {
+      const sentences = p.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [];
+      sentences.forEach(s => {
+        const trimmed = s.trim();
+        if (trimmed && sentenceContainsFlashcardWord(trimmed)) {
+          allSentences.push(trimmed);
+        }
+      });
+    });
+    return allSentences;
+  }, [paragraphs, flashcardsForText]);
+
   useEffect(() => {
     if (activeTextKey !== textKey) return;
     updateFlashcardCount(topicId, textId, flashcardsForText.length);
@@ -65,8 +89,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
-    updateSentenceCount(topicId, textId, savedSentencesForText.length);
-  }, [savedSentencesForText.length, topicId, textId, updateSentenceCount, activeTextKey, textKey]);
+    updateSentenceCount(topicId, textId, eligibleSentences.length);
+  }, [eligibleSentences.length, topicId, textId, updateSentenceCount, activeTextKey, textKey]);
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
@@ -551,7 +575,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "order" && (
           <OrderMode 
-            savedSentences={savedSentencesForText}
+            sentences={eligibleSentences}
             state={practiceState.order}
             onStateChange={updateOrderState}
             onResetProgress={() => resetModeProgress(topicId, textId, "order")}

@@ -2,34 +2,33 @@ import { useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown } from "lucide-react";
 import type { OrderModeState, OrderSentenceState } from "./types";
-import type { SavedSentence } from "@/hooks/use-saved-sentences";
 
 interface OrderModeProps {
-  savedSentences: SavedSentence[];
+  sentences: string[];
   state: OrderModeState;
   onStateChange: (state: OrderModeState) => void;
   onResetProgress?: () => void;
   isCompleted?: boolean;
 }
 
-interface Sentence {
+interface SentenceWithWords {
   original: string;
   words: string[];
 }
 
-export function OrderMode({ savedSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
+export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
   const sentences = useMemo(() => {
-    return savedSentences.map(s => ({
-      original: s.german,
-      words: extractWords(s.german)
+    return inputSentences.map(s => ({
+      original: s,
+      words: extractWords(s)
     })).filter(s => s.words.length >= 3);
-  }, [savedSentences]);
+  }, [inputSentences]);
   
   const { currentIndex, sentenceStates, flashcardCount: savedCount } = state;
 
   useEffect(() => {
-    const countIncreased = savedSentences.length > savedCount && savedCount > 0;
-    const countDecreased = savedSentences.length < savedCount && savedCount > 0;
+    const countIncreased = inputSentences.length > savedCount && savedCount > 0;
+    const countDecreased = inputSentences.length < savedCount && savedCount > 0;
     const needsReinit = !state.initialized || countIncreased || countDecreased;
     
     if (sentences.length > 0 && needsReinit) {
@@ -53,27 +52,27 @@ export function OrderMode({ savedSentences, state, onStateChange, onResetProgres
         currentIndex: 0,
         sentenceStates: initialStates,
         initialized: true,
-        flashcardCount: savedSentences.length,
+        flashcardCount: inputSentences.length,
       });
     } else if (countDecreased && sentences.length === 0) {
       onStateChange({
         currentIndex: 0,
         sentenceStates: {},
         initialized: true,
-        flashcardCount: savedSentences.length,
+        flashcardCount: inputSentences.length,
       });
     }
-  }, [sentences, state.initialized, onStateChange, isCompleted, savedSentences.length, savedCount]);
+  }, [sentences, state.initialized, onStateChange, isCompleted, inputSentences.length, savedCount]);
 
-  if (savedSentences.length === 0) {
+  if (inputSentences.length === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
-          No sentences saved for this text yet.
+          No sentences with flashcard words found.
         </p>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Switch to Study mode, select sentence interaction, and click on sentences to save them.
+          Add words to your flashcard dictionary in Read mode to unlock Order practice.
         </p>
       </div>
     );
@@ -355,7 +354,7 @@ export function OrderMode({ savedSentences, state, onStateChange, onResetProgres
                     currentIndex: 0,
                     sentenceStates: {},
                     initialized: false,
-                    flashcardCount: savedSentences.length,
+                    flashcardCount: inputSentences.length,
                   });
                 }} 
                 data-testid="button-reset-all"
@@ -370,8 +369,8 @@ export function OrderMode({ savedSentences, state, onStateChange, onResetProgres
   );
 }
 
-function extractSentences(paragraphs: string[]): Sentence[] {
-  const sentences: Sentence[] = [];
+function extractSentences(paragraphs: string[]): SentenceWithWords[] {
+  const sentences: SentenceWithWords[] = [];
 
   paragraphs.forEach((para) => {
     const matches = para.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [para];
