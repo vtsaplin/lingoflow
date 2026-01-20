@@ -481,6 +481,21 @@ export function CardsMode({
     const percentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
     return (
       <div className="flex flex-col h-full">
+        <div className="px-4 sm:px-6 py-2 border-b">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
+            <DirectionTabs />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              className="h-6 px-1.5 text-muted-foreground hover:text-foreground"
+              data-testid="button-reset-cards"
+            >
+              <RotateCcw className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+        
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           <div className="text-center">
             <div className={`text-6xl font-bold mb-4 ${percentage >= 70 ? "text-green-500" : percentage >= 50 ? "text-yellow-500" : "text-destructive"}`}>
@@ -500,12 +515,6 @@ export function CardsMode({
                       ? "Keep practicing!" 
                       : "Try again!"}
             </p>
-          </div>
-        </div>
-        
-        <div className="border-t bg-card px-4 sm:px-6 py-3">
-          <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-3">
-            <DirectionTabs />
             <Button onClick={handleReset} data-testid="button-restart-cards">
               <RotateCcw className="h-4 w-4 mr-2" />
               Practice Again
@@ -522,7 +531,38 @@ export function CardsMode({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-auto">
+      <div className="px-4 sm:px-6 py-2 border-b">
+        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <DirectionTabs />
+            <span className="text-xs text-muted-foreground">{currentIndex + 1}/{questions.length}</span>
+          </div>
+          <div className="flex-1 max-w-[200px] mx-4">
+            <div className="w-full bg-muted rounded-full h-1.5">
+              <div 
+                className="bg-primary h-1.5 rounded-full transition-all"
+                style={{ width: `${((correctCount + incorrectCount) / questions.length) * 100}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="text-green-600 dark:text-green-400">{correctCount}</span>
+            <span>/</span>
+            <span className="text-destructive">{incorrectCount}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              className="h-6 px-1.5 text-muted-foreground hover:text-foreground"
+              data-testid="button-reset-cards"
+            >
+              <RotateCcw className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
         <div className="text-center mb-8">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
             {isDeRu ? "German" : "Russian"}
@@ -600,37 +640,6 @@ export function CardsMode({
               </Button>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="border-t bg-card px-4 sm:px-6 py-3">
-        <div className="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <DirectionTabs />
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{currentIndex + 1}/{questions.length}</span>
-              <div className="w-24 bg-muted rounded-full h-1.5">
-                <div 
-                  className="bg-primary h-1.5 rounded-full transition-all"
-                  style={{ width: `${((correctCount + incorrectCount) / questions.length) * 100}%` }}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-green-600 dark:text-green-400">{correctCount}</span>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-destructive">{incorrectCount}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              data-testid="button-reset-cards"
-            >
-              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-              Reset
-            </Button>
-          </div>
         </div>
       </div>
     </div>
