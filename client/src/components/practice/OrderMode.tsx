@@ -313,7 +313,7 @@ export function OrderMode({ paragraphs, flashcardWords, state, onStateChange, on
   const allCorrect = eligibleSentences.every(s => sentenceStates[s.index]?.validationState === "correct");
   const correctCount = eligibleSentences.filter(s => sentenceStates[s.index]?.validationState === "correct").length;
 
-  const renderEligibleSentence = (sentence: ParsedSentence) => {
+  const renderEligibleSentence = (sentence: ParsedSentence, paraIdx?: number, sentIdx?: number) => {
     const idx = sentence.eligibleIndex!;
     const sentState = sentenceStates[idx] || {
       shuffledWords: [],
@@ -325,7 +325,7 @@ export function OrderMode({ paragraphs, flashcardWords, state, onStateChange, on
 
     return (
       <div 
-        key={idx}
+        key={`eligible-${paraIdx ?? 0}-${sentIdx ?? idx}`}
         className={`my-3 p-3 rounded-lg border transition-colors ${
           validationState === "correct"
             ? "bg-green-50 dark:bg-green-900/20 border-green-500"
@@ -458,11 +458,11 @@ export function OrderMode({ paragraphs, flashcardWords, state, onStateChange, on
               <div key={paraIdx} className="mb-4">
                 {para.sentences.map((sentence, sentIdx) => {
                   if (sentence.isEligible) {
-                    return renderEligibleSentence(sentence);
+                    return renderEligibleSentence(sentence, paraIdx, sentIdx);
                   } else {
                     return (
                       <span 
-                        key={sentIdx} 
+                        key={`plain-${paraIdx}-${sentIdx}`} 
                         className="font-serif text-base text-muted-foreground"
                       >
                         {sentence.text}{' '}
