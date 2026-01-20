@@ -541,7 +541,7 @@ export function CardsMode({
             <DirectionTabs />
             
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{currentIndex + 1}/{questions.length}</span>
+              <span className="text-sm text-muted-foreground">{correctCount + incorrectCount}/{questions.length}</span>
               <div className="w-24 bg-muted rounded-full h-1.5">
                 <div 
                   className="bg-primary h-1.5 rounded-full transition-all"
