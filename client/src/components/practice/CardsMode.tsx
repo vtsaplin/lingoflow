@@ -81,6 +81,18 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
     [flashcards]
   );
 
+  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const flashcardCountIncreased = state.initialized && flashcards.length > state.flashcardCount;
     const flashcardCountDecreased = state.initialized && flashcards.length < state.flashcardCount;
@@ -147,6 +159,64 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
     }
   }, [state.initialized, state.flashcardCount, flashcards, uniqueTranslationCount, onStateChange, state.questions]);
 
+  const handleReset = useCallback(() => {
+    onStateChange({
+      questions: generateQuestions(flashcards),
+      currentIndex: 0,
+      showResults: false,
+      initialized: true,
+      flashcardCount: flashcards.length
+    });
+    onResetProgress?.();
+  }, [flashcards, onStateChange, onResetProgress]);
+
+  const handleSelectAnswer = useCallback((answer: string) => {
+    const currentState = stateRef.current;
+    const { questions, currentIndex } = currentState;
+    
+    if (questions[currentIndex]?.selectedAnswer !== null) return;
+    
+    const isCorrect = answer === questions[currentIndex].correctAnswer;
+    const newQuestions = [...questions];
+    newQuestions[currentIndex] = {
+      ...newQuestions[currentIndex],
+      selectedAnswer: answer,
+      isCorrect
+    };
+    
+    onStateChange({
+      ...currentState,
+      questions: newQuestions
+    });
+    
+    playSound(isCorrect);
+    
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+    }
+    
+    autoAdvanceTimerRef.current = setTimeout(() => {
+      const latestState = stateRef.current;
+      if (currentIndex < questions.length - 1) {
+        onStateChange({
+          ...latestState,
+          questions: newQuestions,
+          currentIndex: currentIndex + 1
+        });
+      } else {
+        onStateChange({
+          ...latestState,
+          questions: newQuestions,
+          showResults: true
+        });
+      }
+    }, 1200);
+  }, [onStateChange]);
+
+  const { questions, currentIndex, showResults } = state;
+  const correctCount = questions.filter(q => q.isCorrect === true).length;
+  const currentQuestion = questions[currentIndex];
+
   if (flashcards.length === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
@@ -174,79 +244,6 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
       </div>
     );
   }
-
-  const { questions, currentIndex, showResults } = state;
-  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (autoAdvanceTimerRef.current) {
-        clearTimeout(autoAdvanceTimerRef.current);
-      }
-    };
-  }, []);
-
-  const handleNext = useCallback(() => {
-    if (currentIndex < questions.length - 1) {
-      onStateChange({
-        ...state,
-        currentIndex: currentIndex + 1
-      });
-    } else {
-      onStateChange({
-        ...state,
-        showResults: true
-      });
-    }
-  }, [currentIndex, questions.length, onStateChange, state]);
-
-  const handleSelectAnswer = (answer: string) => {
-    if (questions[currentIndex]?.selectedAnswer !== null) return;
-    
-    const isCorrect = answer === questions[currentIndex].correctAnswer;
-    const newQuestions = [...questions];
-    newQuestions[currentIndex] = {
-      ...newQuestions[currentIndex],
-      selectedAnswer: answer,
-      isCorrect
-    };
-    onStateChange({
-      ...state,
-      questions: newQuestions
-    });
-    
-    playSound(isCorrect);
-    
-    autoAdvanceTimerRef.current = setTimeout(() => {
-      if (currentIndex < questions.length - 1) {
-        onStateChange({
-          ...state,
-          questions: newQuestions,
-          currentIndex: currentIndex + 1
-        });
-      } else {
-        onStateChange({
-          ...state,
-          questions: newQuestions,
-          showResults: true
-        });
-      }
-    }, 1200);
-  };
-
-  const handleReset = () => {
-    onStateChange({
-      questions: generateQuestions(flashcards),
-      currentIndex: 0,
-      showResults: false,
-      initialized: true,
-      flashcardCount: flashcards.length
-    });
-    onResetProgress?.();
-  };
-
-  const correctCount = questions.filter(q => q.isCorrect === true).length;
-  const currentQuestion = questions[currentIndex];
 
   if (showResults) {
     const percentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
