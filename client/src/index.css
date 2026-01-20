@@ -109,18 +109,18 @@
 
 /* Highlight for words saved in flashcard dictionary */
 .flashcard-word {
-  @apply underline decoration-dashed decoration-foreground/30 decoration-1 underline-offset-4;
+  @apply underline decoration-dashed decoration-foreground/60 decoration-1 underline-offset-4;
 }
 
 .flashcard-word:hover {
-  @apply decoration-foreground/50 bg-muted/50;
+  @apply decoration-foreground/80 bg-muted/50;
 }
 
 /* Highlight for sentences containing flashcard words */
 .eligible-sentence {
-  @apply underline decoration-dashed decoration-foreground/30 decoration-1 underline-offset-4;
+  @apply underline decoration-dashed decoration-foreground/60 decoration-1 underline-offset-4;
 }
 
 .eligible-sentence:hover {
-  @apply decoration-foreground/50;
+  @apply decoration-foreground/80;
 }
