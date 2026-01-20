@@ -39,6 +39,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const [isBatchSaving, setIsBatchSaving] = useState(false);
+  const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0, currentWord: "" });
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { 
@@ -185,13 +186,24 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const handleBatchSave = async () => {
     setIsBatchSaving(true);
     const wordsArray = Array.from(selectedWords);
+    const wordsToAdd = wordsArray.filter(
+      word => !flashcardsForText.some(f => f.german.toLowerCase() === word)
+    );
+    const wordsToRemove = flashcardsForText.filter(
+      f => !selectedWords.has(f.german.toLowerCase())
+    );
+    
+    const totalOperations = wordsToAdd.length + wordsToRemove.length;
+    setSaveProgress({ current: 0, total: totalOperations, currentWord: "" });
+    
     let savedCount = 0;
     let removedCount = 0;
     let errorCount = 0;
     
     try {
-      for (const word of wordsArray) {
-        if (flashcardsForText.some(f => f.german.toLowerCase() === word)) continue;
+      for (let i = 0; i < wordsToAdd.length; i++) {
+        const word = wordsToAdd[i];
+        setSaveProgress({ current: i + 1, total: totalOperations, currentWord: word });
         
         try {
           const response = await apiRequest('POST', '/api/dictionary', { word });
@@ -203,11 +215,15 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         }
       }
       
-      for (const flashcard of flashcardsForText) {
-        if (!selectedWords.has(flashcard.german.toLowerCase())) {
-          removeFlashcard(flashcard.id);
-          removedCount++;
-        }
+      for (let i = 0; i < wordsToRemove.length; i++) {
+        const flashcard = wordsToRemove[i];
+        setSaveProgress({ 
+          current: wordsToAdd.length + i + 1, 
+          total: totalOperations, 
+          currentWord: flashcard.german 
+        });
+        removeFlashcard(flashcard.id);
+        removedCount++;
       }
       
       setSelectedWords(new Set());
@@ -239,6 +255,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       });
     } finally {
       setIsBatchSaving(false);
+      setSaveProgress({ current: 0, total: 0, currentWord: "" });
     }
   };
   
@@ -766,6 +783,38 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
           />
         )}
       </div>
+      
+      {isBatchSaving && (
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center"
+          data-testid="saving-overlay"
+        >
+          <div className="bg-card border rounded-lg p-6 shadow-lg max-w-sm w-full mx-4">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="text-center">
+                <h3 className="font-medium text-lg">Saving flashcards...</h3>
+                {saveProgress.total > 0 && (
+                  <>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {saveProgress.current} of {saveProgress.total}
+                    </p>
+                    {saveProgress.currentWord && (
+                      <p className="text-sm font-medium mt-2 text-primary">
+                        {saveProgress.currentWord}
+                      </p>
+                    )}
+                    <Progress 
+                      value={(saveProgress.current / saveProgress.total) * 100} 
+                      className="mt-3 h-2"
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
