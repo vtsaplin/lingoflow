@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2 } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -9,7 +9,6 @@ import { Progress } from "@/components/ui/progress";
 import { useTTS, useTranslate, useDictionary } from "@/hooks/use-services";
 import { usePracticeProgress } from "@/hooks/use-practice-progress";
 import { useFlashcards } from "@/hooks/use-flashcards";
-import { useSavedSentences } from "@/hooks/use-saved-sentences";
 import { usePracticeState } from "@/hooks/use-practice-state";
 import { FillMode } from "@/components/practice/FillMode";
 import { OrderMode } from "@/components/practice/OrderMode";
@@ -55,8 +54,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const { addFlashcard, removeFlashcard, hasFlashcard, getFlashcardByGerman, getFlashcardsForText } = useFlashcards();
   const flashcardsForText = getFlashcardsForText(topicId, textId);
   
-  const { addSentence, removeSentence, hasSentence, getSentenceByGerman, getSentencesForText } = useSavedSentences();
-  const savedSentencesForText = getSentencesForText(topicId, textId);
 
   const sentenceContainsFlashcardWord = (sentence: string): boolean => {
     if (flashcardsForText.length === 0) return false;
@@ -389,7 +386,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       onInteract={handleInteraction}
                       selectedText={selectedText}
                       flashcardWords={flashcardsForText.map(f => f.german)}
-                      savedSentences={savedSentencesForText.map(s => s.german)}
                     />
                   ))}
                 </div>
@@ -440,43 +436,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
                     {translateMutation.isSuccess && selectedText && (
                       <div className="animate-in fade-in">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Translation</p>
-                          {(() => {
-                            const isSaved = hasSentence(selectedText, topicId, textId);
-                            const savedSentence = isSaved ? getSentenceByGerman(selectedText, topicId, textId) : null;
-                            return isSaved && savedSentence ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeSentence(savedSentence.id)}
-                                data-testid="button-delete-sentence"
-                                className="shrink-0 text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Delete
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  addSentence(
-                                    selectedText,
-                                    translateMutation.data.translation,
-                                    topicId,
-                                    textId
-                                  );
-                                }}
-                                data-testid="button-save-sentence"
-                                className="shrink-0"
-                              >
-                                <Bookmark className="h-4 w-4 mr-1" />
-                                Save
-                              </Button>
-                            );
-                          })()}
-                        </div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Translation</p>
                         <p className="text-base text-foreground">
                           {translateMutation.data.translation}
                         </p>
@@ -602,18 +562,24 @@ function Paragraph({
   mode, 
   onInteract, 
   selectedText,
-  flashcardWords = [],
-  savedSentences = []
+  flashcardWords = []
 }: { 
   text: string, 
   mode: InteractionMode, 
   onInteract: (t: string, e: React.MouseEvent) => void,
   selectedText: string | null,
-  flashcardWords?: string[],
-  savedSentences?: string[]
+  flashcardWords?: string[]
 }) {
   const flashcardSet = new Set(flashcardWords.map(w => w.toLowerCase()));
-  const savedSentenceSet = new Set(savedSentences);
+  
+  const sentenceContainsFlashcard = (sentence: string): boolean => {
+    if (flashcardWords.length === 0) return false;
+    const normalizedSentence = sentence.toLowerCase();
+    return flashcardWords.some(word => {
+      const regex = new RegExp(`\\b${word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      return regex.test(normalizedSentence);
+    });
+  };
   
   if (mode === "sentence") {
     const sentences = text.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [text];
@@ -621,13 +587,13 @@ function Paragraph({
       <p>
         {sentences.map((sentence, idx) => {
           const trimmedSentence = sentence.trim();
-          const isSaved = savedSentenceSet.has(trimmedSentence);
+          const hasFlashcardWord = sentenceContainsFlashcard(trimmedSentence);
           return (
             <span 
               key={idx}
               onClick={(e) => onInteract(trimmedSentence, e)}
               data-testid={`sentence-${idx}`}
-              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === trimmedSentence ? 'active' : ''} ${isSaved ? 'saved-sentence' : ''}`}
+              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === trimmedSentence ? 'active' : ''} ${hasFlashcardWord ? 'eligible-sentence' : ''}`}
             >
               {sentence}
             </span>

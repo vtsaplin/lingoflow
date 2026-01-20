@@ -116,11 +116,11 @@
   @apply decoration-foreground/60 bg-muted/50;
 }
 
-/* Highlight for saved sentences */
-.saved-sentence {
+/* Highlight for sentences containing flashcard words */
+.eligible-sentence {
   @apply underline decoration-foreground/40 decoration-2 underline-offset-4;
 }
 
-.saved-sentence:hover {
+.eligible-sentence:hover {
   @apply decoration-foreground/60;
 }
