@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, RotateCcw, Layers } from "lucide-react";
 import type { Flashcard } from "@/hooks/use-flashcards";
 import type { CardsModeState, CardsQuestionState } from "./types";
+import { useTTS } from "@/hooks/use-services";
 
 function playSound(correct: boolean) {
   try {
@@ -84,14 +85,57 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
+  const lastSpokenCardIdRef = useRef<string | null>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const tts = useTTS();
 
   useEffect(() => {
     return () => {
       if (autoAdvanceTimerRef.current) {
         clearTimeout(autoAdvanceTimerRef.current);
       }
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
     };
   }, []);
+
+  useEffect(() => {
+    const { questions, currentIndex, showResults } = state;
+    const currentQuestion = questions[currentIndex];
+    
+    if (
+      currentQuestion && 
+      !showResults && 
+      currentQuestion.selectedAnswer === null &&
+      lastSpokenCardIdRef.current !== currentQuestion.cardId
+    ) {
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+      
+      lastSpokenCardIdRef.current = currentQuestion.cardId;
+      tts.mutate(
+        { text: currentQuestion.germanWord, speed: 1.0 },
+        {
+          onSuccess: (blob) => {
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            currentAudioRef.current = audio;
+            audio.play().catch(() => {});
+            audio.onended = () => {
+              URL.revokeObjectURL(url);
+              if (currentAudioRef.current === audio) {
+                currentAudioRef.current = null;
+              }
+            };
+          }
+        }
+      );
+    }
+  }, [state.currentIndex, state.questions, state.showResults, tts]);
 
   useEffect(() => {
     const flashcardCountIncreased = state.initialized && flashcards.length > state.flashcardCount;
