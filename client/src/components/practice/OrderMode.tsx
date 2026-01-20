@@ -28,7 +28,9 @@ export function OrderMode({ savedSentences, state, onStateChange, onResetProgres
   const { currentIndex, sentenceStates, flashcardCount: savedCount } = state;
 
   useEffect(() => {
-    const needsReinit = !state.initialized || (savedSentences.length > savedCount && savedCount > 0);
+    const countIncreased = savedSentences.length > savedCount && savedCount > 0;
+    const countDecreased = savedSentences.length < savedCount && savedCount > 0;
+    const needsReinit = !state.initialized || countIncreased || countDecreased;
     
     if (sentences.length > 0 && needsReinit) {
       const initialStates: Record<number, OrderSentenceState> = {};
@@ -50,6 +52,13 @@ export function OrderMode({ savedSentences, state, onStateChange, onResetProgres
       onStateChange({
         currentIndex: 0,
         sentenceStates: initialStates,
+        initialized: true,
+        flashcardCount: savedSentences.length,
+      });
+    } else if (countDecreased && sentences.length === 0) {
+      onStateChange({
+        currentIndex: 0,
+        sentenceStates: {},
         initialized: true,
         flashcardCount: savedSentences.length,
       });

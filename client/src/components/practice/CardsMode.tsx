@@ -82,7 +82,8 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
   );
 
   useEffect(() => {
-    const flashcardCountChanged = state.initialized && flashcards.length > state.flashcardCount;
+    const flashcardCountIncreased = state.initialized && flashcards.length > state.flashcardCount;
+    const flashcardCountDecreased = state.initialized && flashcards.length < state.flashcardCount;
     
     if (!state.initialized && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
       onStateChange({
@@ -92,7 +93,25 @@ export function CardsMode({ flashcards, state, onStateChange, onResetProgress, t
         initialized: true,
         flashcardCount: flashcards.length
       });
-    } else if (flashcardCountChanged && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
+    } else if (flashcardCountDecreased) {
+      if (flashcards.length >= 4 && uniqueTranslationCount >= 4) {
+        onStateChange({
+          questions: generateQuestions(flashcards),
+          currentIndex: 0,
+          showResults: false,
+          initialized: true,
+          flashcardCount: flashcards.length
+        });
+      } else {
+        onStateChange({
+          questions: [],
+          currentIndex: 0,
+          showResults: false,
+          initialized: true,
+          flashcardCount: flashcards.length
+        });
+      }
+    } else if (flashcardCountIncreased && flashcards.length >= 4 && uniqueTranslationCount >= 4) {
       const existingCardIds = new Set(state.questions.map(q => q.cardId));
       const newFlashcards = flashcards.filter(f => !existingCardIds.has(f.id));
       

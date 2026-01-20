@@ -41,7 +41,9 @@ export function WriteMode({ paragraphs, flashcardWords, state, onStateChange, on
   const totalGaps = Object.keys(gapLookup).length;
 
   useEffect(() => {
-    const flashcardCountChanged = state.initialized && flashcardWords.length > state.flashcardCount;
+    const flashcardCountIncreased = state.initialized && flashcardWords.length > state.flashcardCount;
+    const flashcardCountDecreased = state.initialized && flashcardWords.length < state.flashcardCount;
+    const flashcardCountChanged = flashcardCountIncreased || flashcardCountDecreased;
     
     if ((!state.initialized || flashcardCountChanged) && totalGaps > 0) {
       if (isCompleted && !flashcardCountChanged) {
@@ -66,6 +68,15 @@ export function WriteMode({ paragraphs, flashcardWords, state, onStateChange, on
           flashcardCount: flashcardWords.length,
         });
       }
+    } else if (flashcardCountDecreased && totalGaps === 0) {
+      onStateChange({
+        ...state,
+        inputs: {},
+        validationState: "idle",
+        incorrectGaps: [],
+        initialized: true,
+        flashcardCount: flashcardWords.length,
+      });
     }
   }, [state.initialized, state.flashcardCount, flashcardWords.length, totalGaps, onStateChange, state, isCompleted, gapLookup]);
 
