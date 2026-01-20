@@ -123,7 +123,8 @@
 
 /* Multi-select mode selected words */
 .multi-selected {
-  @apply bg-primary/20 dark:bg-primary/30 ring-2 ring-primary/50;
+  @apply bg-emerald-100 dark:bg-emerald-900/40 rounded-sm px-0.5 -mx-0.5;
+  box-shadow: 0 2px 0 0 rgb(16 185 129 / 0.6);
 }
 
 .eligible-sentence:hover {
