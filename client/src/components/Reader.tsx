@@ -351,7 +351,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
             <ScrollArea className="flex-1 px-6 sm:px-8">
               <div className="max-w-4xl mx-auto pb-8">
-                <div className="space-y-6 font-serif prose-text text-foreground/90 text-lg leading-relaxed">
+                <div className="space-y-6 font-serif prose-text text-foreground/90 text-lg leading-relaxed select-none">
                   {paragraphs.map((para, i) => (
                     <Paragraph 
                       key={i} 
