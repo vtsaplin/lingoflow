@@ -480,7 +480,16 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                           data-testid="button-deselect-all"
                         >
                           <Eraser className="h-4 w-4 mr-2" />
-                          Deselect All
+                          Clear
+                        </Button>
+                      )}
+                      {multiSelectMode && selectedWords.size === 0 && flashcardsForText.length > 0 && (
+                        <Button 
+                          variant="ghost"
+                          onClick={() => setSelectedWords(new Set(flashcardsForText.map(f => f.german.toLowerCase())))}
+                          data-testid="button-select-all"
+                        >
+                          Select All
                         </Button>
                       )}
                     </>
