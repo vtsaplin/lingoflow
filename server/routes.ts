@@ -7,7 +7,7 @@ import { translate, dictionary, tts } from "./azure";
 import { registerPodcastRoutes } from "./podcast";
 import { generateCombinedMp3 } from "./combined-mp3";
 import { z } from "zod";
-import { convertWebmToWav } from "./replit_integrations/audio/client";
+import { convertWebmToWav } from "./audio-utils";
 import { transcribeWithAzureWhisper } from "./azure-whisper";
 
 export async function registerRoutes(
