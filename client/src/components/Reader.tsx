@@ -32,7 +32,7 @@ interface ReaderProps {
 
 export function Reader({ topicId, textId, topicTitle, title, paragraphs }: ReaderProps) {
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("read");
-  const [interactionMode, setInteractionMode] = useState<InteractionMode>("sentence");
+  const [interactionMode, setInteractionMode] = useState<InteractionMode>("word");
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const [isReadingAll, setIsReadingAll] = useState(false);
   const [slowMode, setSlowMode] = useState(false);
