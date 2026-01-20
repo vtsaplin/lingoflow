@@ -2,7 +2,7 @@ import { MousePointer2, Volume2, BookOpen, Languages } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="max-w-3xl mx-auto py-12 px-6 sm:px-8">
+    <div className="max-w-4xl mx-auto py-12 px-6 sm:px-8">
       <div className="space-y-4 mb-12 text-center">
         <h1 className="text-4xl sm:text-5xl font-serif font-bold tracking-tight text-foreground">
           LingoFlow
@@ -22,7 +22,7 @@ export default function Home() {
             </div>
             <div>
               <h3 className="font-medium text-foreground">Choose a text</h3>
-              <p className="text-muted-foreground text-sm">Pick a topic from the sidebar</p>
+              <p className="text-muted-foreground text-sm">Pick a topic from the sidebar and start reading</p>
             </div>
           </div>
 
@@ -32,7 +32,7 @@ export default function Home() {
             </div>
             <div>
               <h3 className="font-medium text-foreground">Click to learn</h3>
-              <p className="text-muted-foreground text-sm">Words or sentences — you choose</p>
+              <p className="text-muted-foreground text-sm">Tap any word for definition, or sentence for translation</p>
             </div>
           </div>
 
@@ -42,7 +42,7 @@ export default function Home() {
             </div>
             <div>
               <h3 className="font-medium text-foreground">Listen and repeat</h3>
-              <p className="text-muted-foreground text-sm">Audio plays automatically</p>
+              <p className="text-muted-foreground text-sm">Audio plays automatically when you click</p>
             </div>
           </div>
 
@@ -52,7 +52,7 @@ export default function Home() {
             </div>
             <div>
               <h3 className="font-medium text-foreground">Your language</h3>
-              <p className="text-muted-foreground text-sm">Translations in Russian</p>
+              <p className="text-muted-foreground text-sm">All translations and definitions in Russian</p>
             </div>
           </div>
         </div>
