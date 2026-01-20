@@ -473,25 +473,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         <MousePointer2 className="h-4 w-4" />
                         {multiSelectMode ? "Cancel" : "Select"}
                       </Button>
-                      {multiSelectMode && selectedWords.size > 0 && (
-                        <Button 
-                          variant="ghost"
-                          onClick={() => setSelectedWords(new Set())}
-                          data-testid="button-deselect-all"
-                        >
-                          <Eraser className="h-4 w-4 mr-2" />
-                          Clear
-                        </Button>
-                      )}
-                      {multiSelectMode && selectedWords.size === 0 && flashcardsForText.length > 0 && (
-                        <Button 
-                          variant="ghost"
-                          onClick={() => setSelectedWords(new Set(flashcardsForText.map(f => f.german.toLowerCase())))}
-                          data-testid="button-select-all"
-                        >
-                          Select All
-                        </Button>
-                      )}
                     </>
                   )}
 
@@ -667,7 +648,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               </div>
             )}
 
-            {multiSelectMode && (selectedWords.size > 0 || flashcardsForText.length > 0) && !selectedText && (
+            {multiSelectMode && !selectedText && (
               <div className="border-t bg-card animate-in slide-in-from-bottom-4">
                 <div className="max-w-4xl mx-auto px-6 sm:px-8 py-4">
                   <div className="flex justify-between items-center gap-4">
@@ -675,34 +656,48 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       <span className="font-medium text-foreground">{selectedWords.size}</span> words selected
                     </span>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => setSelectedWords(new Set())}
-                        data-testid="button-clear-selection"
-                      >
-                        Clear
-                      </Button>
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={handleBatchSave}
-                        disabled={isBatchSaving}
-                        data-testid="button-batch-save"
-                        className="gap-2"
-                      >
-                        {isBatchSaving ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Check className="h-4 w-4" />
-                            Save All
-                          </>
-                        )}
-                      </Button>
+                      {selectedWords.size === 0 && flashcardsForText.length > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setSelectedWords(new Set(flashcardsForText.map(f => f.german.toLowerCase())))}
+                          data-testid="button-select-all"
+                        >
+                          Select All
+                        </Button>
+                      )}
+                      {selectedWords.size > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setSelectedWords(new Set())}
+                          data-testid="button-clear-selection"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                      {selectedWords.size > 0 && (
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={handleBatchSave}
+                          disabled={isBatchSaving}
+                          data-testid="button-batch-save"
+                          className="gap-2"
+                        >
+                          {isBatchSaving ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Save
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
