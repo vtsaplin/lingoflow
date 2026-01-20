@@ -9,6 +9,7 @@ interface OrderModeProps {
   state: OrderModeState;
   onStateChange: (state: OrderModeState) => void;
   onResetProgress?: () => void;
+  onClearSentences?: () => void;
   isCompleted?: boolean;
 }
 
@@ -18,7 +19,7 @@ interface SentenceWithWords {
   words: string[];
 }
 
-export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
+export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, onClearSentences, isCompleted = false }: OrderModeProps) {
   const sentences = useMemo(() => {
     return inputSentences.map(s => ({
       original: s.german,
@@ -72,10 +73,10 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
-          Нет сохранённых предложений.
+          No saved sentences for this text yet.
         </p>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          В режиме чтения (предложения) нажмите на предложение и сохраните его для практики.
+          Switch to Study mode (Sentence), click on a sentence, and save it for practice.
         </p>
       </div>
     );
@@ -368,6 +369,15 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                 data-testid="button-reset-all"
               >
                 Reset All
+              </Button>
+            )}
+            {onClearSentences && (
+              <Button 
+                variant="ghost" 
+                onClick={onClearSentences}
+                data-testid="button-clear-sentences"
+              >
+                Clear Sentences
               </Button>
             )}
           </div>
