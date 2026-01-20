@@ -109,7 +109,7 @@
 
 /* Highlight for words saved in flashcard dictionary */
 .flashcard-word {
-  @apply underline decoration-dashed decoration-foreground decoration-1 underline-offset-4;
+  @apply underline decoration-solid decoration-foreground decoration-1 underline-offset-4;
 }
 
 .flashcard-word:hover {
