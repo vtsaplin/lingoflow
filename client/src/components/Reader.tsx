@@ -430,6 +430,48 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       >
                         {ttsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
                       </Button>
+                      {interactionMode === "word" && (() => {
+                        const isSaved = hasFlashcard(selectedText, topicId, textId);
+                        const savedFlashcard = isSaved ? getFlashcardByGerman(selectedText, topicId, textId) : null;
+                        const canSave = dictionaryMutation.isSuccess && dictionaryMutation.data;
+                        return isSaved && savedFlashcard ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFlashcard(savedFlashcard.id)}
+                            data-testid="button-delete-flashcard"
+                            className="shrink-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Удалить
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (canSave) {
+                                addFlashcard(
+                                  dictionaryMutation.data.word,
+                                  dictionaryMutation.data.translation,
+                                  topicId,
+                                  textId
+                                );
+                              }
+                            }}
+                            disabled={!canSave}
+                            data-testid="button-save-flashcard"
+                            className="shrink-0"
+                          >
+                            {dictionaryMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <Bookmark className="h-4 w-4 mr-1" />
+                            )}
+                            Сохранить
+                          </Button>
+                        );
+                      })()}
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -463,49 +505,13 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
                     {dictionaryMutation.isSuccess && (
                       <div className="animate-in fade-in space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-baseline gap-2 flex-wrap">
-                            <span className="font-bold">{dictionaryMutation.data.word}</span>
-                            {dictionaryMutation.data.partOfSpeech && (
-                              <span className="text-xs text-muted-foreground italic">{dictionaryMutation.data.partOfSpeech}</span>
-                            )}
-                            <span className="text-muted-foreground">—</span>
-                            <span className="font-medium">{dictionaryMutation.data.translation}</span>
-                          </div>
-                          {(() => {
-                            const isSaved = hasFlashcard(dictionaryMutation.data.word, topicId, textId);
-                            const savedFlashcard = isSaved ? getFlashcardByGerman(dictionaryMutation.data.word, topicId, textId) : null;
-                            return isSaved && savedFlashcard ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeFlashcard(savedFlashcard.id)}
-                                data-testid="button-delete-flashcard"
-                                className="shrink-0 text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Delete
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  addFlashcard(
-                                    dictionaryMutation.data.word,
-                                    dictionaryMutation.data.translation,
-                                    topicId,
-                                    textId
-                                  );
-                                }}
-                                data-testid="button-save-flashcard"
-                                className="shrink-0"
-                              >
-                                <Bookmark className="h-4 w-4 mr-1" />
-                                Save
-                              </Button>
-                            );
-                          })()}
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="font-bold">{dictionaryMutation.data.word}</span>
+                          {dictionaryMutation.data.partOfSpeech && (
+                            <span className="text-xs text-muted-foreground italic">{dictionaryMutation.data.partOfSpeech}</span>
+                          )}
+                          <span className="text-muted-foreground">—</span>
+                          <span className="font-medium">{dictionaryMutation.data.translation}</span>
                         </div>
                         
                         {dictionaryMutation.data.definition && (
