@@ -61,7 +61,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const { addFlashcard, removeFlashcard, hasFlashcard, getFlashcardByGerman, getFlashcardsForText } = useFlashcards();
   const flashcardsForText = getFlashcardsForText(topicId, textId);
   
-  const { getSentencesForText, clearSentencesForText } = useSavedSentences();
+  const { getSentencesForText } = useSavedSentences();
   const savedSentencesForText = getSentencesForText(topicId, textId);
   
   const { toast } = useToast();
@@ -736,11 +736,10 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "order" && (
           <OrderMode 
-            sentences={savedSentencesForText}
+            sentences={eligibleSentences}
             state={practiceState.order}
             onStateChange={updateOrderState}
             onResetProgress={() => resetModeProgress(topicId, textId, "order")}
-            onClearSentences={() => clearSentencesForText(topicId, textId)}
             isCompleted={progress.order}
           />
         )}

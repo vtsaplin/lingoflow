@@ -1,30 +1,41 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown } from "lucide-react";
+import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown, Languages, Loader2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import type { OrderModeState, OrderSentenceState } from "./types";
-import type { SavedSentence } from "@/hooks/use-saved-sentences";
 
 interface OrderModeProps {
-  sentences: SavedSentence[];
+  sentences: string[];
   state: OrderModeState;
   onStateChange: (state: OrderModeState) => void;
   onResetProgress?: () => void;
-  onClearSentences?: () => void;
   isCompleted?: boolean;
 }
 
 interface SentenceWithWords {
   original: string;
-  translation: string;
   words: string[];
 }
 
-export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, onClearSentences, isCompleted = false }: OrderModeProps) {
+export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
+  const [translations, setTranslations] = useState<Record<number, string>>({});
+  
+  const translateMutation = useMutation({
+    mutationFn: async ({ text, index }: { text: string; index: number }) => {
+      const res = await apiRequest("POST", "/api/translate", { text });
+      const data = await res.json();
+      return { translation: data.translation, index };
+    },
+    onSuccess: (data) => {
+      setTranslations(prev => ({ ...prev, [data.index]: data.translation }));
+    },
+  });
+
   const sentences = useMemo(() => {
     return inputSentences.map(s => ({
-      original: s.german,
-      translation: s.translation,
-      words: extractWords(s.german)
+      original: s,
+      words: extractWords(s)
     })).filter(s => s.words.length >= 3);
   }, [inputSentences]);
   
@@ -73,10 +84,10 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
-          No saved sentences for this text yet.
+          No sentences with flashcard words found.
         </p>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Switch to Study mode (Sentence), click on a sentence, and save it for practice.
+          Add words to your flashcards in Study mode to practice sentence ordering.
         </p>
       </div>
     );
@@ -87,10 +98,10 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
-          Сохранённые предложения слишком короткие.
+          Sentences are too short for practice.
         </p>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Для практики нужны предложения минимум из 3 слов.
+          Sentences need at least 3 words for ordering practice.
         </p>
       </div>
     );
@@ -150,32 +161,28 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     e.preventDefault();
     const word = e.dataTransfer.getData("word");
     const fromOrdered = e.dataTransfer.getData("fromOrdered") === "true";
-    const sourceIndex = parseInt(e.dataTransfer.getData("index"));
+    const originalIndex = parseInt(e.dataTransfer.getData("index"));
 
     if (fromOrdered) {
-      if (dropIndex !== undefined && dropIndex !== sourceIndex) {
-        const newArr = [...orderedWords];
-        newArr.splice(sourceIndex, 1);
-        newArr.splice(dropIndex > sourceIndex ? dropIndex - 1 : dropIndex, 0, word);
-        updateCurrentSentenceState({ orderedWords: newArr, validationState: "idle" });
-      }
-    } else {
-      const newShuffled = shuffledWords.filter((_, i) => i !== sourceIndex);
-      if (dropIndex !== undefined) {
+      if (dropIndex !== undefined && dropIndex !== originalIndex) {
         const newOrdered = [...orderedWords];
-        newOrdered.splice(dropIndex, 0, word);
+        newOrdered.splice(originalIndex, 1);
+        newOrdered.splice(dropIndex > originalIndex ? dropIndex - 1 : dropIndex, 0, word);
         updateCurrentSentenceState({
-          shuffledWords: newShuffled,
           orderedWords: newOrdered,
           validationState: "idle",
         });
-      } else {
-        updateCurrentSentenceState({
-          shuffledWords: newShuffled,
-          orderedWords: [...orderedWords, word],
-          validationState: "idle",
-        });
       }
+    } else {
+      const newShuffled = shuffledWords.filter((_, i) => i !== originalIndex);
+      const newOrdered = dropIndex !== undefined 
+        ? [...orderedWords.slice(0, dropIndex), word, ...orderedWords.slice(dropIndex)]
+        : [...orderedWords, word];
+      updateCurrentSentenceState({
+        shuffledWords: newShuffled,
+        orderedWords: newOrdered,
+        validationState: "idle",
+      });
     }
   };
 
@@ -183,11 +190,11 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     e.preventDefault();
     const word = e.dataTransfer.getData("word");
     const fromOrdered = e.dataTransfer.getData("fromOrdered") === "true";
-    const sourceIndex = parseInt(e.dataTransfer.getData("index"));
+    const originalIndex = parseInt(e.dataTransfer.getData("index"));
 
     if (fromOrdered) {
       updateCurrentSentenceState({
-        orderedWords: orderedWords.filter((_, i) => i !== sourceIndex),
+        orderedWords: orderedWords.filter((_, i) => i !== originalIndex),
         shuffledWords: [...shuffledWords, word],
         validationState: "idle",
       });
@@ -195,7 +202,9 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
   };
 
   const handleCheck = () => {
-    const isCorrect = orderedWords.join(" ") === currentSentence.words.join(" ");
+    const userAnswer = orderedWords.join(" ");
+    const correctAnswer = currentSentence.words.join(" ");
+    const isCorrect = userAnswer === correctAnswer;
     updateCurrentSentenceState({
       validationState: isCorrect ? "correct" : "incorrect",
     });
@@ -220,6 +229,14 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       onStateChange({ ...state, currentIndex: currentIndex - 1 });
     }
   };
+
+  const handleTranslate = () => {
+    if (!translations[currentIndex] && !translateMutation.isPending) {
+      translateMutation.mutate({ text: currentSentence.original, index: currentIndex });
+    }
+  };
+
+  const currentTranslation = translations[currentIndex];
 
   return (
     <div className="flex flex-col h-full">
@@ -255,8 +272,32 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
           </div>
           
           <div className="mb-6 p-4 bg-muted/30 rounded-lg border" data-testid="text-translation-hint">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Translation:</p>
-            <p className="text-base font-medium">{currentSentence.translation}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Translation hint:</p>
+              {!currentTranslation && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleTranslate}
+                  disabled={translateMutation.isPending}
+                  data-testid="button-show-translation"
+                >
+                  {translateMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Languages className="h-4 w-4 mr-1" />
+                      Show
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            {currentTranslation ? (
+              <p className="text-base font-medium">{currentTranslation}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Click "Show" to see translation</p>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -277,26 +318,27 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
               <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Your answer:</p>
               <div className="flex flex-wrap gap-2">
                 {orderedWords.length === 0 && (
-                  <span className="text-muted-foreground text-sm italic">
-                    Drag words here in the correct order
-                  </span>
+                  <p className="text-sm text-muted-foreground italic">Drag or click words to place them here</p>
                 )}
                 {orderedWords.map((word, idx) => (
-                  <span
+                  <button
                     key={`ordered-${idx}`}
-                    draggable
                     onClick={() => handleWordClick(word, true)}
+                    draggable
                     onDragStart={(e) => handleDragStart(e, word, true, idx)}
-                    onDrop={(e) => {
-                      e.stopPropagation();
-                      handleDropOnOrdered(e, idx);
-                    }}
+                    onDrop={(e) => handleDropOnOrdered(e, idx)}
                     onDragOver={(e) => e.preventDefault()}
+                    className={`px-3 py-2 rounded-md font-medium cursor-pointer transition-all hover-elevate active-elevate-2 ${
+                      validationState === "correct"
+                        ? "bg-green-500 text-white"
+                        : validationState === "incorrect"
+                          ? "bg-destructive text-destructive-foreground"
+                          : "bg-primary text-primary-foreground"
+                    }`}
                     data-testid={`ordered-word-${idx}`}
-                    className="px-3 py-1.5 bg-background border rounded-md cursor-grab active:cursor-grabbing hover:bg-accent transition-colors text-base font-serif"
                   >
                     {word}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -309,44 +351,59 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
             >
               <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Available words:</p>
               <div className="flex flex-wrap gap-2">
-                {shuffledWords.length === 0 && (
-                  <span className="text-muted-foreground text-sm">All words placed</span>
+                {shuffledWords.length === 0 && orderedWords.length > 0 && (
+                  <p className="text-sm text-muted-foreground italic">All words placed</p>
                 )}
                 {shuffledWords.map((word, idx) => (
-                  <span
+                  <button
                     key={`shuffled-${idx}`}
-                    draggable
                     onClick={() => handleWordClick(word, false)}
+                    draggable
                     onDragStart={(e) => handleDragStart(e, word, false, idx)}
+                    className="px-3 py-2 rounded-md bg-secondary text-secondary-foreground font-medium cursor-pointer transition-all hover-elevate active-elevate-2"
                     data-testid={`shuffled-word-${idx}`}
-                    className="px-3 py-1.5 bg-background border rounded-md cursor-grab active:cursor-grabbing hover:bg-accent transition-colors text-base font-serif"
                   >
                     {word}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
           </div>
+
+          <div className="flex items-center gap-2 mt-6 text-sm">
+            {Object.values(sentenceStates).map((s, idx) => (
+              <div
+                key={idx}
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                  s.validationState === "correct"
+                    ? "bg-green-500 text-white"
+                    : idx === currentIndex
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                }`}
+                data-testid={`sentence-indicator-${idx}`}
+              >
+                {s.validationState === "correct" ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : s.validationState === "incorrect" ? (
+                  <XCircle className="h-4 w-4" />
+                ) : (
+                  idx + 1
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-
-      <div className="border-t bg-card px-6 sm:px-8 py-4">
-        <div className="max-w-3xl mx-auto">
-          {validationState === "correct" && (
-            <div className="flex items-center gap-2 mb-4 text-green-600 dark:text-green-400">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">Correct!</span>
-            </div>
-          )}
-          {validationState === "incorrect" && (
-            <div className="flex items-center gap-2 mb-4 text-destructive">
-              <XCircle className="h-5 w-5" />
-              <span className="font-medium">Incorrect order. Try again!</span>
-            </div>
-          )}
-
+      
+      <div className="border-t bg-card">
+        <div className="max-w-3xl mx-auto px-6 sm:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex gap-2">
-            <Button onClick={handleCheck} data-testid="button-check">
+            <Button
+              onClick={handleCheck}
+              disabled={orderedWords.length !== currentSentence.words.length || validationState !== "idle"}
+              data-testid="button-check"
+            >
               <Check className="h-4 w-4 mr-2" />
               Check
             </Button>
@@ -359,6 +416,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                 variant="ghost" 
                 onClick={() => {
                   onResetProgress();
+                  setTranslations({});
                   onStateChange({
                     currentIndex: 0,
                     sentenceStates: {},
@@ -371,20 +429,18 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                 Reset All
               </Button>
             )}
-            {onClearSentences && (
-              <Button 
-                variant="ghost" 
-                onClick={onClearSentences}
-                data-testid="button-clear-sentences"
-              >
-                Clear Sentences
-              </Button>
-            )}
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function extractWords(text: string): string[] {
+  return text
+    .split(/\s+/)
+    .map(word => word.trim())
+    .filter(word => word.length > 0);
 }
 
 function shuffleArray<T>(array: T[]): T[] {
@@ -394,8 +450,4 @@ function shuffleArray<T>(array: T[]): T[] {
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
-}
-
-function extractWords(text: string): string[] {
-  return text.split(/\s+/).filter(w => w.length > 0);
 }
