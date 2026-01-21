@@ -430,59 +430,79 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             <div className="px-6 sm:px-8 py-4">
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex bg-muted p-1 rounded-lg">
-                    <button
-                      onClick={() => setInteractionMode("word")}
-                      data-testid="mode-word"
-                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        interactionMode === "word" 
-                          ? "bg-background shadow-sm text-foreground" 
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Word
-                    </button>
-                    <button
-                      onClick={() => setInteractionMode("sentence")}
-                      data-testid="mode-sentence"
-                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        interactionMode === "sentence" 
-                          ? "bg-background shadow-sm text-foreground" 
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Sentence
-                    </button>
-                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex bg-muted p-1 rounded-lg">
+                      <button
+                        onClick={() => setInteractionMode("word")}
+                        data-testid="mode-word"
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                          interactionMode === "word" 
+                            ? "bg-background shadow-sm text-foreground" 
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Word
+                      </button>
+                      <button
+                        onClick={() => setInteractionMode("sentence")}
+                        data-testid="mode-sentence"
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                          interactionMode === "sentence" 
+                            ? "bg-background shadow-sm text-foreground" 
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Sentence
+                      </button>
+                    </div>
 
-                  <div className="flex bg-muted p-1 rounded-lg">
-                    <button
-                      onClick={() => setSlowMode(false)}
-                      data-testid="speed-normal"
-                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        !slowMode 
-                          ? "bg-background shadow-sm text-foreground" 
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
+                    <div className="flex bg-muted p-1 rounded-lg">
+                      <button
+                        onClick={() => setSlowMode(false)}
+                        data-testid="speed-normal"
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                          !slowMode 
+                            ? "bg-background shadow-sm text-foreground" 
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        1x
+                      </button>
+                      <button
+                        onClick={() => setSlowMode(true)}
+                        data-testid="speed-slow"
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                          slowMode 
+                            ? "bg-background shadow-sm text-foreground" 
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        0.7x
+                      </button>
+                    </div>
+
+                    <Button 
+                      variant="outline" 
+                      onClick={handleReadAll}
+                      disabled={ttsMutation.isPending && isReadingAll}
+                      data-testid="button-read-all"
                     >
-                      1x
-                    </button>
-                    <button
-                      onClick={() => setSlowMode(true)}
-                      data-testid="speed-slow"
-                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        slowMode 
-                          ? "bg-background shadow-sm text-foreground" 
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      0.7x
-                    </button>
+                      {isReadingAll ? (
+                        <>
+                          <StopCircle className="h-4 w-4 mr-2" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <PlayCircle className="h-4 w-4 mr-2" />
+                          Read All
+                        </>
+                      )}
+                    </Button>
                   </div>
 
                   {interactionMode === "word" && (
-                    <>
-                      <Separator orientation="vertical" className="h-6" />
+                    <div className="ml-auto">
                       <Button 
                         variant={multiSelectMode ? "default" : "outline"}
                         onClick={toggleMultiSelectMode}
@@ -492,27 +512,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         <MousePointer2 className="h-4 w-4" />
                         {multiSelectMode ? "Cancel" : "Select"}
                       </Button>
-                    </>
+                    </div>
                   )}
-
-                  <Button 
-                    variant="outline" 
-                    onClick={handleReadAll}
-                    disabled={ttsMutation.isPending && isReadingAll}
-                    data-testid="button-read-all"
-                  >
-                    {isReadingAll ? (
-                      <>
-                        <StopCircle className="h-4 w-4 mr-2" />
-                        Stop
-                      </>
-                    ) : (
-                      <>
-                        <PlayCircle className="h-4 w-4 mr-2" />
-                        Read All
-                      </>
-                    )}
-                  </Button>
                 </div>
                 <p className="text-sm text-muted-foreground mt-3">
                   {multiSelectMode 
