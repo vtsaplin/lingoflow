@@ -482,15 +482,15 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
                   {interactionMode === "word" && (
                     <>
-                      <Separator orientation="vertical" className="h-6 mx-2" />
+                      <Separator orientation="vertical" className="h-6" />
                       <Button 
-                        variant={multiSelectMode ? "secondary" : "default"}
+                        variant={multiSelectMode ? "default" : "outline"}
                         onClick={toggleMultiSelectMode}
                         data-testid="button-multi-select"
-                        className="gap-2 font-medium"
+                        className="gap-2"
                       >
                         <MousePointer2 className="h-4 w-4" />
-                        {multiSelectMode ? "Cancel" : "Select Words"}
+                        {multiSelectMode ? "Cancel" : "Select"}
                       </Button>
                     </>
                   )}
