@@ -279,6 +279,12 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     }
   }, [interactionMode, multiSelectMode]);
 
+  useEffect(() => {
+    setMultiSelectMode(false);
+    setSelectedWords(new Set());
+    setSelectedText(null);
+  }, [topicId, textId]);
+
   const handleReadAll = async () => {
     if (isReadingAll) {
       if (audioRef.current) {
