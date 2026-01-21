@@ -10,8 +10,6 @@ export interface TextProgress {
   cardsDeRu: boolean;
   cardsRuDe: boolean;
   speak: boolean;
-  flashcardCount: number;
-  sentenceCount: number;
 }
 
 interface ProgressStore {
@@ -51,7 +49,7 @@ function getSnapshot(): ProgressStore {
 }
 
 function createDefaultProgress(): TextProgress {
-  return { fill: false, order: false, write: false, cards: false, cardsDeRu: false, cardsRuDe: false, speak: false, flashcardCount: 0, sentenceCount: 0 };
+  return { fill: false, order: false, write: false, cards: false, cardsDeRu: false, cardsRuDe: false, speak: false };
 }
 
 function setModeCompleteInternal(topicId: string, textId: string, mode: "fill" | "order" | "write" | "cards" | "cardsDeRu" | "cardsRuDe" | "speak") {
@@ -94,56 +92,6 @@ function resetModeProgressInternal(topicId: string, textId: string, mode: "fill"
   notifyListeners();
 }
 
-function updateFlashcardCountInternal(topicId: string, textId: string, count: number) {
-  const key = `${topicId}-${textId}`;
-  const current = progressState[key] || createDefaultProgress();
-  const currentFlashcardCount = current.flashcardCount ?? 0;
-  
-  if (count !== currentFlashcardCount) {
-    // Reset flashcard-dependent modes when count changes (increase or decrease)
-    progressState = {
-      ...progressState,
-      [key]: { 
-        ...current, 
-        flashcardCount: count,
-        fill: false,
-        write: false,
-        cards: false,
-        cardsDeRu: false,
-        cardsRuDe: false
-      }
-    };
-    saveToStorage(progressState);
-    notifyListeners();
-  }
-}
-
-function updateSentenceCountInternal(topicId: string, textId: string, count: number) {
-  const key = `${topicId}-${textId}`;
-  const current = progressState[key] || createDefaultProgress();
-  const currentSentenceCount = current.sentenceCount ?? 0;
-  
-  if (count > currentSentenceCount) {
-    progressState = {
-      ...progressState,
-      [key]: { 
-        ...current, 
-        sentenceCount: count,
-        order: false
-      }
-    };
-    saveToStorage(progressState);
-    notifyListeners();
-  } else if (count !== currentSentenceCount) {
-    progressState = {
-      ...progressState,
-      [key]: { ...current, sentenceCount: count }
-    };
-    saveToStorage(progressState);
-    notifyListeners();
-  }
-}
-
 function resetTextProgressInternal(topicId: string, textId: string) {
   const key = `${topicId}-${textId}`;
   const { [key]: _, ...rest } = progressState;
@@ -171,14 +119,6 @@ export function usePracticeProgress() {
     resetModeProgressInternal(topicId, textId, mode);
   }, []);
 
-  const updateFlashcardCount = useCallback((topicId: string, textId: string, count: number) => {
-    updateFlashcardCountInternal(topicId, textId, count);
-  }, []);
-
-  const updateSentenceCount = useCallback((topicId: string, textId: string, count: number) => {
-    updateSentenceCountInternal(topicId, textId, count);
-  }, []);
-
   const resetTextProgress = useCallback((topicId: string, textId: string) => {
     resetTextProgressInternal(topicId, textId);
   }, []);
@@ -201,8 +141,6 @@ export function usePracticeProgress() {
     getTextProgress,
     setModeComplete,
     resetModeProgress,
-    updateFlashcardCount,
-    updateSentenceCount,
     resetTextProgress,
     getCompletionCount,
     isTextComplete,

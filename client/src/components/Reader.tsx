@@ -53,7 +53,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     activeTextKey 
   } = usePracticeState(topicId, textId);
   
-  const { setModeComplete, resetModeProgress, updateFlashcardCount, updateSentenceCount, getCompletionCount, isTextComplete, getTextProgress, resetTextProgress } = usePracticeProgress();
+  const { setModeComplete, resetModeProgress, getCompletionCount, isTextComplete, getTextProgress, resetTextProgress } = usePracticeProgress();
   const completionCount = getCompletionCount(topicId, textId);
   const completionPercentage = Math.round((completionCount / 5) * 100);
   const textComplete = isTextComplete(topicId, textId);
@@ -91,16 +91,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     });
     return allSentences;
   }, [paragraphs, flashcardsForText]);
-
-  useEffect(() => {
-    if (activeTextKey !== textKey) return;
-    updateFlashcardCount(topicId, textId, flashcardsForText.length);
-  }, [flashcardsForText.length, topicId, textId, updateFlashcardCount, activeTextKey, textKey]);
-
-  useEffect(() => {
-    if (activeTextKey !== textKey) return;
-    updateSentenceCount(topicId, textId, eligibleSentences.length);
-  }, [eligibleSentences.length, topicId, textId, updateSentenceCount, activeTextKey, textKey]);
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
@@ -229,6 +219,12 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       setSelectedWords(new Set());
       setMultiSelectMode(false);
       
+      // Reset all practice progress and state when flashcards change
+      if (savedCount > 0 || removedCount > 0) {
+        resetTextProgress(topicId, textId);
+        resetPracticeState();
+      }
+      
       const messages: string[] = [];
       if (savedCount > 0) messages.push(`added ${savedCount}`);
       if (removedCount > 0) messages.push(`removed ${removedCount}`);
@@ -236,7 +232,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       if (messages.length > 0) {
         toast({
           title: "Flashcards updated",
-          description: messages.join(', ') + ' words',
+          description: messages.join(', ') + ' words. Progress reset.',
         });
       }
       
@@ -574,7 +570,11 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => removeFlashcard(savedFlashcard.id)}
+                            onClick={() => {
+                              removeFlashcard(savedFlashcard.id);
+                              resetTextProgress(topicId, textId);
+                              resetPracticeState();
+                            }}
                             data-testid="button-delete-flashcard"
                             className="shrink-0 text-destructive hover:text-destructive"
                           >
@@ -593,6 +593,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                                   topicId,
                                   textId
                                 );
+                                resetTextProgress(topicId, textId);
+                                resetPracticeState();
                               }
                             }}
                             disabled={!canSave}
