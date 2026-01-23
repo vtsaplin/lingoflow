@@ -456,6 +456,11 @@ export function SpeakMode({
 
           {state === "listening" && (
             <div className="flex flex-col items-center gap-4 py-8">
+              {!isPlaying && (
+                <p className="text-sm text-muted-foreground animate-pulse">
+                  Ваша очередь — нажмите кнопку и ответьте
+                </p>
+              )}
               <Button
                 size="lg"
                 onClick={startRecording}
@@ -463,7 +468,7 @@ export function SpeakMode({
                 data-testid="button-start-recording"
               >
                 <Mic className="h-5 w-5 mr-2" />
-                Start Recording
+                {isPlaying ? "Playing..." : "Start Recording"}
               </Button>
             </div>
           )}
