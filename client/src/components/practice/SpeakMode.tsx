@@ -133,7 +133,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
       audio.onerror = () => {
         if (mountedRef.current) {
           setIsPlaying(false);
-          setError("Ошибка воспроизведения");
+          setError("Playback error");
         }
       };
       
@@ -141,7 +141,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
     } catch (err) {
       if (!mountedRef.current) return;
       setIsPlaying(false);
-      setError("Ошибка синтеза речи");
+      setError("Speech synthesis error");
       console.error("TTS error:", err);
     }
   }, [currentSentence, isPlaying, stopCurrentAudio, ttsMutation]);
@@ -187,7 +187,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
       setIsRecording(true);
       setState("recording");
     } catch (err) {
-      setError("Не удалось получить доступ к микрофону");
+      setError("Could not access microphone");
       console.error("Microphone error:", err);
     }
   };
@@ -244,7 +244,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
     } catch (err) {
       if (!mountedRef.current) return;
       if ((err as Error).name === "AbortError") return;
-      setError("Ошибка распознавания речи");
+      setError("Speech recognition error");
       console.error("Transcription error:", err);
       setState("listening");
     } finally {
@@ -274,8 +274,8 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
         <Mic className="h-12 w-12 mb-4 opacity-50" />
-        <p className="text-lg font-medium">Нет предложений для практики</p>
-        <p className="text-sm mt-2">Сохраните слова в карточки в режиме чтения</p>
+        <p className="text-lg font-medium">No sentences for practice</p>
+        <p className="text-sm mt-2">Save words to flashcards in reading mode</p>
       </div>
     );
   }
@@ -302,7 +302,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
     <div className="flex flex-col gap-6 p-4 max-w-2xl mx-auto">
       <div className="flex items-center gap-4">
         <span className="text-sm text-muted-foreground">
-          Предложение {currentIndex + 1} из {sentences.length}
+          Sentence {currentIndex + 1} of {sentences.length}
         </span>
         <Progress value={progressValue} className="flex-1" />
       </div>
@@ -324,7 +324,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
 
           {state === "listening" && (
             <div className="flex flex-col items-center gap-4">
-              <p className="text-muted-foreground">Прослушайте предложение и нажмите для записи</p>
+              <p className="text-muted-foreground">Listen to the sentence and click to record</p>
               <Button
                 size="lg"
                 onClick={startRecording}
@@ -332,7 +332,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
                 data-testid="button-start-recording"
               >
                 <Mic className="h-5 w-5 mr-2" />
-                Начать запись
+                Start Recording
               </Button>
             </div>
           )}
@@ -341,7 +341,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
             <div className="flex flex-col items-center gap-4">
               <div className="flex items-center gap-2 text-red-500">
                 <span className="animate-pulse">●</span>
-                <span>Запись...</span>
+                <span>Recording...</span>
               </div>
               <Button
                 size="lg"
@@ -350,7 +350,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
                 data-testid="button-stop-recording"
               >
                 <MicOff className="h-5 w-5 mr-2" />
-                Остановить
+                Stop
               </Button>
             </div>
           )}
@@ -358,7 +358,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
           {state === "processing" && (
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              <p className="text-muted-foreground">Распознавание речи...</p>
+              <p className="text-muted-foreground">Recognizing speech...</p>
             </div>
           )}
 
@@ -368,18 +368,18 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
                 {comparison.isCorrect ? (
                   <>
                     <CheckCircle2 className="h-5 w-5" />
-                    <span className="font-medium">Отлично!</span>
+                    <span className="font-medium">Excellent!</span>
                   </>
                 ) : (
                   <>
                     <XCircle className="h-5 w-5" />
-                    <span className="font-medium">Попробуйте ещё раз</span>
+                    <span className="font-medium">Try again</span>
                   </>
                 )}
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Ваш ответ:</p>
+                <p className="text-sm text-muted-foreground">Your answer:</p>
                 <p className="text-lg">
                   {comparison.wordResults.map((wr, i) => (
                     <span
@@ -398,11 +398,11 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
               <div className="flex gap-2 pt-4">
                 <Button variant="outline" onClick={resetCurrent} data-testid="button-retry">
                   <RotateCcw className="h-4 w-4 mr-2" />
-                  Повторить
+                  Retry
                 </Button>
                 {!isComplete && (
                   <Button onClick={nextSentence} data-testid="button-next">
-                    Далее
+                    Next
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 )}
@@ -410,11 +410,11 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
                   <>
                     <Button variant="default" disabled>
                       <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Завершено
+                      Complete
                     </Button>
                     <Button variant="outline" onClick={handleReset} data-testid="button-reset-speak">
                       <RotateCcw className="h-4 w-4 mr-2" />
-                      Сначала
+                      Start Over
                     </Button>
                   </>
                 )}
