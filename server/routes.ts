@@ -122,8 +122,8 @@ export async function registerRoutes(
   // Generate dialogue questions for Speak mode
   app.post(api.services.generateDialogue.path, async (req, res) => {
     try {
-      const { textContent, topicTitle, questionCount } = api.services.generateDialogue.input.parse(req.body);
-      const questions = await generateDialogue(textContent, topicTitle, questionCount);
+      const { textContent, topicTitle, questionCount, previousQuestions } = api.services.generateDialogue.input.parse(req.body);
+      const questions = await generateDialogue(textContent, topicTitle, questionCount, previousQuestions);
       res.json({ questions });
     } catch (err) {
       console.error("Generate dialogue failed:", err);

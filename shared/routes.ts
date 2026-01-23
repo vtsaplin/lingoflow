@@ -63,7 +63,8 @@ export const api = {
       input: z.object({ 
         textContent: z.string(),
         topicTitle: z.string(),
-        questionCount: z.number().optional().default(5)
+        questionCount: z.number().optional().default(1),
+        previousQuestions: z.array(z.string()).optional().default([])
       }),
       responses: {
         200: z.object({ 

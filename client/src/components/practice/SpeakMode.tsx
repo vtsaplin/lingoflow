@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Card, CardContent } from "@/components/ui/card";
 import { Volume2, Mic, MicOff, RotateCcw, ArrowRight, CheckCircle2, XCircle, Loader2, MessageCircle } from "lucide-react";
 import { useTTS } from "@/hooks/use-services";
 import { useMutation } from "@tanstack/react-query";
@@ -35,14 +33,12 @@ interface EvaluationResult {
 export function SpeakMode({ 
   textContent, 
   topicTitle, 
-  topicId, 
-  textId, 
   onComplete, 
   onResetProgress, 
   isCompleted 
 }: SpeakModeProps) {
-  const [questions, setQuestions] = useState<DialogueQuestion[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState<DialogueQuestion | null>(null);
+  const [questionNumber, setQuestionNumber] = useState(1);
   const [state, setState] = useState<DialogueState>("loading");
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [userTranscript, setUserTranscript] = useState<string>("");
@@ -50,6 +46,7 @@ export function SpeakMode({
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
+  const [previousQuestions, setPreviousQuestions] = useState<string[]>([]);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -60,32 +57,34 @@ export function SpeakMode({
   const processingRef = useRef(false);
   
   const ttsMutation = useTTS();
-  
-  const currentQuestion = questions[currentIndex];
-  const progressValue = questions.length > 0 ? ((currentIndex) / questions.length) * 100 : 0;
 
-  const generateDialogueMutation = useMutation({
-    mutationFn: async ({ textContent, topicTitle }: { textContent: string; topicTitle: string }) => {
+  const generateQuestionMutation = useMutation({
+    mutationFn: async ({ textContent, topicTitle, previousQuestions }: { 
+      textContent: string; 
+      topicTitle: string;
+      previousQuestions: string[];
+    }) => {
       const response = await apiRequest("POST", "/api/generate-dialogue", {
         textContent,
         topicTitle,
-        questionCount: 5
+        questionCount: 1,
+        previousQuestions
       });
       return response.json();
     },
     onSuccess: (data) => {
       if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
-        setQuestions(data.questions);
+        setCurrentQuestion(data.questions[0]);
         setError(null);
         setState("listening");
         setShouldAutoPlay(true);
       } else {
-        setError("Could not generate dialogue questions");
+        setError("Could not generate a question");
         setState("error");
       }
     },
     onError: () => {
-      setError("Failed to generate dialogue questions");
+      setError("Failed to generate question");
       setState("error");
     }
   });
@@ -105,19 +104,19 @@ export function SpeakMode({
     }
   });
 
-  const loadDialogue = useCallback(() => {
-    if (textContent && topicTitle && !generateDialogueMutation.isPending) {
+  const loadQuestion = useCallback(() => {
+    if (textContent && topicTitle && !generateQuestionMutation.isPending) {
       setError(null);
       setState("loading");
-      generateDialogueMutation.mutate({ textContent, topicTitle });
+      generateQuestionMutation.mutate({ textContent, topicTitle, previousQuestions });
     }
-  }, [textContent, topicTitle, generateDialogueMutation]);
+  }, [textContent, topicTitle, previousQuestions, generateQuestionMutation]);
 
   useEffect(() => {
-    if (textContent && topicTitle && state === "loading" && questions.length === 0 && !generateDialogueMutation.isPending) {
-      generateDialogueMutation.mutate({ textContent, topicTitle });
+    if (textContent && topicTitle && state === "loading" && !currentQuestion && !generateQuestionMutation.isPending) {
+      generateQuestionMutation.mutate({ textContent, topicTitle, previousQuestions: [] });
     }
-  }, [textContent, topicTitle, state, questions.length, generateDialogueMutation]);
+  }, [textContent, topicTitle, state, currentQuestion, generateQuestionMutation]);
 
   const stopCurrentAudio = useCallback(() => {
     if (audioRef.current) {
@@ -330,17 +329,24 @@ export function SpeakMode({
   };
 
   const nextQuestion = () => {
-    if (currentIndex < questions.length - 1) {
-      stopCurrentAudio();
-      setCurrentIndex(currentIndex + 1);
-      setEvaluation(null);
-      setUserTranscript("");
-      setShouldAutoPlay(true);
-      setState("listening");
+    stopCurrentAudio();
+    if (currentQuestion) {
+      setPreviousQuestions(prev => [...prev, currentQuestion.question]);
     }
+    setCurrentQuestion(null);
+    setEvaluation(null);
+    setUserTranscript("");
+    setQuestionNumber(prev => prev + 1);
+    setShouldAutoPlay(true);
+    setState("loading");
+    generateQuestionMutation.mutate({ 
+      textContent, 
+      topicTitle, 
+      previousQuestions: currentQuestion ? [...previousQuestions, currentQuestion.question] : previousQuestions 
+    });
   };
 
-  const resetCurrent = () => {
+  const retryQuestion = () => {
     stopCurrentAudio();
     setEvaluation(null);
     setUserTranscript("");
@@ -348,49 +354,47 @@ export function SpeakMode({
     setState("listening");
   };
 
-  const isComplete = currentIndex >= questions.length - 1 && state === "result";
-
-  useEffect(() => {
-    if (isComplete && !isCompleted && onComplete) {
-      onComplete();
-    }
-  }, [isComplete, isCompleted, onComplete]);
-
   const handleReset = () => {
-    setCurrentIndex(0);
+    stopCurrentAudio();
+    setCurrentQuestion(null);
     setEvaluation(null);
     setUserTranscript("");
-    setQuestions([]);
+    setQuestionNumber(1);
+    setPreviousQuestions([]);
     setState("loading");
     if (onResetProgress) {
       onResetProgress();
     }
-    if (textContent && topicTitle) {
-      generateDialogueMutation.mutate({ textContent, topicTitle });
+    generateQuestionMutation.mutate({ textContent, topicTitle, previousQuestions: [] });
+  };
+
+  const markComplete = () => {
+    if (onComplete) {
+      onComplete();
     }
   };
 
-  if (state === "loading" || generateDialogueMutation.isPending) {
+  if (state === "loading" || generateQuestionMutation.isPending) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-        <Loader2 className="h-12 w-12 mb-4 animate-spin" />
-        <p className="text-lg font-medium">Generating dialogue questions...</p>
-        <p className="text-sm mt-2">Based on the text topic</p>
+      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <Loader2 className="h-12 w-12 text-muted-foreground mb-4 animate-spin" />
+        <p className="text-muted-foreground text-center">Generating question...</p>
       </div>
     );
   }
 
-  if (state === "error" || questions.length === 0) {
+  if (state === "error" || !currentQuestion) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-        <MessageCircle className="h-12 w-12 mb-4 opacity-50" />
-        <p className="text-lg font-medium">No dialogue questions available</p>
-        <p className="text-sm mt-2">{error || "Could not generate questions for this text"}</p>
+      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground text-center">
+          {error || "Could not generate a question for this text."}
+        </p>
         <Button 
           variant="outline" 
           className="mt-4"
-          onClick={loadDialogue}
-          disabled={generateDialogueMutation.isPending}
+          onClick={loadQuestion}
+          disabled={generateQuestionMutation.isPending}
           data-testid="button-retry-dialogue"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
@@ -401,17 +405,14 @@ export function SpeakMode({
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 max-w-2xl mx-auto">
-      <div className="flex items-center gap-4">
-        <span className="text-sm text-muted-foreground">
-          Question {currentIndex + 1} of {questions.length}
-        </span>
-        <Progress value={progressValue} className="flex-1" />
-      </div>
-
-      <Card className="bg-card">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4 mb-4">
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-auto px-6 sm:px-8 py-6">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-sm text-muted-foreground mb-4">
+            Question {questionNumber}. Listen and respond in German.
+          </p>
+          
+          <div className="flex items-start gap-4 mb-6">
             <Button
               variant="outline"
               size="icon"
@@ -419,19 +420,26 @@ export function SpeakMode({
               disabled={isPlaying}
               data-testid="button-play-question"
             >
-              <Volume2 className="h-4 w-4" />
+              {isPlaying ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Volume2 className="h-4 w-4" />
+              )}
             </Button>
             <div className="flex-1">
-              <p className="text-xl leading-relaxed">{currentQuestion?.question}</p>
-              <p className="text-sm text-muted-foreground mt-2 italic">
-                {currentQuestion?.context}
+              <p className="font-serif text-lg leading-relaxed text-foreground/90">
+                {currentQuestion.question}
               </p>
+              {currentQuestion.context && (
+                <p className="text-sm text-muted-foreground mt-2 italic">
+                  {currentQuestion.context}
+                </p>
+              )}
             </div>
           </div>
 
           {state === "listening" && (
-            <div className="flex flex-col items-center gap-4 mt-6">
-              <p className="text-muted-foreground">Listen and respond in German</p>
+            <div className="flex flex-col items-center gap-4 py-8">
               <Button
                 size="lg"
                 onClick={startRecording}
@@ -445,8 +453,8 @@ export function SpeakMode({
           )}
 
           {state === "recording" && (
-            <div className="flex flex-col items-center gap-4 mt-6">
-              <div className="flex items-center gap-2 text-red-500">
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className="flex items-center gap-2 text-red-500 dark:text-red-400">
                 <span className="animate-pulse">●</span>
                 <span>Recording...</span>
               </div>
@@ -463,82 +471,88 @@ export function SpeakMode({
           )}
 
           {state === "processing" && (
-            <div className="flex flex-col items-center gap-4 mt-6">
+            <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               <p className="text-muted-foreground">Recognizing speech...</p>
             </div>
           )}
 
           {state === "evaluating" && (
-            <div className="flex flex-col items-center gap-4 mt-6">
+            <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               <p className="text-muted-foreground">Evaluating your response...</p>
             </div>
           )}
 
           {state === "result" && evaluation && (
-            <div className="space-y-4 mt-6">
-              <div className={`flex items-center gap-2 ${evaluation.isAppropriate ? "text-green-600" : "text-amber-600"}`}>
-                {evaluation.isAppropriate ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span className="font-medium">Good response!</span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-5 w-5" />
-                    <span className="font-medium">Try again</span>
-                  </>
-                )}
-              </div>
-
+            <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Your answer:</p>
-                <p className="text-lg italic">"{userTranscript}"</p>
+                <p className="font-serif text-lg italic text-foreground/90">"{userTranscript}"</p>
               </div>
 
               <div className="bg-muted/50 rounded-lg p-4">
                 <p className="text-sm">{evaluation.feedback}</p>
                 {evaluation.suggestedResponse && (
-                  <div className="mt-3 pt-3 border-t">
+                  <div className="mt-3 pt-3 border-t border-border">
                     <p className="text-sm text-muted-foreground">Suggested response:</p>
                     <p className="text-sm font-medium mt-1">"{evaluation.suggestedResponse}"</p>
                   </div>
-                )}
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" onClick={resetCurrent} data-testid="button-retry">
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-                {!isComplete && (
-                  <Button onClick={nextQuestion} data-testid="button-next">
-                    Next
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                )}
-                {isComplete && (
-                  <>
-                    <Button variant="default" disabled>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Complete
-                    </Button>
-                    <Button variant="outline" onClick={handleReset} data-testid="button-reset-speak">
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Start Over
-                    </Button>
-                  </>
                 )}
               </div>
             </div>
           )}
 
           {error && (
-            <p className="text-red-500 text-center mt-4">{error}</p>
+            <p className="text-destructive text-center py-4">{error}</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <div className="border-t bg-card px-6 sm:px-8 py-4">
+        <div className="max-w-3xl mx-auto">
+          {state === "result" && evaluation && (
+            <div className="flex items-center gap-2 mb-4">
+              {evaluation.isAppropriate ? (
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span className="font-medium">Good response!</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                  <XCircle className="h-5 w-5" />
+                  <span className="font-medium">Try a different answer</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {state === "result" && (
+              <>
+                <Button variant="outline" onClick={retryQuestion} data-testid="button-retry">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+                <Button onClick={nextQuestion} data-testid="button-next">
+                  Next Question
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+                {!isCompleted && (
+                  <Button variant="outline" onClick={markComplete} data-testid="button-mark-complete">
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Mark Complete
+                  </Button>
+                )}
+              </>
+            )}
+            <Button variant="outline" onClick={handleReset} data-testid="button-reset">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

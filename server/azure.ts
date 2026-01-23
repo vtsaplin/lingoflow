@@ -119,10 +119,15 @@ export interface DialogueQuestion {
 export async function generateDialogue(
   textContent: string,
   topicTitle: string,
-  questionCount: number = 5
+  questionCount: number = 1,
+  previousQuestions: string[] = []
 ): Promise<DialogueQuestion[]> {
   const client = getChatClient();
   if (!client) return [];
+
+  const previousQuestionsNote = previousQuestions.length > 0 
+    ? `\n\nDo NOT repeat these questions that were already asked:\n${previousQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
+    : '';
 
   try {
     const response = await client.chat.completions.create({
@@ -131,14 +136,14 @@ export async function generateDialogue(
         { 
           role: "system", 
           content: `You are a German language tutor creating dialogue practice questions. 
-Based on the provided German learning text, generate ${questionCount} conversational questions in German that a native speaker might ask in a similar real-life situation.
+Based on the provided German learning text, generate ${questionCount} conversational question(s) in German that a native speaker might ask in a similar real-life situation.
 
 For each question, provide:
 - question: The question in German (natural, conversational)
 - context: Brief context about what kind of answer is expected (in English)
 - expectedTopics: Array of key topics/words the response should relate to (in German)
 
-The questions should progress from simple to more complex. Focus on practical, everyday conversation scenarios related to the text topic.
+Focus on practical, everyday conversation scenarios related to the text topic.${previousQuestionsNote}
 
 Return ONLY a valid JSON object with format: { "questions": [...] }` 
         },
