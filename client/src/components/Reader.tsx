@@ -786,6 +786,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             sentences={eligibleSentences}
             topicId={topicId}
             textId={textId}
+            textContent={paragraphs.join("\n\n")}
+            topicTitle={topicTitle}
             onComplete={() => setModeComplete(topicId, textId, "speak")}
             onResetProgress={() => resetModeProgress(topicId, textId, "speak")}
             isCompleted={progress.speak}

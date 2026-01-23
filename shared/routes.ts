@@ -56,6 +56,40 @@ export const api = {
       responses: {
         200: z.object({ transcript: z.string() }),
       }
+    },
+    generateDialogue: {
+      method: 'POST' as const,
+      path: '/api/generate-dialogue',
+      input: z.object({ 
+        textContent: z.string(),
+        topicTitle: z.string(),
+        questionCount: z.number().optional().default(5)
+      }),
+      responses: {
+        200: z.object({ 
+          questions: z.array(z.object({
+            question: z.string(),
+            context: z.string(),
+            expectedTopics: z.array(z.string())
+          }))
+        }),
+      }
+    },
+    evaluateResponse: {
+      method: 'POST' as const,
+      path: '/api/evaluate-response',
+      input: z.object({
+        question: z.string(),
+        userResponse: z.string(),
+        expectedTopics: z.array(z.string())
+      }),
+      responses: {
+        200: z.object({
+          isAppropriate: z.boolean(),
+          feedback: z.string(),
+          suggestedResponse: z.string().optional()
+        }),
+      }
     }
   }
 };

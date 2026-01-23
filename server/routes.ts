@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { getTopics, getTopic } from "./content";
-import { translate, dictionary, tts } from "./azure";
+import { translate, dictionary, tts, generateDialogue, evaluateResponse } from "./azure";
 import { registerPodcastRoutes } from "./podcast";
 import { generateCombinedMp3 } from "./combined-mp3";
 import { z } from "zod";
@@ -116,6 +116,30 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Combined MP3 generation failed:", err);
       res.status(500).json({ message: "Failed to generate combined MP3" });
+    }
+  });
+
+  // Generate dialogue questions for Speak mode
+  app.post(api.services.generateDialogue.path, async (req, res) => {
+    try {
+      const { textContent, topicTitle, questionCount } = api.services.generateDialogue.input.parse(req.body);
+      const questions = await generateDialogue(textContent, topicTitle, questionCount);
+      res.json({ questions });
+    } catch (err) {
+      console.error("Generate dialogue failed:", err);
+      res.status(500).json({ message: "Failed to generate dialogue questions" });
+    }
+  });
+
+  // Evaluate user's spoken response
+  app.post(api.services.evaluateResponse.path, async (req, res) => {
+    try {
+      const { question, userResponse, expectedTopics } = api.services.evaluateResponse.input.parse(req.body);
+      const result = await evaluateResponse(question, userResponse, expectedTopics);
+      res.json(result);
+    } catch (err) {
+      console.error("Evaluate response failed:", err);
+      res.status(500).json({ message: "Failed to evaluate response" });
     }
   });
 

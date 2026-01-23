@@ -109,3 +109,114 @@ export async function tts(text: string, speed: number = 1.0): Promise<Buffer | n
     return null;
   }
 }
+
+export interface DialogueQuestion {
+  question: string;
+  context: string;
+  expectedTopics: string[];
+}
+
+export async function generateDialogue(
+  textContent: string,
+  topicTitle: string,
+  questionCount: number = 5
+): Promise<DialogueQuestion[]> {
+  const client = getChatClient();
+  if (!client) return [];
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [
+        { 
+          role: "system", 
+          content: `You are a German language tutor creating dialogue practice questions. 
+Based on the provided German learning text, generate ${questionCount} conversational questions in German that a native speaker might ask in a similar real-life situation.
+
+For each question, provide:
+- question: The question in German (natural, conversational)
+- context: Brief context about what kind of answer is expected (in English)
+- expectedTopics: Array of key topics/words the response should relate to (in German)
+
+The questions should progress from simple to more complex. Focus on practical, everyday conversation scenarios related to the text topic.
+
+Return ONLY a valid JSON object with format: { "questions": [...] }` 
+        },
+        { 
+          role: "user", 
+          content: `Topic: ${topicTitle}\n\nText content:\n${textContent}` 
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+    
+    const content = response.choices[0].message.content;
+    const parsed = JSON.parse(content || '{"questions": []}');
+    return parsed.questions || [];
+  } catch (error) {
+    console.error("Generate dialogue error:", error);
+    return [];
+  }
+}
+
+export interface EvaluationResult {
+  isAppropriate: boolean;
+  feedback: string;
+  suggestedResponse?: string;
+}
+
+export async function evaluateResponse(
+  question: string,
+  userResponse: string,
+  expectedTopics: string[]
+): Promise<EvaluationResult> {
+  const client = getChatClient();
+  if (!client) {
+    return { 
+      isAppropriate: false, 
+      feedback: "Evaluation unavailable (No API Key)" 
+    };
+  }
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [
+        { 
+          role: "system", 
+          content: `You are a German language tutor evaluating a student's spoken response in a dialogue practice exercise.
+
+Evaluate whether the student's German response is appropriate for the given question. Be encouraging but helpful.
+
+Consider:
+1. Is the response grammatically understandable (minor errors are OK)?
+2. Does the response make sense as an answer to the question?
+3. Does it relate to any of the expected topics?
+
+Be lenient - the goal is communication practice, not perfection. Accept responses that demonstrate understanding even if grammar isn't perfect.
+
+Return ONLY a valid JSON object with:
+- isAppropriate: boolean (true if the response is a reasonable answer)
+- feedback: string (brief encouraging feedback in English, 1-2 sentences)
+- suggestedResponse: string (optional, a natural German response as an example, only if the user's response was inappropriate)` 
+        },
+        { 
+          role: "user", 
+          content: `Question: ${question}
+User's response: ${userResponse}
+Expected topics: ${expectedTopics.join(", ")}` 
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+    
+    const content = response.choices[0].message.content;
+    return JSON.parse(content || '{"isAppropriate": false, "feedback": "Could not evaluate"}');
+  } catch (error) {
+    console.error("Evaluate response error:", error);
+    return { 
+      isAppropriate: false, 
+      feedback: "Evaluation error occurred" 
+    };
+  }
+}

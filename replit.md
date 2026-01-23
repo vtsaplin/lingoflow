@@ -40,6 +40,8 @@ Preferred communication style: Simple, everyday language.
 - `GET /podcast/audio/:topicId/:textId.mp3` - Episode audio with caching
 - `POST /api/download-combined-mp3` - Batch download selected texts as single MP3
 - `POST /api/transcribe` - Audio transcription via Whisper API (for Speak mode)
+- `POST /api/generate-dialogue` - Generate contextual dialogue questions from text content
+- `POST /api/evaluate-response` - Evaluate user's spoken response appropriateness
 
 ### Practice Modes System
 - Two phases: Study (read & listen to learn material) and Practice (Cards, Fill, Order, Write, Speak exercises)
@@ -53,7 +55,12 @@ Preferred communication style: Simple, everyday language.
 - Fill mode: Creates gaps ONLY for words in user's flashcard dictionary (one gap per unique word), click word bank to fill gaps
 - Order mode: Uses saved sentences from Study mode (sentence interaction → Save button), displays Russian translation as hint, shuffle German words to reorder (min 3 words per sentence)
 - Write mode: Creates gaps ONLY for flashcard dictionary words (one gap per unique word) with first-letter hints
-- Speak mode: Pronunciation practice - plays German sentence via TTS, user repeats into microphone, Whisper transcribes, compares word-by-word with color-coded feedback (green=correct, red=incorrect)
+- Speak mode: AI-powered dialogue practice system:
+  - Generates contextual conversation questions based on text topic via `/api/generate-dialogue`
+  - App speaks question in German via TTS, user responds via microphone
+  - Whisper transcribes user's response, AI evaluates appropriateness via `/api/evaluate-response`
+  - Feedback shows whether response was appropriate (not exact match, but contextually correct)
+  - Suggested response shown if user's answer was inappropriate
 - Strict validation with Check button (correct/incorrect feedback per gap/sentence)
 - Flashcard-dependent modes (Fill, Write, Cards) track flashcardCount to detect new additions
 - Order mode tracks saved sentence count separately

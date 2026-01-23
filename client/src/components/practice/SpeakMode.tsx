@@ -2,57 +2,50 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
-import { Volume2, Mic, MicOff, RotateCcw, ArrowRight, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Volume2, Mic, MicOff, RotateCcw, ArrowRight, CheckCircle2, XCircle, Loader2, MessageCircle } from "lucide-react";
 import { useTTS } from "@/hooks/use-services";
-import { api } from "@shared/routes";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface SpeakModeProps {
   sentences: string[];
   topicId: string;
   textId: string;
+  textContent: string;
+  topicTitle: string;
   onComplete?: () => void;
   onResetProgress?: () => void;
   isCompleted?: boolean;
 }
 
-type SentenceState = "listening" | "recording" | "processing" | "result";
+type DialogueState = "loading" | "error" | "listening" | "recording" | "processing" | "evaluating" | "result";
 
-interface ComparisonResult {
-  expected: string;
-  actual: string;
-  isCorrect: boolean;
-  wordResults: { word: string; correct: boolean }[];
+interface DialogueQuestion {
+  question: string;
+  context: string;
+  expectedTopics: string[];
 }
 
-function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[.,!?;:"""''„‚«»\-–—]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+interface EvaluationResult {
+  isAppropriate: boolean;
+  feedback: string;
+  suggestedResponse?: string;
 }
 
-function compareTexts(expected: string, actual: string): ComparisonResult {
-  const normalizedExpected = normalizeText(expected);
-  const normalizedActual = normalizeText(actual);
-  
-  const expectedWords = normalizedExpected.split(" ");
-  const actualWords = normalizedActual.split(" ");
-  
-  const wordResults = expectedWords.map((word, i) => ({
-    word,
-    correct: actualWords[i]?.toLowerCase() === word.toLowerCase(),
-  }));
-  
-  const isCorrect = normalizedExpected === normalizedActual;
-  
-  return { expected, actual, isCorrect, wordResults };
-}
-
-export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgress, isCompleted }: SpeakModeProps) {
+export function SpeakMode({ 
+  textContent, 
+  topicTitle, 
+  topicId, 
+  textId, 
+  onComplete, 
+  onResetProgress, 
+  isCompleted 
+}: SpeakModeProps) {
+  const [questions, setQuestions] = useState<DialogueQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [state, setState] = useState<SentenceState>("listening");
-  const [comparison, setComparison] = useState<ComparisonResult | null>(null);
+  const [state, setState] = useState<DialogueState>("loading");
+  const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
+  const [userTranscript, setUserTranscript] = useState<string>("");
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -68,8 +61,63 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
   
   const ttsMutation = useTTS();
   
-  const currentSentence = sentences[currentIndex] || "";
-  const progressValue = sentences.length > 0 ? ((currentIndex) / sentences.length) * 100 : 0;
+  const currentQuestion = questions[currentIndex];
+  const progressValue = questions.length > 0 ? ((currentIndex) / questions.length) * 100 : 0;
+
+  const generateDialogueMutation = useMutation({
+    mutationFn: async ({ textContent, topicTitle }: { textContent: string; topicTitle: string }) => {
+      const response = await apiRequest("POST", "/api/generate-dialogue", {
+        textContent,
+        topicTitle,
+        questionCount: 5
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
+        setQuestions(data.questions);
+        setError(null);
+        setState("listening");
+        setShouldAutoPlay(true);
+      } else {
+        setError("Could not generate dialogue questions");
+        setState("error");
+      }
+    },
+    onError: () => {
+      setError("Failed to generate dialogue questions");
+      setState("error");
+    }
+  });
+
+  const evaluateResponseMutation = useMutation({
+    mutationFn: async ({ question, userResponse, expectedTopics }: { 
+      question: string; 
+      userResponse: string; 
+      expectedTopics: string[] 
+    }) => {
+      const response = await apiRequest("POST", "/api/evaluate-response", {
+        question,
+        userResponse,
+        expectedTopics
+      });
+      return response.json();
+    }
+  });
+
+  const loadDialogue = useCallback(() => {
+    if (textContent && topicTitle && !generateDialogueMutation.isPending) {
+      setError(null);
+      setState("loading");
+      generateDialogueMutation.mutate({ textContent, topicTitle });
+    }
+  }, [textContent, topicTitle, generateDialogueMutation]);
+
+  useEffect(() => {
+    if (textContent && topicTitle && state === "loading" && questions.length === 0 && !generateDialogueMutation.isPending) {
+      generateDialogueMutation.mutate({ textContent, topicTitle });
+    }
+  }, [textContent, topicTitle, state, questions.length, generateDialogueMutation]);
 
   const stopCurrentAudio = useCallback(() => {
     if (audioRef.current) {
@@ -107,15 +155,15 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
     };
   }, [stopCurrentAudio, stopCurrentRecording]);
 
-  const playCurrentSentence = useCallback(async () => {
-    if (!currentSentence || isPlaying) return;
+  const playCurrentQuestion = useCallback(async () => {
+    if (!currentQuestion || isPlaying) return;
     
     stopCurrentAudio();
     
     try {
       setIsPlaying(true);
       setError(null);
-      const blob = await ttsMutation.mutateAsync({ text: currentSentence });
+      const blob = await ttsMutation.mutateAsync({ text: currentQuestion.question });
       
       if (!mountedRef.current) return;
       
@@ -144,14 +192,14 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
       setError("Speech synthesis error");
       console.error("TTS error:", err);
     }
-  }, [currentSentence, isPlaying, stopCurrentAudio, ttsMutation]);
+  }, [currentQuestion, isPlaying, stopCurrentAudio, ttsMutation]);
 
   useEffect(() => {
-    if (state === "listening" && currentSentence && shouldAutoPlay) {
-      playCurrentSentence();
+    if (state === "listening" && currentQuestion && shouldAutoPlay) {
+      playCurrentQuestion();
       setShouldAutoPlay(false);
     }
-  }, [state, currentSentence, shouldAutoPlay, playCurrentSentence]);
+  }, [state, currentQuestion, shouldAutoPlay, playCurrentQuestion]);
 
   const startRecording = async () => {
     if (isRecording || processingRef.current || mediaRecorderRef.current) return;
@@ -201,7 +249,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
   };
 
   const processRecording = async (blob: Blob) => {
-    if (processingRef.current || !mountedRef.current) return;
+    if (processingRef.current || !mountedRef.current || !currentQuestion) return;
     processingRef.current = true;
     
     try {
@@ -220,11 +268,10 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      const validated = api.services.transcribe.input.parse({ audio: base64Audio });
-      const response = await fetch(api.services.transcribe.path, {
-        method: api.services.transcribe.method,
+      const response = await fetch("/api/transcribe", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
+        body: JSON.stringify({ audio: base64Audio }),
         signal: controller.signal,
       });
 
@@ -234,17 +281,46 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
         throw new Error("Transcription failed");
       }
 
-      const data = api.services.transcribe.responses[200].parse(await response.json());
+      const data = await response.json();
+      const transcript = data?.transcript || "";
       
       if (!mountedRef.current) return;
       
-      const result = compareTexts(currentSentence, data.transcript);
-      setComparison(result);
-      setState("result");
+      if (!transcript || transcript.trim() === "") {
+        setError("Could not recognize speech. Please try again.");
+        setState("listening");
+        return;
+      }
+      
+      setUserTranscript(transcript);
+      setState("evaluating");
+      
+      try {
+        const evalResult = await evaluateResponseMutation.mutateAsync({
+          question: currentQuestion.question,
+          userResponse: transcript,
+          expectedTopics: currentQuestion.expectedTopics || []
+        });
+        
+        if (!mountedRef.current) return;
+        
+        if (evalResult && typeof evalResult.isAppropriate === "boolean") {
+          setEvaluation(evalResult);
+          setState("result");
+        } else {
+          setError("Could not evaluate response. Please try again.");
+          setState("listening");
+        }
+      } catch (evalErr) {
+        if (!mountedRef.current) return;
+        setError("Evaluation failed. Please try again.");
+        console.error("Evaluation error:", evalErr);
+        setState("listening");
+      }
     } catch (err) {
       if (!mountedRef.current) return;
       if ((err as Error).name === "AbortError") return;
-      setError("Speech recognition error");
+      setError("Speech recognition error. Please try again.");
       console.error("Transcription error:", err);
       setState("listening");
     } finally {
@@ -253,11 +329,12 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
     }
   };
 
-  const nextSentence = () => {
-    if (currentIndex < sentences.length - 1) {
+  const nextQuestion = () => {
+    if (currentIndex < questions.length - 1) {
       stopCurrentAudio();
       setCurrentIndex(currentIndex + 1);
-      setComparison(null);
+      setEvaluation(null);
+      setUserTranscript("");
       setShouldAutoPlay(true);
       setState("listening");
     }
@@ -265,22 +342,13 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
 
   const resetCurrent = () => {
     stopCurrentAudio();
-    setComparison(null);
+    setEvaluation(null);
+    setUserTranscript("");
     setShouldAutoPlay(true);
     setState("listening");
   };
 
-  if (sentences.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-        <Mic className="h-12 w-12 mb-4 opacity-50" />
-        <p className="text-lg font-medium">No sentences for practice</p>
-        <p className="text-sm mt-2">Save words to flashcards in reading mode</p>
-      </div>
-    );
-  }
-
-  const isComplete = currentIndex >= sentences.length - 1 && state === "result";
+  const isComplete = currentIndex >= questions.length - 1 && state === "result";
 
   useEffect(() => {
     if (isComplete && !isCompleted && onComplete) {
@@ -290,41 +358,80 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
 
   const handleReset = () => {
     setCurrentIndex(0);
-    setComparison(null);
-    setShouldAutoPlay(true);
-    setState("listening");
+    setEvaluation(null);
+    setUserTranscript("");
+    setQuestions([]);
+    setState("loading");
     if (onResetProgress) {
       onResetProgress();
     }
+    if (textContent && topicTitle) {
+      generateDialogueMutation.mutate({ textContent, topicTitle });
+    }
   };
+
+  if (state === "loading" || generateDialogueMutation.isPending) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+        <Loader2 className="h-12 w-12 mb-4 animate-spin" />
+        <p className="text-lg font-medium">Generating dialogue questions...</p>
+        <p className="text-sm mt-2">Based on the text topic</p>
+      </div>
+    );
+  }
+
+  if (state === "error" || questions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+        <MessageCircle className="h-12 w-12 mb-4 opacity-50" />
+        <p className="text-lg font-medium">No dialogue questions available</p>
+        <p className="text-sm mt-2">{error || "Could not generate questions for this text"}</p>
+        <Button 
+          variant="outline" 
+          className="mt-4"
+          onClick={loadDialogue}
+          disabled={generateDialogueMutation.isPending}
+          data-testid="button-retry-dialogue"
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-4 max-w-2xl mx-auto">
       <div className="flex items-center gap-4">
         <span className="text-sm text-muted-foreground">
-          Sentence {currentIndex + 1} of {sentences.length}
+          Question {currentIndex + 1} of {questions.length}
         </span>
         <Progress value={progressValue} className="flex-1" />
       </div>
 
       <Card className="bg-card">
         <CardContent className="p-6">
-          <div className="flex items-start gap-4 mb-6">
+          <div className="flex items-start gap-4 mb-4">
             <Button
               variant="outline"
               size="icon"
-              onClick={playCurrentSentence}
+              onClick={playCurrentQuestion}
               disabled={isPlaying}
-              data-testid="button-play-sentence"
+              data-testid="button-play-question"
             >
               <Volume2 className="h-4 w-4" />
             </Button>
-            <p className="text-xl leading-relaxed flex-1">{currentSentence}</p>
+            <div className="flex-1">
+              <p className="text-xl leading-relaxed">{currentQuestion?.question}</p>
+              <p className="text-sm text-muted-foreground mt-2 italic">
+                {currentQuestion?.context}
+              </p>
+            </div>
           </div>
 
           {state === "listening" && (
-            <div className="flex flex-col items-center gap-4">
-              <p className="text-muted-foreground">Listen to the sentence and click to record</p>
+            <div className="flex flex-col items-center gap-4 mt-6">
+              <p className="text-muted-foreground">Listen and respond in German</p>
               <Button
                 size="lg"
                 onClick={startRecording}
@@ -338,7 +445,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
           )}
 
           {state === "recording" && (
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-4 mt-6">
               <div className="flex items-center gap-2 text-red-500">
                 <span className="animate-pulse">●</span>
                 <span>Recording...</span>
@@ -356,19 +463,26 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
           )}
 
           {state === "processing" && (
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-4 mt-6">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               <p className="text-muted-foreground">Recognizing speech...</p>
             </div>
           )}
 
-          {state === "result" && comparison && (
-            <div className="space-y-4">
-              <div className={`flex items-center gap-2 ${comparison.isCorrect ? "text-green-600" : "text-amber-600"}`}>
-                {comparison.isCorrect ? (
+          {state === "evaluating" && (
+            <div className="flex flex-col items-center gap-4 mt-6">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="text-muted-foreground">Evaluating your response...</p>
+            </div>
+          )}
+
+          {state === "result" && evaluation && (
+            <div className="space-y-4 mt-6">
+              <div className={`flex items-center gap-2 ${evaluation.isAppropriate ? "text-green-600" : "text-amber-600"}`}>
+                {evaluation.isAppropriate ? (
                   <>
                     <CheckCircle2 className="h-5 w-5" />
-                    <span className="font-medium">Excellent!</span>
+                    <span className="font-medium">Good response!</span>
                   </>
                 ) : (
                   <>
@@ -380,18 +494,16 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
 
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Your answer:</p>
-                <p className="text-lg">
-                  {comparison.wordResults.map((wr, i) => (
-                    <span
-                      key={i}
-                      className={wr.correct ? "text-green-600" : "text-red-500 underline decoration-wavy"}
-                    >
-                      {wr.word}{" "}
-                    </span>
-                  ))}
-                </p>
-                {comparison.actual && (
-                  <p className="text-sm text-muted-foreground italic">"{comparison.actual}"</p>
+                <p className="text-lg italic">"{userTranscript}"</p>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-sm">{evaluation.feedback}</p>
+                {evaluation.suggestedResponse && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-sm text-muted-foreground">Suggested response:</p>
+                    <p className="text-sm font-medium mt-1">"{evaluation.suggestedResponse}"</p>
+                  </div>
                 )}
               </div>
 
@@ -401,7 +513,7 @@ export function SpeakMode({ sentences, topicId, textId, onComplete, onResetProgr
                   Retry
                 </Button>
                 {!isComplete && (
-                  <Button onClick={nextSentence} data-testid="button-next">
+                  <Button onClick={nextQuestion} data-testid="button-next">
                     Next
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
