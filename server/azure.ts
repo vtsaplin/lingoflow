@@ -135,12 +135,12 @@ export async function generateDialogue(
       messages: [
         { 
           role: "system", 
-          content: `You are a German language tutor creating dialogue practice questions. 
+          content: `You are a German language tutor creating dialogue practice questions for Russian-speaking students learning German.
 Based on the provided German learning text, generate ${questionCount} conversational question(s) in German that a native speaker might ask in a similar real-life situation.
 
 For each question, provide:
 - question: The question in German (natural, conversational)
-- context: Brief context about what kind of answer is expected (in English)
+- context: Brief context about what kind of answer is expected (in Russian, для русскоязычного студента)
 - expectedTopics: Array of key topics/words the response should relate to (in German)
 
 Focus on practical, everyday conversation scenarios related to the text topic.${previousQuestionsNote}
@@ -189,7 +189,7 @@ export async function evaluateResponse(
       messages: [
         { 
           role: "system", 
-          content: `You are a German language tutor evaluating a student's spoken response in a dialogue practice exercise.
+          content: `You are a German language tutor evaluating a Russian-speaking student's spoken response in a dialogue practice exercise.
 
 Evaluate whether the student's German response is appropriate for the given question. Be encouraging but helpful.
 
@@ -202,7 +202,7 @@ Be lenient - the goal is communication practice, not perfection. Accept response
 
 Return ONLY a valid JSON object with:
 - isAppropriate: boolean (true if the response is a reasonable answer)
-- feedback: string (brief encouraging feedback in English, 1-2 sentences)
+- feedback: string (brief encouraging feedback in Russian для русскоязычного студента, 1-2 предложения)
 - suggestedResponse: string (optional, a natural German response as an example, only if the user's response was inappropriate)` 
         },
         { 

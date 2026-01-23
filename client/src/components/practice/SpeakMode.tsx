@@ -409,7 +409,7 @@ export function SpeakMode({
       <div className="flex-1 overflow-auto px-6 sm:px-8 py-6">
         <div className="max-w-3xl mx-auto">
           <p className="text-sm text-muted-foreground mb-4">
-            Question {questionNumber}. Listen and respond in German.
+            Вопрос {questionNumber}. Прослушайте и ответьте на немецком.
           </p>
           
           <div className="flex items-start gap-4 mb-6">
