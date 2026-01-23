@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Volume2, Mic, MicOff, RotateCcw, ArrowRight, CheckCircle2, XCircle, Loader2, MessageCircle } from "lucide-react";
+import { Volume2, Mic, MicOff, RotateCcw, ArrowRight, CheckCircle2, XCircle, Loader2, MessageCircle, HelpCircle } from "lucide-react";
 import { useTTS } from "@/hooks/use-services";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -47,6 +47,7 @@ export function SpeakMode({
   const [isPlaying, setIsPlaying] = useState(false);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
   const [previousQuestions, setPreviousQuestions] = useState<string[]>([]);
+  const [showHint, setShowHint] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -338,6 +339,7 @@ export function SpeakMode({
     setUserTranscript("");
     setQuestionNumber(prev => prev + 1);
     setShouldAutoPlay(true);
+    setShowHint(false);
     setState("loading");
     generateQuestionMutation.mutate({ 
       textContent, 
@@ -361,6 +363,7 @@ export function SpeakMode({
     setUserTranscript("");
     setQuestionNumber(1);
     setPreviousQuestions([]);
+    setShowHint(false);
     setState("loading");
     if (onResetProgress) {
       onResetProgress();
@@ -431,9 +434,22 @@ export function SpeakMode({
                 {currentQuestion.question}
               </p>
               {currentQuestion.context && (
-                <p className="text-sm text-muted-foreground mt-2 italic">
-                  {currentQuestion.context}
-                </p>
+                <div className="mt-2">
+                  {showHint ? (
+                    <p className="text-sm text-muted-foreground italic">
+                      {currentQuestion.context}
+                    </p>
+                  ) : (
+                    <button
+                      onClick={() => setShowHint(true)}
+                      className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                      data-testid="button-show-hint"
+                    >
+                      <HelpCircle className="h-3.5 w-3.5" />
+                      Показать подсказку
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
