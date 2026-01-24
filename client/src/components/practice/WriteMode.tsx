@@ -192,7 +192,7 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
           </div>
 
           <div className="bg-card border rounded-lg p-6">
-            <p className="font-serif text-lg leading-loose text-foreground/90">
+            <p className="font-serif text-lg leading-relaxed text-foreground/90">
               {currentSentence.template.map((item, tIdx) => {
                 if (item.type === "text") {
                   return <span key={tIdx}>{item.content}</span>;

@@ -262,7 +262,7 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
           </div>
 
           <div className="bg-card border rounded-lg p-6 mb-4">
-            <p className="font-serif text-lg leading-loose text-foreground/90">
+            <p className="font-serif text-lg leading-relaxed text-foreground/90">
               {currentSentence.template.map((item, idx) => {
                 if (item.type === "text") {
                   return <span key={idx}>{item.content}</span>;
@@ -281,7 +281,7 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
                     draggable={!!placed}
                     onDragStart={(e) => placed && handleDragStart(e, placed, gapId)}
                     data-testid={`gap-${gapId}`}
-                    className={`inline-block min-w-[60px] mx-0.5 px-2 py-0.5 text-center border-b-2 border-dashed cursor-pointer transition-colors ${
+                    className={`inline-block min-w-[40px] mx-0.5 px-1 py-0.5 text-center border-b-2 border-dashed cursor-pointer transition-colors ${
                       isIncorrect
                         ? "border-destructive bg-destructive/10 text-destructive"
                         : isCorrect
