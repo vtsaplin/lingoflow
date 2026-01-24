@@ -40,7 +40,8 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
   useEffect(() => {
     const countIncreased = flashcardWords.length > state.flashcardCount && state.flashcardCount > 0;
     const countDecreased = flashcardWords.length < state.flashcardCount && state.flashcardCount > 0;
-    const needsReinit = !state.initialized || countIncreased || countDecreased;
+    const sentenceCountMismatch = Object.keys(state.sentenceStates).length !== sentences.length;
+    const needsReinit = !state.initialized || countIncreased || countDecreased || sentenceCountMismatch;
     
     if (sentences.length > 0 && needsReinit) {
       const initialStates: Record<number, FillSentenceState> = {};
@@ -81,7 +82,7 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
         flashcardCount: flashcardWords.length,
       });
     }
-  }, [sentences, state.initialized, onStateChange, isCompleted, flashcardWords.length, state.flashcardCount]);
+  }, [sentences, state.initialized, state.sentenceStates, onStateChange, isCompleted, flashcardWords.length, state.flashcardCount]);
 
   if (sentences.length === 0) {
     return (
@@ -445,15 +446,30 @@ function extractSentencesWithGaps(paragraphs: string[], flashcardWords: string[]
       let currentText = "";
 
       const cleanWords = words.filter(w => w.trim()).map(w => w.replace(/[.,!?;:«»„"'"]/g, "").trim().toLowerCase());
+      const totalWordCount = cleanWords.filter(w => w.length > 0).length;
+      
       const flashcardWordsInSentence = cleanWords.filter(w => w && flashcardWordsLower.has(w));
       
       if (flashcardWordsInSentence.length === 0) return;
 
-      const otherWords = cleanWords.filter(w => w && !flashcardWordsLower.has(w) && w.length > 2);
-      const shuffledOthers = shuffleArray(otherWords);
-      const randomWordsToGap = shuffledOthers.slice(0, Math.min(2, shuffledOthers.length));
+      // Limit total gaps to ~30% of words, minimum 1, maximum 3
+      const maxGaps = Math.max(1, Math.min(3, Math.ceil(totalWordCount * 0.3)));
       
-      const wordsToGap = new Set([...flashcardWordsInSentence, ...randomWordsToGap]);
+      // Prioritize flashcard words, then add random words if room
+      const uniqueFlashcardWords = [...new Set(flashcardWordsInSentence)];
+      const flashcardGaps = uniqueFlashcardWords.slice(0, maxGaps);
+      
+      const remainingSlots = maxGaps - flashcardGaps.length;
+      let randomWordsToGap: string[] = [];
+      
+      if (remainingSlots > 0) {
+        const otherWords = cleanWords.filter(w => w && !flashcardWordsLower.has(w) && w.length > 2);
+        const uniqueOthers = [...new Set(otherWords)];
+        const shuffledOthers = shuffleArray(uniqueOthers);
+        randomWordsToGap = shuffledOthers.slice(0, remainingSlots);
+      }
+      
+      const wordsToGap = new Set([...flashcardGaps, ...randomWordsToGap]);
       const usedInSentence = new Set<string>();
 
       words.forEach((w) => {
