@@ -11,7 +11,7 @@ export interface FillModeState {
   currentIndex: number;
   sentenceStates: Record<number, FillSentenceState>;
   initialized: boolean;
-  flashcardCount: number;
+  flashcardCount: number; // Kept for backward compatibility with stored state
 }
 
 export interface OrderSentenceState {

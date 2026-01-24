@@ -771,7 +771,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         {practiceMode === "fill" && (
           <FillMode 
             paragraphs={paragraphs}
-            flashcardWords={flashcardsForText.map(f => f.german)}
             state={practiceState.fill}
             onStateChange={updateFillState}
             onResetProgress={() => resetModeProgress(topicId, textId, "fill")}
