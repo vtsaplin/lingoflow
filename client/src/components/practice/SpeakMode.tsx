@@ -632,7 +632,7 @@ export function SpeakMode({
                 </Button>
                 {questionNumber < TOTAL_QUESTIONS ? (
                   <Button onClick={nextQuestion} data-testid="button-next">
-                    Next Question
+                    Next
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 ) : (
