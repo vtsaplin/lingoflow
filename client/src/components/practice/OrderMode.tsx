@@ -263,7 +263,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
             </span>
           </div>
           
-          <div className="mb-6 p-4 bg-muted/30 rounded-lg border" data-testid="text-translation-hint">
+          <div className="mb-6 p-4 bg-card rounded-lg border" data-testid="text-translation-hint">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Translation hint:</p>
               {!currentTranslation && (
@@ -320,12 +320,12 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                     onDragStart={(e) => handleDragStart(e, word, true, idx)}
                     onDrop={(e) => handleDropOnOrdered(e, idx)}
                     onDragOver={(e) => e.preventDefault()}
-                    className={`px-3 py-2 rounded-md font-medium cursor-pointer transition-all hover-elevate active-elevate-2 ${
+                    className={`px-3 py-1.5 rounded border font-medium cursor-pointer transition-all hover-elevate active-elevate-2 ${
                       validationState === "correct"
-                        ? "bg-green-500 text-white"
+                        ? "bg-green-100 dark:bg-green-900/30 border-green-500 text-green-700 dark:text-green-400"
                         : validationState === "incorrect"
-                          ? "bg-destructive text-destructive-foreground"
-                          : "bg-primary text-primary-foreground"
+                          ? "bg-destructive/10 border-destructive text-destructive"
+                          : "bg-primary/10 border-primary/50 text-primary"
                     }`}
                     data-testid={`ordered-word-${idx}`}
                   >
