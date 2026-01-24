@@ -368,9 +368,9 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                   <p className="text-sm text-muted-foreground italic">Drag or click words to place them here</p>
                 )}
                 {orderedWords.map((word, idx) => (
-                  <div key={`ordered-${idx}`} className="flex items-center gap-0">
+                  <div key={`ordered-${idx}`} className="relative flex items-center">
                     {dropTargetIndex === idx && (
-                      <div className="w-0.5 h-8 bg-primary rounded-full animate-pulse -mr-1" />
+                      <div className="absolute -left-[5px] top-1/2 -translate-y-1/2 w-0.5 h-8 bg-primary rounded-full animate-pulse" />
                     )}
                     <span
                       onClick={() => handleWordClick(word, true)}
@@ -390,7 +390,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                       {word}
                     </span>
                     {dropTargetIndex === orderedWords.length && idx === orderedWords.length - 1 && (
-                      <div className="w-0.5 h-8 bg-primary rounded-full animate-pulse ml-1" />
+                      <div className="absolute -right-[5px] top-1/2 -translate-y-1/2 w-0.5 h-8 bg-primary rounded-full animate-pulse" />
                     )}
                   </div>
                 ))}
