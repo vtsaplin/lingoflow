@@ -79,7 +79,7 @@ export function SidebarNav() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `lingoflow-flashcards-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `lingoflow-saved-words-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -273,8 +273,8 @@ export function SidebarNav() {
               <button 
                 onClick={handleExportFlashcards}
                 className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
-                data-testid="button-export-flashcards"
-                title="Export flashcards to CSV"
+                data-testid="button-export-saved-words"
+                title="Export saved words to CSV"
               >
                 <FileDown className="h-4 w-4" />
                 <span className="text-xs">{flashcardCount}</span>

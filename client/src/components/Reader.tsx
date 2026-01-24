@@ -227,23 +227,27 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         removedCount++;
       }
       
-      setSelectedWords(new Set());
+      // Update selection to reflect current saved state (don't clear, maintain overlay feel)
+      const updatedFlashcardWords = new Set(
+        getFlashcardsForText(topicId, textId).map(f => f.german.toLowerCase())
+      );
+      setSelectedWords(updatedFlashcardWords);
+      
+      // Exit selection mode gracefully and return to Explore
       setMultiSelectMode(false);
       
-      // Reset all practice progress and state when flashcards change
+      // Reset practice state silently (required for consistency but don't show visual disruption)
       if (savedCount > 0 || removedCount > 0) {
         resetTextProgress(topicId, textId);
         resetPracticeState();
-      }
-      
-      const messages: string[] = [];
-      if (savedCount > 0) messages.push(`added ${savedCount}`);
-      if (removedCount > 0) messages.push(`removed ${removedCount}`);
-      
-      if (messages.length > 0) {
+        
+        const messages: string[] = [];
+        if (savedCount > 0) messages.push(`${savedCount} added`);
+        if (removedCount > 0) messages.push(`${removedCount} removed`);
+        
         toast({
-          title: "Flashcards updated",
-          description: messages.join(', ') + ' words. Progress reset.',
+          title: "Added to Saved Words",
+          description: messages.join(', '),
         });
       }
       
@@ -257,7 +261,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save flashcards",
+        description: "Failed to save words",
         variant: "destructive",
       });
     } finally {
@@ -513,18 +517,35 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       className="gap-2"
                     >
                       {multiSelectMode ? (
-                        <X className="h-4 w-4" />
-                      ) : null}
-                      {multiSelectMode ? "Cancel" : "Flashcards"}
+                        <>
+                          <Check className="h-4 w-4" />
+                          Done
+                        </>
+                      ) : (
+                        <>
+                          <MousePointer2 className="h-4 w-4" />
+                          Select Words
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-3">
-                  {multiSelectMode 
-                    ? `Click words to select them for saving (${selectedWords.size} selected)`
-                    : `Click on ${interactionMode === "word" ? "words" : "sentences"} to hear pronunciation and see ${interactionMode === "word" ? "definitions" : "translations"}.`
-                  }
-                </p>
+                <div className="mt-3">
+                  {multiSelectMode ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Select words you want to practice later
+                      </p>
+                      <p className="text-sm font-medium text-foreground mt-1">
+                        {selectedWords.size} words selected
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Click on {interactionMode === "word" ? "words" : "sentences"} to hear pronunciation and see {interactionMode === "word" ? "definitions" : "translations"}.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -702,13 +723,11 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                             Clear
                           </Button>
                         )}
-                        {hasChanges && (
-                          <>
-                            <Button 
+                        <Button 
                               variant="default" 
                               size="sm"
-                              onClick={() => setShowSaveConfirm(true)}
-                              disabled={isBatchSaving}
+                              onClick={() => hasChanges ? setShowSaveConfirm(true) : null}
+                              disabled={isBatchSaving || selectedWords.size === 0 || !hasChanges}
                               data-testid="button-batch-save"
                               className="gap-2"
                             >
@@ -719,22 +738,22 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                                 </>
                               ) : (
                                 <>
-                                  <Check className="h-4 w-4" />
-                                  Save
+                                  <Plus className="h-4 w-4" />
+                                  Add to Saved Words
                                 </>
                               )}
                             </Button>
                             <AlertDialog open={showSaveConfirm} onOpenChange={setShowSaveConfirm}>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Update Flashcards?</AlertDialogTitle>
+                                  <AlertDialogTitle>Update Saved Words?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Adding or removing flashcards will reset your practice progress for this text. 
-                                    Fill, Write, and Cards exercises will start over.
+                                    Adding or removing words will reset your practice progress for this text. 
+                                    Practice exercises will start over.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogCancel>Go Back</AlertDialogCancel>
                                   <AlertDialogAction onClick={() => {
                                     setShowSaveConfirm(false);
                                     handleBatchSave();
@@ -744,8 +763,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>
