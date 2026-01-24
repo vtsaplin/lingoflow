@@ -292,56 +292,53 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
             )}
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div
-              className={`min-h-[100px] p-4 rounded-lg border-2 border-dashed transition-colors ${
-                orderedWords.length > 0
-                  ? validationState === "correct"
-                    ? "bg-green-50 dark:bg-green-900/20 border-green-500"
-                    : validationState === "incorrect"
-                      ? "bg-destructive/10 border-destructive"
-                      : "bg-primary/5 border-primary/30"
-                  : "bg-background border-muted-foreground/30"
+              className={`bg-card border rounded-lg p-6 transition-colors ${
+                validationState === "correct"
+                  ? "border-green-500"
+                  : validationState === "incorrect"
+                    ? "border-destructive"
+                    : ""
               }`}
               onDrop={(e) => handleDropOnOrdered(e)}
               onDragOver={(e) => e.preventDefault()}
               data-testid="ordered-area"
             >
-              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Your answer:</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 min-h-[40px]">
                 {orderedWords.length === 0 && (
                   <p className="text-sm text-muted-foreground italic">Drag or click words to place them here</p>
                 )}
                 {orderedWords.map((word, idx) => (
-                  <button
+                  <span
                     key={`ordered-${idx}`}
                     onClick={() => handleWordClick(word, true)}
                     draggable
                     onDragStart={(e) => handleDragStart(e, word, true, idx)}
                     onDrop={(e) => handleDropOnOrdered(e, idx)}
                     onDragOver={(e) => e.preventDefault()}
-                    className={`px-3 py-1.5 rounded border font-medium cursor-pointer transition-all hover-elevate active-elevate-2 ${
+                    className={`px-3 py-1.5 rounded cursor-pointer transition-all hover-elevate active-elevate-2 select-none ${
                       validationState === "correct"
-                        ? "bg-green-100 dark:bg-green-900/30 border-green-500 text-green-700 dark:text-green-400"
+                        ? "bg-green-100 dark:bg-green-900/30 border border-green-500 text-green-700 dark:text-green-400"
                         : validationState === "incorrect"
-                          ? "bg-destructive/10 border-destructive text-destructive"
-                          : "bg-primary/10 border-primary/50 text-primary"
+                          ? "bg-destructive/10 border border-destructive text-destructive"
+                          : "bg-primary/10 border border-primary/30 text-primary"
                     }`}
                     data-testid={`ordered-word-${idx}`}
                   >
                     {word}
-                  </button>
+                  </span>
                 ))}
               </div>
             </div>
 
             <div
-              className="min-h-[80px] p-4 rounded-lg border"
+              className="bg-muted/30 border rounded-lg p-4"
               onDrop={handleDropOnShuffled}
               onDragOver={(e) => e.preventDefault()}
               data-testid="shuffled-area"
             >
-              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Available words:</p>
+              <p className="text-sm text-muted-foreground mb-2">Word bank:</p>
               <div className="flex flex-wrap gap-2">
                 {shuffledWords.length === 0 && orderedWords.length > 0 && (
                   <p className="text-sm text-muted-foreground italic">All words placed</p>
