@@ -409,7 +409,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   ) : (
                     <Layers className="h-4 w-4" />
                   )}
-                  <span className="hidden sm:inline">Memorize</span>
+                  <span className="hidden sm:inline">Review</span>
                   {flashcardsForText.length > 0 && (
                     <span className="text-xs text-muted-foreground hidden sm:inline">({flashcardsForText.length})</span>
                   )}
@@ -537,7 +537,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         className="gap-2"
                       >
                         <MousePointer2 className="h-4 w-4" />
-                        Select Words to Memorize
+                        Select Words to Review
                       </Button>
                     )}
                   </div>
@@ -760,12 +760,12 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                               ) : (
                                 <>
                                   <Check className="h-4 w-4" />
-                                  Apply Changes
+                                  Update Review
                                 </>
                               )}
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Save updates to your saved words</TooltipContent>
+                          <TooltipContent>Apply changes to your review list</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
