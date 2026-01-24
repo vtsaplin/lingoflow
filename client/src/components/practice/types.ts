@@ -64,11 +64,28 @@ export interface CardsModeState {
   ruDe: CardsDirectionState;
 }
 
+export interface SpeakQuestionState {
+  question: string;
+  context: string;
+  expectedTopics: string[];
+  suggestedResponse?: string;
+  userTranscript?: string;
+  isCorrect?: boolean;
+}
+
+export interface SpeakModeState {
+  currentQuestionIndex: number;
+  questions: SpeakQuestionState[];
+  previousQuestions: string[];
+  initialized: boolean;
+}
+
 export interface PracticeState {
   fill: FillModeState;
   order: OrderModeState;
   write: WriteModeState;
   cards: CardsModeState;
+  speak: SpeakModeState;
 }
 
 function createInitialCardsDirectionState(): CardsDirectionState {
@@ -104,6 +121,12 @@ export function createInitialPracticeState(): PracticeState {
       direction: "de-ru",
       deRu: createInitialCardsDirectionState(),
       ruDe: createInitialCardsDirectionState(),
+    },
+    speak: {
+      currentQuestionIndex: 0,
+      questions: [],
+      previousQuestions: [],
+      initialized: false,
     },
   };
 }

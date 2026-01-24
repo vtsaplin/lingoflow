@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { createInitialPracticeState, type PracticeState, type FillModeState, type OrderModeState, type WriteModeState, type CardsModeState } from "@/components/practice/types";
+import { createInitialPracticeState, type PracticeState, type FillModeState, type OrderModeState, type WriteModeState, type CardsModeState, type SpeakModeState } from "@/components/practice/types";
 
 const STORAGE_KEY = "lingoflow-practice-state";
 
@@ -14,6 +14,7 @@ function migrateState(stored: Partial<PracticeState>): PracticeState {
     order: { ...defaults.order, ...stored.order },
     write: { ...defaults.write, ...stored.write },
     cards: { ...defaults.cards, ...stored.cards },
+    speak: { ...defaults.speak, ...stored.speak },
   };
 }
 
@@ -75,6 +76,10 @@ export function usePracticeState(topicId: string, textId: string) {
     setPracticeStateInternal(prev => ({ ...prev, cards: newState }));
   }, []);
 
+  const updateSpeakState = useCallback((newState: SpeakModeState) => {
+    setPracticeStateInternal(prev => ({ ...prev, speak: newState }));
+  }, []);
+
   const resetPracticeState = useCallback(() => {
     const newState = createInitialPracticeState();
     setPracticeStateInternal(newState);
@@ -90,6 +95,7 @@ export function usePracticeState(topicId: string, textId: string) {
     updateOrderState,
     updateWriteState,
     updateCardsState,
+    updateSpeakState,
     resetPracticeState,
     textKey,
     activeTextKey

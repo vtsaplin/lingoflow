@@ -49,6 +49,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     updateOrderState, 
     updateWriteState,
     updateCardsState,
+    updateSpeakState,
     resetPracticeState,
     textKey,
     activeTextKey 
@@ -822,6 +823,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             textId={textId}
             textContent={paragraphs.join("\n\n")}
             topicTitle={topicTitle}
+            state={practiceState.speak}
+            onStateChange={updateSpeakState}
             onComplete={() => setModeComplete(topicId, textId, "speak")}
             onResetProgress={() => resetModeProgress(topicId, textId, "speak")}
             isCompleted={progress.speak}

@@ -4,6 +4,7 @@ import { Volume2, Mic, MicOff, RotateCcw, ArrowRight, CheckCircle2, XCircle, Loa
 import { useTTS } from "@/hooks/use-services";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import type { SpeakModeState } from "./types";
 
 interface SpeakModeProps {
   sentences: string[];
@@ -11,6 +12,8 @@ interface SpeakModeProps {
   textId: string;
   textContent: string;
   topicTitle: string;
+  state: SpeakModeState;
+  onStateChange: (state: SpeakModeState) => void;
   onComplete?: () => void;
   onResetProgress?: () => void;
   isCompleted?: boolean;
@@ -35,21 +38,34 @@ interface EvaluationResult {
 export function SpeakMode({ 
   textContent, 
   topicTitle, 
+  state: persistedState,
+  onStateChange,
   onComplete, 
   onResetProgress, 
   isCompleted 
 }: SpeakModeProps) {
-  const [currentQuestion, setCurrentQuestion] = useState<DialogueQuestion | null>(null);
-  const [questionNumber, setQuestionNumber] = useState(1);
-  const [state, setState] = useState<DialogueState>("loading");
+  const { currentQuestionIndex, questions, previousQuestions } = persistedState;
+  const currentSavedQuestion = questions[currentQuestionIndex];
+  
+  const [dialogueState, setDialogueState] = useState<DialogueState>(() => {
+    if (currentSavedQuestion) return "listening";
+    return "loading";
+  });
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [userTranscript, setUserTranscript] = useState<string>("");
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
-  const [previousQuestions, setPreviousQuestions] = useState<string[]>([]);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(!currentSavedQuestion);
   const [showHint, setShowHint] = useState(false);
+  
+  const currentQuestion = currentSavedQuestion ? {
+    question: currentSavedQuestion.question,
+    context: currentSavedQuestion.context,
+    expectedTopics: currentSavedQuestion.expectedTopics,
+  } : null;
+  
+  const questionNumber = currentQuestionIndex + 1;
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -61,34 +77,51 @@ export function SpeakMode({
   
   const ttsMutation = useTTS();
 
+  const pendingQuestionIndexRef = useRef<number>(0);
+  
   const generateQuestionMutation = useMutation({
-    mutationFn: async ({ textContent, topicTitle, previousQuestions }: { 
+    mutationFn: async ({ textContent, topicTitle, prevQuestions, targetIndex }: { 
       textContent: string; 
       topicTitle: string;
-      previousQuestions: string[];
+      prevQuestions: string[];
+      targetIndex: number;
     }) => {
+      pendingQuestionIndexRef.current = targetIndex;
       const response = await apiRequest("POST", "/api/generate-dialogue", {
         textContent,
         topicTitle,
         questionCount: 1,
-        previousQuestions
+        previousQuestions: prevQuestions
       });
       return response.json();
     },
     onSuccess: (data) => {
+      const targetIndex = pendingQuestionIndexRef.current;
       if (data.questions && Array.isArray(data.questions) && data.questions.length > 0) {
-        setCurrentQuestion(data.questions[0]);
+        const newQuestion = data.questions[0];
+        const newQuestions = [...questions];
+        newQuestions[targetIndex] = {
+          question: newQuestion.question,
+          context: newQuestion.context,
+          expectedTopics: newQuestion.expectedTopics,
+        };
+        onStateChange({
+          ...persistedState,
+          currentQuestionIndex: targetIndex,
+          questions: newQuestions,
+          initialized: true,
+        });
         setError(null);
-        setState("listening");
+        setDialogueState("listening");
         setShouldAutoPlay(true);
       } else {
         setError("Could not generate a question");
-        setState("error");
+        setDialogueState("error");
       }
     },
     onError: () => {
       setError("Failed to generate question");
-      setState("error");
+      setDialogueState("error");
     }
   });
 
@@ -110,16 +143,16 @@ export function SpeakMode({
   const loadQuestion = useCallback(() => {
     if (textContent && topicTitle && !generateQuestionMutation.isPending) {
       setError(null);
-      setState("loading");
-      generateQuestionMutation.mutate({ textContent, topicTitle, previousQuestions });
+      setDialogueState("loading");
+      generateQuestionMutation.mutate({ textContent, topicTitle, prevQuestions: previousQuestions, targetIndex: currentQuestionIndex });
     }
-  }, [textContent, topicTitle, previousQuestions, generateQuestionMutation]);
+  }, [textContent, topicTitle, previousQuestions, currentQuestionIndex, generateQuestionMutation]);
 
   useEffect(() => {
-    if (textContent && topicTitle && state === "loading" && !currentQuestion && !generateQuestionMutation.isPending) {
-      generateQuestionMutation.mutate({ textContent, topicTitle, previousQuestions: [] });
+    if (textContent && topicTitle && dialogueState === "loading" && !currentQuestion && !generateQuestionMutation.isPending) {
+      generateQuestionMutation.mutate({ textContent, topicTitle, prevQuestions: previousQuestions, targetIndex: currentQuestionIndex });
     }
-  }, [textContent, topicTitle, state, currentQuestion, generateQuestionMutation]);
+  }, [textContent, topicTitle, dialogueState, currentQuestion, previousQuestions, currentQuestionIndex, generateQuestionMutation]);
 
   const stopCurrentAudio = useCallback(() => {
     if (audioRef.current) {
@@ -197,11 +230,11 @@ export function SpeakMode({
   }, [currentQuestion, isPlaying, stopCurrentAudio, ttsMutation]);
 
   useEffect(() => {
-    if (state === "listening" && currentQuestion && shouldAutoPlay) {
+    if (dialogueState === "listening" && currentQuestion && shouldAutoPlay) {
       playCurrentQuestion();
       setShouldAutoPlay(false);
     }
-  }, [state, currentQuestion, shouldAutoPlay, playCurrentQuestion]);
+  }, [dialogueState, currentQuestion, shouldAutoPlay, playCurrentQuestion]);
 
   const startRecording = async () => {
     if (isRecording || processingRef.current || mediaRecorderRef.current) return;
@@ -236,7 +269,7 @@ export function SpeakMode({
       
       recorder.start(100);
       setIsRecording(true);
-      setState("recording");
+      setDialogueState("recording");
     } catch (err) {
       setError("Could not access microphone");
       console.error("Microphone error:", err);
@@ -247,7 +280,7 @@ export function SpeakMode({
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      setState("processing");
+      setDialogueState("processing");
     }
   };
 
@@ -291,12 +324,12 @@ export function SpeakMode({
       
       if (!transcript || transcript.trim() === "") {
         setError("Could not recognize speech. Please try again.");
-        setState("listening");
+        setDialogueState("listening");
         return;
       }
       
       setUserTranscript(transcript);
-      setState("evaluating");
+      setDialogueState("evaluating");
       
       try {
         const evalResult = await evaluateResponseMutation.mutateAsync({
@@ -309,23 +342,23 @@ export function SpeakMode({
         
         if (evalResult && typeof evalResult.isAppropriate === "boolean") {
           setEvaluation(evalResult);
-          setState("result");
+          setDialogueState("result");
         } else {
           setError("Could not evaluate response. Please try again.");
-          setState("listening");
+          setDialogueState("listening");
         }
       } catch (evalErr) {
         if (!mountedRef.current) return;
         setError("Evaluation failed. Please try again.");
         console.error("Evaluation error:", evalErr);
-        setState("listening");
+        setDialogueState("listening");
       }
     } catch (err) {
       if (!mountedRef.current) return;
       if ((err as Error).name === "AbortError") return;
       setError("Speech recognition error. Please try again.");
       console.error("Transcription error:", err);
-      setState("listening");
+      setDialogueState("listening");
     } finally {
       processingRef.current = false;
       abortControllerRef.current = null;
@@ -334,20 +367,26 @@ export function SpeakMode({
 
   const nextQuestion = () => {
     stopCurrentAudio();
-    if (currentQuestion) {
-      setPreviousQuestions(prev => [...prev, currentQuestion.question]);
-    }
-    setCurrentQuestion(null);
+    const newPrevQuestions = currentQuestion 
+      ? [...previousQuestions, currentQuestion.question] 
+      : previousQuestions;
+    const nextIndex = currentQuestionIndex + 1;
+    
+    onStateChange({
+      ...persistedState,
+      previousQuestions: newPrevQuestions,
+    });
+    
     setEvaluation(null);
     setUserTranscript("");
-    setQuestionNumber(prev => prev + 1);
     setShouldAutoPlay(true);
     setShowHint(false);
-    setState("loading");
+    setDialogueState("loading");
     generateQuestionMutation.mutate({ 
       textContent, 
       topicTitle, 
-      previousQuestions: currentQuestion ? [...previousQuestions, currentQuestion.question] : previousQuestions 
+      prevQuestions: newPrevQuestions,
+      targetIndex: nextIndex
     });
   };
 
@@ -356,22 +395,25 @@ export function SpeakMode({
     setEvaluation(null);
     setUserTranscript("");
     setShouldAutoPlay(true);
-    setState("listening");
+    setDialogueState("listening");
   };
 
   const handleReset = () => {
     stopCurrentAudio();
-    setCurrentQuestion(null);
+    onStateChange({
+      currentQuestionIndex: 0,
+      questions: [],
+      previousQuestions: [],
+      initialized: false,
+    });
     setEvaluation(null);
     setUserTranscript("");
-    setQuestionNumber(1);
-    setPreviousQuestions([]);
     setShowHint(false);
-    setState("loading");
+    setDialogueState("loading");
     if (onResetProgress) {
       onResetProgress();
     }
-    generateQuestionMutation.mutate({ textContent, topicTitle, previousQuestions: [] });
+    generateQuestionMutation.mutate({ textContent, topicTitle, prevQuestions: [], targetIndex: 0 });
   };
 
   const markComplete = () => {
@@ -380,7 +422,7 @@ export function SpeakMode({
     }
   };
 
-  if (state === "loading" || generateQuestionMutation.isPending) {
+  if (dialogueState === "loading" || generateQuestionMutation.isPending) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <Loader2 className="h-12 w-12 text-muted-foreground mb-4 animate-spin" />
@@ -389,7 +431,7 @@ export function SpeakMode({
     );
   }
 
-  if (state === "error" || !currentQuestion) {
+  if (dialogueState === "error" || !currentQuestion) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -457,7 +499,7 @@ export function SpeakMode({
             </div>
           </div>
 
-          {state === "listening" && (
+          {dialogueState === "listening" && (
             <div className="flex flex-col items-center gap-4 py-8">
               {!isPlaying && (
                 <p className="text-sm text-muted-foreground animate-pulse">
@@ -476,7 +518,7 @@ export function SpeakMode({
             </div>
           )}
 
-          {state === "recording" && (
+          {dialogueState === "recording" && (
             <div className="flex flex-col items-center gap-4 py-8">
               <div className="flex items-center gap-2 text-red-500 dark:text-red-400">
                 <span className="animate-pulse">●</span>
@@ -494,21 +536,21 @@ export function SpeakMode({
             </div>
           )}
 
-          {state === "processing" && (
+          {dialogueState === "processing" && (
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               <p className="text-muted-foreground">Recognizing speech...</p>
             </div>
           )}
 
-          {state === "evaluating" && (
+          {dialogueState === "evaluating" && (
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               <p className="text-muted-foreground">Evaluating your response...</p>
             </div>
           )}
 
-          {state === "result" && evaluation && (
+          {dialogueState === "result" && evaluation && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Your answer:</p>
@@ -535,7 +577,7 @@ export function SpeakMode({
 
       <div className="border-t bg-card px-6 sm:px-8 py-4">
         <div className="max-w-3xl mx-auto">
-          {state === "result" && evaluation && (
+          {dialogueState === "result" && evaluation && (
             <div className="flex items-center gap-2 mb-4">
               {evaluation.isAppropriate ? (
                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
@@ -552,7 +594,7 @@ export function SpeakMode({
           )}
 
           <div className="flex flex-wrap gap-2">
-            {state === "result" && (
+            {dialogueState === "result" && (
               <>
                 <Button variant="outline" onClick={retryQuestion} data-testid="button-retry">
                   <RotateCcw className="h-4 w-4 mr-2" />
