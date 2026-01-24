@@ -906,14 +906,23 @@ function Paragraph({
         const isFlashcard = flashcardSet.has(cleanWord.toLowerCase());
         const isMultiSelected = multiSelectMode && selectedWords.has(cleanWord.toLowerCase());
 
+        // Extract leading and trailing punctuation
+        const leadingMatch = word.match(/^[.,?!/#$%^&*;:{}=\-_`~()«»„"]+/);
+        const trailingMatch = word.match(/[.,?!/#$%^&*;:{}=\-_`~()«»„"]+$/);
+        const leadingPunct = leadingMatch ? leadingMatch[0] : "";
+        const trailingPunct = trailingMatch ? trailingMatch[0] : "";
+
         return (
-          <span 
-            key={idx}
-            onClick={(e) => onInteract(cleanWord, e)}
-            data-testid={`word-${idx}`}
-            className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isFlashcard ? 'flashcard-word' : ''} ${isMultiSelected ? 'multi-selected' : ''}`}
-          >
-            {word}
+          <span key={idx}>
+            {leadingPunct}
+            <span 
+              onClick={(e) => onInteract(cleanWord, e)}
+              data-testid={`word-${idx}`}
+              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isFlashcard ? 'flashcard-word' : ''} ${isMultiSelected ? 'multi-selected' : ''}`}
+            >
+              {cleanWord}
+            </span>
+            {trailingPunct}
           </span>
         );
       })}
