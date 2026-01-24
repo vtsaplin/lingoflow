@@ -238,20 +238,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       
       // Show confirmation toast (no progress reset needed)
       if (savedCount > 0 || removedCount > 0) {
-        const messages: string[] = [];
-        if (savedCount > 0) messages.push(`${savedCount} added`);
-        if (removedCount > 0) messages.push(`${removedCount} removed`);
-        
-        // Dynamic title based on action
-        const toastTitle = savedCount > 0 && removedCount > 0 
-          ? "Saved Words Updated"
-          : savedCount > 0 
-            ? "Added to Saved Words" 
-            : "Removed from Saved Words";
-        
         toast({
-          title: toastTitle,
-          description: messages.join(', '),
+          title: "Changes applied",
         });
       }
       
