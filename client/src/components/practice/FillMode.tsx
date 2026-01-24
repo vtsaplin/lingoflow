@@ -35,6 +35,9 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
   }, [paragraphs]);
 
   const { currentIndex, sentenceStates } = state;
+  
+  // State hooks must be at the top, before any conditional returns
+  const [selectedWord, setSelectedWord] = useState<{ word: string; index: number } | null>(null);
 
   useEffect(() => {
     const sentenceCountMismatch = Object.keys(state.sentenceStates).length !== sentences.length;
@@ -114,8 +117,6 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
       },
     });
   };
-
-  const [selectedWord, setSelectedWord] = useState<{ word: string; index: number } | null>(null);
 
   const handleWordBankClick = (word: string, index: number) => {
     if (selectedWord?.index === index) {
