@@ -428,7 +428,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden h-full">
+      <div className="flex-1 overflow-hidden">
         {practiceMode === "read" && (
           <div className="flex flex-col h-full">
             <div className="px-6 sm:px-8 py-4">
