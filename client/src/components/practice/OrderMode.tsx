@@ -118,6 +118,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     validationState: "idle" as const,
   };
   const { shuffledWords, orderedWords, validationState } = currentState;
+  const completedCount = Object.values(sentenceStates).filter(s => s.validationState === "correct").length;
 
   const updateCurrentSentenceState = (updates: Partial<OrderSentenceState>) => {
     onStateChange({
@@ -249,26 +250,9 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
             <span className="text-sm text-muted-foreground">
               Sentence {currentIndex + 1} of {sentences.length}
             </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handlePrev}
-                disabled={currentIndex === 0}
-                data-testid="button-prev-sentence"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleNext}
-                disabled={currentIndex === sentences.length - 1}
-                data-testid="button-next-sentence"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <span className={`text-sm font-medium ${completedCount === sentences.length ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
+              {completedCount} / {sentences.length} complete
+            </span>
           </div>
           
           <div className="mb-6 p-4 bg-muted/30 rounded-lg border" data-testid="text-translation-hint">
@@ -370,34 +354,46 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-6 text-sm">
-            {Object.values(sentenceStates).map((s, idx) => (
-              <div
-                key={idx}
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                  s.validationState === "correct"
-                    ? "bg-green-500 text-white"
-                    : idx === currentIndex
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                }`}
-                data-testid={`sentence-indicator-${idx}`}
-              >
-                {s.validationState === "correct" ? (
-                  <CheckCircle2 className="h-4 w-4" />
-                ) : s.validationState === "incorrect" ? (
-                  <XCircle className="h-4 w-4" />
-                ) : (
-                  idx + 1
-                )}
-              </div>
-            ))}
+          <div className="flex items-center justify-between mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrev}
+              disabled={currentIndex === 0}
+              data-testid="button-prev-sentence"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNext}
+              disabled={currentIndex === sentences.length - 1}
+              data-testid="button-next-sentence"
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
           </div>
         </div>
       </div>
-      
-      <div className="border-t bg-card">
-        <div className="max-w-3xl mx-auto px-6 sm:px-8 py-4 flex items-center justify-between gap-4">
+
+      <div className="border-t bg-card px-6 sm:px-8 py-4">
+        <div className="max-w-3xl mx-auto">
+          {validationState === "correct" && (
+            <div className="flex items-center gap-2 mb-4 text-green-600 dark:text-green-400">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="font-medium">Correct!</span>
+            </div>
+          )}
+          {validationState === "incorrect" && (
+            <div className="flex items-center gap-2 mb-4 text-destructive">
+              <XCircle className="h-5 w-5" />
+              <span className="font-medium">Word order is incorrect. Try again!</span>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button
               onClick={handleCheck}
@@ -409,7 +405,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
             </Button>
             <Button variant="outline" onClick={handleReset} data-testid="button-reset">
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset Sentence
+              Reset
             </Button>
             {onResetProgress && (
               <Button 
