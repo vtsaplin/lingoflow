@@ -202,30 +202,36 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     let errorCount = 0;
     
     try {
-      for (let i = 0; i < wordsToAdd.length; i++) {
-        const word = wordsToAdd[i];
-        setSaveProgress({ current: i + 1, total: totalOperations, currentWord: word });
-        
+      // Fetch all translations in parallel for speed
+      const translationPromises = wordsToAdd.map(async (word) => {
         try {
           const response = await apiRequest('POST', '/api/dictionary', { word });
           const data = await response.json();
-          addFlashcard(data.word, data.translation, topicId, textId);
-          savedCount++;
+          return { success: true, word: data.word, translation: data.translation };
         } catch {
+          return { success: false, word };
+        }
+      });
+      
+      const results = await Promise.all(translationPromises);
+      
+      // Add flashcards from successful translations
+      for (const result of results) {
+        if (result.success && result.translation) {
+          addFlashcard(result.word, result.translation, topicId, textId);
+          savedCount++;
+        } else {
           errorCount++;
         }
       }
       
-      for (let i = 0; i < wordsToRemove.length; i++) {
-        const flashcard = wordsToRemove[i];
-        setSaveProgress({ 
-          current: wordsToAdd.length + i + 1, 
-          total: totalOperations, 
-          currentWord: flashcard.german 
-        });
+      // Remove words (instant, no API needed)
+      for (const flashcard of wordsToRemove) {
         removeFlashcard(flashcard.id);
         removedCount++;
       }
+      
+      setSaveProgress({ current: totalOperations, total: totalOperations, currentWord: "" });
       
       // Update selection to reflect current saved state (don't clear, maintain overlay feel)
       const updatedFlashcardWords = new Set(
