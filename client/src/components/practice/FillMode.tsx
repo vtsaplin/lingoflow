@@ -38,6 +38,26 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
   
   // State hooks must be at the top, before any conditional returns
   const [selectedWord, setSelectedWord] = useState<{ word: string; index: number } | null>(null);
+  
+  // All callbacks with hooks must also be at top level
+  const handleFullReset = useCallback(() => {
+    const initialStates: Record<number, FillSentenceState> = {};
+    sentences.forEach((_, idx) => {
+      initialStates[idx] = {
+        placedWords: {},
+        availableWords: [],
+        validationState: "idle",
+        incorrectGaps: [],
+      };
+    });
+    onStateChange({
+      currentIndex: 0,
+      sentenceStates: initialStates,
+      initialized: true,
+      flashcardCount: 0,
+    });
+    onResetProgress?.();
+  }, [sentences, onStateChange, onResetProgress]);
 
   useEffect(() => {
     const sentenceCountMismatch = Object.keys(state.sentenceStates).length !== sentences.length;
@@ -207,25 +227,6 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
       incorrectGaps: [],
     });
   };
-
-  const handleFullReset = useCallback(() => {
-    const initialStates: Record<number, FillSentenceState> = {};
-    sentences.forEach((_, idx) => {
-      initialStates[idx] = {
-        placedWords: {},
-        availableWords: [],
-        validationState: "idle",
-        incorrectGaps: [],
-      };
-    });
-    onStateChange({
-      currentIndex: 0,
-      sentenceStates: initialStates,
-      initialized: true,
-      flashcardCount: 0,
-    });
-    onResetProgress?.();
-  }, [sentences, onStateChange, onResetProgress]);
 
   const handleNext = () => {
     if (currentIndex < sentences.length - 1) {
