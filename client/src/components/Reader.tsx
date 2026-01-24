@@ -512,9 +512,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       >
                         {multiSelectMode ? (
                           <X className="h-4 w-4" />
-                        ) : (
-                          <Plus className="h-4 w-4" />
-                        )}
+                        ) : null}
                         {multiSelectMode ? "Cancel" : "Flashcards"}
                       </Button>
                     </div>
@@ -693,16 +691,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         <span className="font-medium text-foreground">{selectedWords.size}</span> words selected
                       </span>
                       <div className="flex items-center gap-2 shrink-0">
-                        {selectedWords.size === 0 && flashcardsForText.length > 0 && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setSelectedWords(new Set(flashcardsForText.map(f => f.german.toLowerCase())))}
-                            data-testid="button-select-all"
-                          >
-                            Select All
-                          </Button>
-                        )}
                         {selectedWords.size > 0 && (
                           <Button 
                             variant="ghost" 

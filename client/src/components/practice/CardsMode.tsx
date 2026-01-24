@@ -427,7 +427,7 @@ export function CardsMode({
           No flashcards saved for this text yet.
         </p>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Switch to Study mode and click "+ Flashcards" to add words.
+          Switch to Study mode and click "Flashcards" to add words.
         </p>
       </div>
     );
