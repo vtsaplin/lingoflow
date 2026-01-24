@@ -41,28 +41,11 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
     const countIncreased = flashcardWords.length > state.flashcardCount && state.flashcardCount > 0;
     const countDecreased = flashcardWords.length < state.flashcardCount && state.flashcardCount > 0;
     const sentenceCountMismatch = Object.keys(state.sentenceStates).length !== sentences.length;
-    
-    // Check if gap words in state match the current sentences
-    let gapWordsMismatch = false;
-    if (state.initialized && sentences.length > 0 && Object.keys(state.sentenceStates).length === sentences.length) {
-      for (let i = 0; i < sentences.length; i++) {
-        const sentenceGaps = sentences[i].allGapWords.sort().join(",");
-        const stateData = state.sentenceStates[i];
-        if (stateData) {
-          const stateWords = [...stateData.availableWords, ...Object.values(stateData.placedWords).filter(Boolean) as string[]].sort().join(",");
-          if (sentenceGaps !== stateWords) {
-            gapWordsMismatch = true;
-            break;
-          }
-        }
-      }
-    }
-    
-    const needsReinit = !state.initialized || countIncreased || countDecreased || sentenceCountMismatch || gapWordsMismatch;
+    const needsReinit = !state.initialized || countIncreased || countDecreased || sentenceCountMismatch;
     
     if (sentences.length > 0 && needsReinit) {
       const initialStates: Record<number, FillSentenceState> = {};
-      const shouldRestoreCompleted = isCompleted && !countIncreased && !countDecreased;
+      const shouldRestoreCompleted = isCompleted && !countIncreased && !countDecreased && !sentenceCountMismatch;
       
       sentences.forEach((sentence, idx) => {
         if (shouldRestoreCompleted) {
@@ -99,7 +82,7 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
         flashcardCount: flashcardWords.length,
       });
     }
-  }, [sentences, state.initialized, state.sentenceStates, onStateChange, isCompleted, flashcardWords.length, state.flashcardCount]);
+  }, [sentences, state.initialized, onStateChange, isCompleted, flashcardWords.length, state.flashcardCount]);
 
   if (sentences.length === 0) {
     return (
