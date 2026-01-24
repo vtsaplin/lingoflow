@@ -450,7 +450,9 @@ function extractSentencesWithGaps(paragraphs: string[], flashcardWords: string[]
       if (remainingSlots > 0) {
         const otherWords = cleanWords.filter(w => w && !flashcardWordsLower.has(w) && w.length > 2);
         const uniqueOthers = Array.from(new Set(otherWords));
-        const shuffledOthers = shuffleArray(uniqueOthers);
+        // Use seeded shuffle based on sentence content for deterministic results
+        const seed = hashString(trimmed);
+        const shuffledOthers = shuffleArraySeeded(uniqueOthers, seed);
         randomWordsToGap = shuffledOthers.slice(0, remainingSlots);
       }
       
@@ -499,11 +501,26 @@ function extractSentencesWithGaps(paragraphs: string[], flashcardWords: string[]
   return result;
 }
 
-function shuffleArray<T>(array: T[]): T[] {
+function shuffleArraySeeded<T>(array: T[], seed: number): T[] {
   const result = [...array];
+  let s = seed;
+  const random = () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    return s / 0x7fffffff;
+  };
   for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
+}
+
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
 }
