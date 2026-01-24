@@ -436,7 +436,7 @@ export function CardsMode({
           </li>
           <li className="flex gap-2">
             <span className="font-medium text-foreground">2.</span>
-            <span>Click the <strong>Cards</strong> button (with + icon)</span>
+            <span>Click the <strong>+ Cards</strong> button to select words for flashcards</span>
           </li>
           <li className="flex gap-2">
             <span className="font-medium text-foreground">3.</span>
