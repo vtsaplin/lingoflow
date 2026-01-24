@@ -20,6 +20,7 @@ interface SentenceWithWords {
 
 export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
   const [translations, setTranslations] = useState<Record<number, string>>({});
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   
   const translateMutation = useMutation({
     mutationFn: async ({ text, index }: { text: string; index: number }) => {
@@ -176,17 +177,21 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     e.dataTransfer.setData("index", String(index));
   };
 
-  const handleDropOnOrdered = (e: React.DragEvent, dropIndex?: number) => {
+  const handleDropOnOrdered = (e: React.DragEvent) => {
     e.preventDefault();
+    const insertAt = dropTargetIndex;
+    setDropTargetIndex(null);
+    
     const word = e.dataTransfer.getData("word");
     const fromOrdered = e.dataTransfer.getData("fromOrdered") === "true";
     const originalIndex = parseInt(e.dataTransfer.getData("index"));
 
     if (fromOrdered) {
-      if (dropIndex !== undefined && dropIndex !== originalIndex) {
+      if (insertAt !== null && insertAt !== originalIndex && insertAt !== originalIndex + 1) {
         const newOrdered = [...orderedWords];
         newOrdered.splice(originalIndex, 1);
-        newOrdered.splice(dropIndex > originalIndex ? dropIndex - 1 : dropIndex, 0, word);
+        const adjustedIndex = insertAt > originalIndex ? insertAt - 1 : insertAt;
+        newOrdered.splice(adjustedIndex, 0, word);
         updateCurrentSentenceState({
           orderedWords: newOrdered,
           validationState: "idle",
@@ -194,8 +199,8 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       }
     } else {
       const newShuffled = shuffledWords.filter((_, i) => i !== originalIndex);
-      const newOrdered = dropIndex !== undefined 
-        ? [...orderedWords.slice(0, dropIndex), word, ...orderedWords.slice(dropIndex)]
+      const newOrdered = insertAt !== null
+        ? [...orderedWords.slice(0, insertAt), word, ...orderedWords.slice(insertAt)]
         : [...orderedWords, word];
       updateCurrentSentenceState({
         shuffledWords: newShuffled,
@@ -207,6 +212,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
 
   const handleDropOnShuffled = (e: React.DragEvent) => {
     e.preventDefault();
+    setDropTargetIndex(null);
     const word = e.dataTransfer.getData("word");
     const fromOrdered = e.dataTransfer.getData("fromOrdered") === "true";
     const originalIndex = parseInt(e.dataTransfer.getData("index"));
@@ -218,6 +224,22 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
         validationState: "idle",
       });
     }
+  };
+
+  const handleDragOverWord = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+    const insertIndex = e.clientX < midX ? idx : idx + 1;
+    setDropTargetIndex(insertIndex);
+  };
+
+  const handleDragLeaveOrdered = () => {
+    setDropTargetIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDropTargetIndex(null);
   };
 
   const handleCheck = () => {
@@ -289,32 +311,48 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                     : ""
               }`}
               onDrop={(e) => handleDropOnOrdered(e)}
-              onDragOver={(e) => e.preventDefault()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (orderedWords.length === 0) {
+                  setDropTargetIndex(0);
+                }
+              }}
+              onDragLeave={handleDragLeaveOrdered}
               data-testid="ordered-area"
             >
-              <div className="flex flex-wrap gap-2 min-h-[40px]">
-                {orderedWords.length === 0 && (
+              <div className="flex flex-wrap gap-2 min-h-[40px] items-center">
+                {orderedWords.length === 0 && dropTargetIndex === 0 && (
+                  <div className="w-1 h-8 bg-primary rounded-full mx-1 animate-pulse" />
+                )}
+                {orderedWords.length === 0 && dropTargetIndex !== 0 && (
                   <p className="text-sm text-muted-foreground italic">Drag or click words to place them here</p>
                 )}
                 {orderedWords.map((word, idx) => (
-                  <span
-                    key={`ordered-${idx}`}
-                    onClick={() => handleWordClick(word, true)}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, word, true, idx)}
-                    onDrop={(e) => handleDropOnOrdered(e, idx)}
-                    onDragOver={(e) => e.preventDefault()}
-                    className={`px-3 py-1.5 rounded cursor-pointer transition-all hover-elevate active-elevate-2 select-none ${
-                      validationState === "correct"
-                        ? "bg-green-100 dark:bg-green-900/30 border border-green-500 text-green-700 dark:text-green-400"
-                        : validationState === "incorrect"
-                          ? "bg-destructive/10 border border-destructive text-destructive"
-                          : "bg-primary/10 border border-primary/30 text-primary"
-                    }`}
-                    data-testid={`ordered-word-${idx}`}
-                  >
-                    {word}
-                  </span>
+                  <div key={`ordered-${idx}`} className="flex items-center">
+                    {dropTargetIndex === idx && (
+                      <div className="w-1 h-8 bg-primary rounded-full mx-1 animate-pulse" />
+                    )}
+                    <span
+                      onClick={() => handleWordClick(word, true)}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, word, true, idx)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => handleDragOverWord(e, idx)}
+                      className={`px-3 py-1.5 rounded cursor-pointer transition-all hover-elevate active-elevate-2 select-none ${
+                        validationState === "correct"
+                          ? "bg-green-100 dark:bg-green-900/30 border border-green-500 text-green-700 dark:text-green-400"
+                          : validationState === "incorrect"
+                            ? "bg-destructive/10 border border-destructive text-destructive"
+                            : "bg-primary/10 border border-primary/30 text-primary"
+                      }`}
+                      data-testid={`ordered-word-${idx}`}
+                    >
+                      {word}
+                    </span>
+                    {dropTargetIndex === orderedWords.length && idx === orderedWords.length - 1 && (
+                      <div className="w-1 h-8 bg-primary rounded-full mx-1 animate-pulse" />
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -336,6 +374,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                     onClick={() => handleWordClick(word, false)}
                     draggable
                     onDragStart={(e) => handleDragStart(e, word, false, idx)}
+                    onDragEnd={handleDragEnd}
                     className="px-3 py-1.5 bg-background border rounded cursor-grab hover-elevate active-elevate-2 select-none"
                     data-testid={`shuffled-word-${idx}`}
                   >
