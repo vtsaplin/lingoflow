@@ -201,7 +201,7 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
     e.preventDefault();
   };
 
-  const handleCheck = () => {
+  const checkAnswers = useCallback(() => {
     let allCorrect = true;
     const newIncorrect: number[] = [];
 
@@ -218,6 +218,22 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
       incorrectGaps: newIncorrect,
       validationState: allCorrect ? "correct" : "incorrect",
     });
+  }, [currentSentence.gapLookup, placedWords, updateCurrentSentenceState]);
+
+  // Auto-check when all gaps are filled
+  useEffect(() => {
+    if (validationState !== "idle") return;
+    
+    const gapIds = Object.keys(currentSentence.gapLookup).map(Number);
+    const allFilled = gapIds.every(gapId => placedWords[gapId]);
+    
+    if (allFilled && gapIds.length > 0) {
+      checkAnswers();
+    }
+  }, [placedWords, currentSentence.gapLookup, validationState, checkAnswers]);
+
+  const handleCheck = () => {
+    checkAnswers();
   };
 
   const handleReset = () => {

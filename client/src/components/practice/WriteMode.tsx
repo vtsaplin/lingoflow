@@ -132,7 +132,7 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
     });
   };
 
-  const handleCheck = () => {
+  const checkAnswers = useCallback(() => {
     let allCorrect = true;
     const newIncorrect: number[] = [];
 
@@ -150,6 +150,22 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
       incorrectGaps: newIncorrect,
       validationState: allCorrect ? "correct" : "incorrect",
     });
+  }, [currentSentence.gapLookup, inputs, updateCurrentSentenceState]);
+
+  // Auto-check when all gaps are filled
+  useEffect(() => {
+    if (validationState !== "idle") return;
+    
+    const gapIds = Object.keys(currentSentence.gapLookup).map(Number);
+    const allFilled = gapIds.every(gapId => (inputs[gapId] || "").trim().length > 0);
+    
+    if (allFilled && gapIds.length > 0) {
+      checkAnswers();
+    }
+  }, [inputs, currentSentence.gapLookup, validationState, checkAnswers]);
+
+  const handleCheck = () => {
+    checkAnswers();
   };
 
   const handleReset = () => {
