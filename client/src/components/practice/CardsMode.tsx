@@ -537,12 +537,12 @@ export function CardsMode({
     <div className="flex flex-col h-full">
       <div className="px-6 sm:px-8 py-4">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3">
             <DirectionTabs />
             
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-center justify-center gap-3">
               <span className="text-sm text-muted-foreground shrink-0">{correctCount + incorrectCount}/{questions.length}</span>
-              <div className="w-[40%] bg-muted rounded-full h-1.5">
+              <div className="w-32 bg-muted rounded-full h-1.5">
                 <div 
                   className="bg-primary h-1.5 rounded-full transition-all"
                   style={{ width: `${((correctCount + incorrectCount) / questions.length) * 100}%` }}
