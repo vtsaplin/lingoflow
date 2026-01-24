@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic, MousePointer2, Check, Plus, Minus, Save } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic, MousePointer2, Check, Plus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -517,31 +518,39 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   </div>
 
                   <div className="ml-auto">
-                    <Button 
-                      variant={multiSelectMode ? "default" : "outline"}
-                      onClick={toggleMultiSelectMode}
-                      data-testid="button-multi-select"
-                      className="gap-2"
-                    >
-                      {multiSelectMode ? (
-                        <>
-                          <Check className="h-4 w-4" />
-                          Done
-                        </>
-                      ) : (
-                        <>
-                          <MousePointer2 className="h-4 w-4" />
-                          Select Words
-                        </>
-                      )}
-                    </Button>
+                    {multiSelectMode ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="default"
+                            onClick={toggleMultiSelectMode}
+                            data-testid="button-multi-select"
+                            className="gap-2"
+                          >
+                            <Check className="h-4 w-4" />
+                            Done
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Return to Explore without applying changes</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Button 
+                        variant="outline"
+                        onClick={toggleMultiSelectMode}
+                        data-testid="button-multi-select"
+                        className="gap-2"
+                      >
+                        <MousePointer2 className="h-4 w-4" />
+                        Select Words
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div className="mt-3">
                   {multiSelectMode ? (
                     <>
                       <p className="text-sm text-muted-foreground">
-                        Select words you want to practice later
+                        Edit the words you want to practice
                       </p>
                       <p className="text-sm font-medium text-foreground mt-1">
                         {selectedWords.size} words selected
@@ -712,38 +721,39 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               const wordsToRemove = Array.from(existingSet).filter(w => !selectedWords.has(w));
               const hasChanges = wordsToAdd.length > 0 || wordsToRemove.length > 0;
               
-              // Determine button label based on action
-              const getButtonContent = () => {
-                if (wordsToAdd.length > 0 && wordsToRemove.length > 0) {
-                  return { icon: <Save className="h-4 w-4" />, text: "Save Changes" };
-                } else if (wordsToRemove.length > 0) {
-                  return { icon: <Minus className="h-4 w-4" />, text: `Remove ${wordsToRemove.length} Word${wordsToRemove.length > 1 ? 's' : ''}` };
-                } else if (wordsToAdd.length > 0) {
-                  return { icon: <Plus className="h-4 w-4" />, text: `Add ${wordsToAdd.length} Word${wordsToAdd.length > 1 ? 's' : ''}` };
-                }
-                return { icon: <Save className="h-4 w-4" />, text: "Save Changes" };
-              };
-              const buttonContent = getButtonContent();
-              
               return (
                 <div className="border-t bg-card animate-in slide-in-from-bottom-4">
                   <div className="max-w-4xl mx-auto px-6 sm:px-8 py-4">
                     <div className="flex justify-between items-center gap-4">
-                      <span className="text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{selectedWords.size}</span> words selected
-                      </span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm text-muted-foreground">
+                          <span className="font-medium text-foreground">{selectedWords.size}</span> words selected
+                        </span>
+                        {hasChanges && (
+                          <span className="text-xs text-amber-600 dark:text-amber-400">
+                            Changes not applied
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {selectedWords.size > 0 && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setSelectedWords(new Set())}
-                            data-testid="button-clear-selection"
-                          >
-                            Clear
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setSelectedWords(new Set())}
+                                data-testid="button-clear-selection"
+                              >
+                                Clear Selection
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Unselect all selected words</TooltipContent>
+                          </Tooltip>
                         )}
-                        <Button 
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
                               variant="default" 
                               size="sm"
                               onClick={() => hasChanges ? setShowSaveConfirm(true) : null}
@@ -758,11 +768,14 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                                 </>
                               ) : (
                                 <>
-                                  {buttonContent.icon}
-                                  {buttonContent.text}
+                                  <Check className="h-4 w-4" />
+                                  Apply Changes
                                 </>
                               )}
                             </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Save updates to your saved words</TooltipContent>
+                        </Tooltip>
                             <AlertDialog open={showSaveConfirm} onOpenChange={setShowSaveConfirm}>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
