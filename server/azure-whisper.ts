@@ -15,6 +15,7 @@ export async function transcribeWithAzureWhisper(audioBuffer: Buffer): Promise<s
   const blob = new Blob([audioBuffer], { type: "audio/wav" });
   formData.append("file", blob, "audio.wav");
   formData.append("response_format", "text");
+  formData.append("language", "de"); // Force German language recognition
 
   const response = await fetch(url, {
     method: "POST",
