@@ -18,6 +18,8 @@ interface SpeakModeProps {
 
 type DialogueState = "loading" | "error" | "listening" | "recording" | "processing" | "evaluating" | "result";
 
+const TOTAL_QUESTIONS = 5;
+
 interface DialogueQuestion {
   question: string;
   context: string;
@@ -413,7 +415,7 @@ export function SpeakMode({
       <div className="flex-1 overflow-auto px-6 sm:px-8 py-6">
         <div className="max-w-3xl mx-auto">
           <p className="text-sm text-muted-foreground mb-4">
-            Question {questionNumber}. Listen and answer in German.
+            Question {questionNumber} of {TOTAL_QUESTIONS}. Listen and answer in German.
           </p>
           
           <div className="flex items-start gap-4 mb-6">
@@ -556,14 +558,15 @@ export function SpeakMode({
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Retry
                 </Button>
-                <Button onClick={nextQuestion} data-testid="button-next">
-                  Next Question
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-                {!isCompleted && (
-                  <Button variant="outline" onClick={markComplete} data-testid="button-mark-complete">
+                {questionNumber < TOTAL_QUESTIONS ? (
+                  <Button onClick={nextQuestion} data-testid="button-next">
+                    Next Question
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button onClick={markComplete} data-testid="button-finish">
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Mark Complete
+                    Finish
                   </Button>
                 )}
               </>
