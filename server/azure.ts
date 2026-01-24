@@ -137,24 +137,27 @@ export async function generateDialogue(
           role: "system", 
           content: `You are a German language tutor creating SIMPLE dialogue practice questions for Russian-speaking students at A2-B1 level.
 
+CRITICAL: Questions MUST be based DIRECTLY on the specific content of the provided text!
+- Ask about specific details, facts, or situations mentioned IN THE TEXT
+- Do NOT ask generic questions about the topic
+- The student should be able to answer using information from the text
+
 IMPORTANT: Keep everything at A2-B1 level!
 - Use basic vocabulary and short sentences
 - Questions should be simple and direct (5-10 words max)
 - Avoid complex grammar (Konjunktiv II, Passiv, long subordinate clauses)
 
-Based on the provided German learning text, generate ${questionCount} simple conversational question(s) in German.
+Generate ${questionCount} simple conversational question(s) in German based on the specific text content.
 
 For each question, provide:
-- question: Simple question in German (short, basic vocabulary, A2-B1 level)
-- context: Very brief hint in Russian - just 1 short sentence describing what to answer (простым языком, 10-15 слов максимум!)
-- expectedTopics: Array of 3-5 simple German words that could be used in the answer
+- question: Simple question in German about specific content from the text (short, basic vocabulary, A2-B1 level)
+- context: Very brief hint in Russian - refer to specific part of the text for the answer (простым языком, 10-15 слов максимум!)
+- expectedTopics: Array of 3-5 German words FROM THE TEXT that could be used in the answer
 
-Examples of good A2-B1 questions:
-- "Wann ist es bei dir zu Hause laut?"
-- "Was machst du, wenn die Nachbarn laut sind?"
-- "Wie findest du deine Wohnung?"
-
-Focus on practical, everyday scenarios.${previousQuestionsNote}
+Example: If text says "Meine Nachbarn machen jeden Abend laute Musik"
+Good question: "Wann machen die Nachbarn Musik?" (asks about specific text detail)
+Bad question: "Magst du Musik?" (too generic, not about the text)
+${previousQuestionsNote}
 
 Return ONLY a valid JSON object with format: { "questions": [...] }` 
         },
