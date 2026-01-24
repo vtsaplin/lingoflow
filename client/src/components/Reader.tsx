@@ -413,7 +413,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   ) : (
                     <Layers className="h-4 w-4" />
                   )}
-                  <span className="hidden sm:inline">Words</span>
+                  <span className="hidden sm:inline">Memorize</span>
                   {flashcardsForText.length > 0 && (
                     <span className="text-xs text-muted-foreground hidden sm:inline">({flashcardsForText.length})</span>
                   )}
