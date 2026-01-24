@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown, Languages, Loader2 } from "lucide-react";
+import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown, Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { OrderModeState, OrderSentenceState } from "./types";
@@ -86,6 +86,16 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       });
     }
   }, [sentences, state.initialized, sentenceStates, onStateChange, isCompleted, inputSentences.length, savedCount]);
+
+  // Auto-fetch translation when sentence changes
+  useEffect(() => {
+    if (state.initialized && sentences.length > 0 && !translations[currentIndex]) {
+      const currentSentence = sentences[currentIndex];
+      if (currentSentence) {
+        translateMutation.mutate({ text: currentSentence.original, index: currentIndex });
+      }
+    }
+  }, [currentIndex, state.initialized, sentences.length]);
 
   if (inputSentences.length === 0) {
     return (
@@ -239,12 +249,6 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     }
   };
 
-  const handleTranslate = () => {
-    if (!translations[currentIndex] && !translateMutation.isPending) {
-      translateMutation.mutate({ text: currentSentence.original, index: currentIndex });
-    }
-  };
-
   const currentTranslation = translations[currentIndex];
 
   return (
@@ -264,31 +268,14 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
           </div>
           
           <div className="mb-6 p-4 bg-muted/30 rounded-lg border" data-testid="text-translation-hint">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Translation hint:</p>
-              {!currentTranslation && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleTranslate}
-                  disabled={translateMutation.isPending}
-                  data-testid="button-show-translation"
-                >
-                  {translateMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Languages className="h-4 w-4 mr-1" />
-                      Show
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Translation hint:</p>
             {currentTranslation ? (
               <p className="text-sm">{currentTranslation}</p>
             ) : (
-              <p className="text-sm text-muted-foreground italic">Click "Show" to see translation</p>
+              <p className="text-sm text-muted-foreground italic flex items-center gap-2">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading translation...
+              </p>
             )}
           </div>
 
