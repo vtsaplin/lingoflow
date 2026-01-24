@@ -41,8 +41,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const [isBatchSaving, setIsBatchSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0, currentWord: "" });
-  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { 
     practiceState, 
@@ -237,11 +236,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       // Exit selection mode gracefully and return to Explore
       setMultiSelectMode(false);
       
-      // Reset practice state silently (required for consistency but don't show visual disruption)
+      // Show confirmation toast (no progress reset needed)
       if (savedCount > 0 || removedCount > 0) {
-        resetTextProgress(topicId, textId);
-        resetPracticeState();
-        
         const messages: string[] = [];
         if (savedCount > 0) messages.push(`${savedCount} added`);
         if (removedCount > 0) messages.push(`${removedCount} removed`);
@@ -756,7 +752,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                             <Button 
                               variant="default" 
                               size="sm"
-                              onClick={() => hasChanges ? setShowSaveConfirm(true) : null}
+                              onClick={() => hasChanges ? handleBatchSave() : null}
                               disabled={isBatchSaving || !hasChanges}
                               data-testid="button-batch-save"
                               className="gap-2"
@@ -776,26 +772,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                           </TooltipTrigger>
                           <TooltipContent>Save updates to your saved words</TooltipContent>
                         </Tooltip>
-                            <AlertDialog open={showSaveConfirm} onOpenChange={setShowSaveConfirm}>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Update Saved Words?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Adding or removing words will reset your practice progress for this text. 
-                                    Practice exercises will start over.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Go Back</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => {
-                                    setShowSaveConfirm(false);
-                                    handleBatchSave();
-                                  }}>
-                                    Yes, Update
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
                       </div>
                     </div>
                   </div>
