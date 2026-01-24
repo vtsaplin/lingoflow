@@ -532,7 +532,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                 <div className="mt-3">
                   {multiSelectMode ? (
                     <p className="text-sm text-muted-foreground">
-                      Edit the words you want to practice
+                      Click on words to select them for practice
                     </p>
                   ) : (
                     <p className="text-sm text-muted-foreground">
