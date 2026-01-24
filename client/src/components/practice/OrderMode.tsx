@@ -18,6 +18,10 @@ interface SentenceWithWords {
   words: string[];
 }
 
+function stripPunctuation(word: string): string {
+  return word.replace(/[.,!?;:„"»«"'()–—-]+$/g, "").replace(/^[„"»«"'()–—-]+/g, "");
+}
+
 export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
   const [translations, setTranslations] = useState<Record<number, string>>({});
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
@@ -387,7 +391,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                       }`}
                       data-testid={`ordered-word-${idx}`}
                     >
-                      {word}
+                      {stripPunctuation(word)}
                     </span>
                     {dropTargetIndex === orderedWords.length && idx === orderedWords.length - 1 && (
                       <div className="absolute -right-[5px] top-1/2 -translate-y-1/2 w-0.5 h-8 bg-primary rounded-full animate-pulse" />
@@ -418,7 +422,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                     className="px-3 py-2 bg-background border rounded-md cursor-grab hover-elevate active-elevate-2 select-none font-medium transition-all duration-150"
                     data-testid={`shuffled-word-${idx}`}
                   >
-                    {word}
+                    {stripPunctuation(word)}
                   </button>
                 ))}
               </div>
