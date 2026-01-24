@@ -263,7 +263,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
             </span>
           </div>
           
-          <div className="mb-6 p-4 bg-card rounded-lg border" data-testid="text-translation-hint">
+          <div className="mb-6 p-4 bg-muted/30 rounded-lg border" data-testid="text-translation-hint">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Translation hint:</p>
               {!currentTranslation && (
@@ -286,7 +286,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
               )}
             </div>
             {currentTranslation ? (
-              <p className="text-base font-medium">{currentTranslation}</p>
+              <p className="text-sm">{currentTranslation}</p>
             ) : (
               <p className="text-sm text-muted-foreground italic">Click "Show" to see translation</p>
             )}
