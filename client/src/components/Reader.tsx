@@ -903,12 +903,12 @@ function Paragraph({
               className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === trimmedSentence ? 'active' : ''}`}
             >
               {wordsInSentence.map((word, wordIdx) => {
-                if (word.trim().length === 0) return <span key={wordIdx}>{word}</span>;
+                if (word.trim().length === 0) return <span key={wordIdx} className="pointer-events-none">{word}</span>;
                 const cleanWord = word.replace(/[.,?!/#$%^&*;:{}=\-_`~()«»„"]/g, "");
-                if (!cleanWord) return <span key={wordIdx}>{word}</span>;
+                if (!cleanWord) return <span key={wordIdx} className="pointer-events-none">{word}</span>;
                 const isFlashcard = flashcardSet.has(cleanWord.toLowerCase());
                 return (
-                  <span key={wordIdx} className={isFlashcard ? 'flashcard-word' : ''}>
+                  <span key={wordIdx} className={`pointer-events-none ${isFlashcard ? 'flashcard-word' : ''}`}>
                     {word}
                   </span>
                 );
