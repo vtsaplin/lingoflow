@@ -300,7 +300,7 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
                     onDragOver={handleDragOver}
                     data-testid={`gap-${gapId}`}
                     className={`
-                      inline-flex items-center justify-center min-w-[80px] h-8 mx-1
+                      inline-flex items-center justify-center min-w-[100px] px-3 h-8 mx-1
                       border-b-2 border-dashed cursor-pointer transition-colors
                       ${placed 
                         ? isIncorrect
