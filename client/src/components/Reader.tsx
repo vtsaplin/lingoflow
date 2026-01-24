@@ -400,7 +400,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               <TabsList className="flex-1">
                 <TabsTrigger value="read" data-testid="tab-read" className="gap-2 flex-1">
                   <BookOpen className="h-4 w-4" />
-                  <span className="hidden sm:inline">Read</span>
+                  <span className="hidden sm:inline">Explore</span>
                 </TabsTrigger>
               </TabsList>
               <TabsList className="flex-[5] grid grid-cols-5">
@@ -412,7 +412,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                   ) : (
                     <Layers className="h-4 w-4" />
                   )}
-                  <span className="hidden sm:inline">Cards</span>
+                  <span className="hidden sm:inline">Saved Words</span>
                   {flashcardsForText.length > 0 && (
                     <span className="text-xs text-muted-foreground hidden sm:inline">({flashcardsForText.length})</span>
                   )}
@@ -456,7 +456,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        Word
+                        Words
                       </button>
                       <button
                         onClick={() => setInteractionMode("sentence")}
@@ -467,7 +467,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        Sentence
+                        Sentences
                       </button>
                     </div>
 
