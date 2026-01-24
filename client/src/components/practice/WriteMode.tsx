@@ -35,6 +35,24 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
   }, [paragraphs]);
 
   const { currentIndex, sentenceStates } = state;
+  
+  // All hooks must be at the top, before any conditional returns
+  const handleFullReset = useCallback(() => {
+    const initialStates: Record<number, WriteSentenceState> = {};
+    sentences.forEach((_, idx) => {
+      initialStates[idx] = {
+        inputs: {},
+        validationState: "idle",
+        incorrectGaps: [],
+      };
+    });
+    onStateChange({
+      currentIndex: 0,
+      sentenceStates: initialStates,
+      initialized: true,
+    });
+    onResetProgress?.();
+  }, [sentences, onStateChange, onResetProgress]);
 
   useEffect(() => {
     const sentenceCountMismatch = Object.keys(state.sentenceStates).length !== sentences.length;
@@ -141,23 +159,6 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
       incorrectGaps: [],
     });
   };
-
-  const handleFullReset = useCallback(() => {
-    const initialStates: Record<number, WriteSentenceState> = {};
-    sentences.forEach((_, idx) => {
-      initialStates[idx] = {
-        inputs: {},
-        validationState: "idle",
-        incorrectGaps: [],
-      };
-    });
-    onStateChange({
-      currentIndex: 0,
-      sentenceStates: initialStates,
-      initialized: true,
-    });
-    onResetProgress?.();
-  }, [sentences, onStateChange, onResetProgress]);
 
   const handleNext = () => {
     if (currentIndex < sentences.length - 1) {
