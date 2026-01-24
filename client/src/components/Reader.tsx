@@ -95,10 +95,15 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
-    if (practiceState.fill.validationState === "correct" && !progress.fill) {
+    const { sentenceStates, initialized } = practiceState.fill;
+    if (!initialized || !progress) return;
+    const sentenceCount = Object.keys(sentenceStates).length;
+    if (sentenceCount === 0) return;
+    const allCorrect = Object.values(sentenceStates).every(s => s.validationState === "correct");
+    if (allCorrect && !progress.fill) {
       setModeComplete(topicId, textId, "fill");
     }
-  }, [practiceState.fill.validationState, topicId, textId, setModeComplete, progress.fill, activeTextKey, textKey]);
+  }, [practiceState.fill, topicId, textId, setModeComplete, progress, activeTextKey, textKey]);
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;

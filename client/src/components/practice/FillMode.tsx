@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, RotateCcw, CheckCircle2, XCircle, Puzzle } from "lucide-react";
-import type { FillModeState, ValidationState } from "./types";
+import { Check, RotateCcw, CheckCircle2, XCircle, Puzzle, ChevronLeft, ChevronRight } from "lucide-react";
+import type { FillModeState, FillSentenceState, ValidationState } from "./types";
 
 interface FillModeProps {
   paragraphs: string[];
@@ -23,66 +23,67 @@ interface TemplateItem {
   gapId?: number;
 }
 
-interface ParagraphData {
+interface SentenceData {
+  original: string;
   template: TemplateItem[];
-}
-
-interface GapLookup {
-  [gapId: number]: GapInfo;
+  gapLookup: Record<number, GapInfo>;
+  allGapWords: string[];
 }
 
 export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onResetProgress, isCompleted = false }: FillModeProps) {
-  const { paragraphData, gapLookup, allGapWords } = useMemo(
-    () => generateGaps(paragraphs, flashcardWords),
-    [paragraphs, flashcardWords]
-  );
+  const sentences = useMemo(() => {
+    return extractSentencesWithGaps(paragraphs, flashcardWords);
+  }, [paragraphs, flashcardWords]);
 
-  const totalGaps = Object.keys(gapLookup).length;
+  const { currentIndex, sentenceStates } = state;
 
   useEffect(() => {
-    const flashcardCountIncreased = state.initialized && flashcardWords.length > state.flashcardCount;
-    const flashcardCountDecreased = state.initialized && flashcardWords.length < state.flashcardCount;
-    const flashcardCountChanged = flashcardCountIncreased || flashcardCountDecreased;
+    const countIncreased = flashcardWords.length > state.flashcardCount && state.flashcardCount > 0;
+    const countDecreased = flashcardWords.length < state.flashcardCount && state.flashcardCount > 0;
+    const needsReinit = !state.initialized || countIncreased || countDecreased;
     
-    if ((!state.initialized || flashcardCountChanged) && totalGaps > 0) {
-      if (isCompleted && !flashcardCountChanged) {
-        const correctPlacements: Record<number, string> = {};
-        Object.entries(gapLookup).forEach(([id, gap]) => {
-          correctPlacements[Number(id)] = gap.original;
-        });
-        onStateChange({
-          ...state,
-          placedWords: correctPlacements,
-          availableWords: [],
-          validationState: "correct",
-          initialized: true,
-          flashcardCount: flashcardWords.length,
-        });
-      } else {
-        onStateChange({
-          ...state,
-          placedWords: {},
-          availableWords: shuffleArray([...allGapWords]),
-          validationState: "idle",
-          incorrectGaps: [],
-          initialized: true,
-          flashcardCount: flashcardWords.length,
-        });
-      }
-    } else if (flashcardCountDecreased && totalGaps === 0) {
+    if (sentences.length > 0 && needsReinit) {
+      const initialStates: Record<number, FillSentenceState> = {};
+      const shouldRestoreCompleted = isCompleted && !countIncreased && !countDecreased;
+      
+      sentences.forEach((sentence, idx) => {
+        if (shouldRestoreCompleted) {
+          const correctPlacements: Record<number, string> = {};
+          Object.entries(sentence.gapLookup).forEach(([id, gap]) => {
+            correctPlacements[Number(id)] = gap.original;
+          });
+          initialStates[idx] = {
+            placedWords: correctPlacements,
+            availableWords: [],
+            validationState: "correct",
+            incorrectGaps: [],
+          };
+        } else {
+          initialStates[idx] = {
+            placedWords: {},
+            availableWords: shuffleArray([...sentence.allGapWords]),
+            validationState: "idle",
+            incorrectGaps: [],
+          };
+        }
+      });
       onStateChange({
-        ...state,
-        placedWords: {},
-        availableWords: [],
-        validationState: "idle",
-        incorrectGaps: [],
+        currentIndex: 0,
+        sentenceStates: initialStates,
+        initialized: true,
+        flashcardCount: flashcardWords.length,
+      });
+    } else if (countDecreased && sentences.length === 0) {
+      onStateChange({
+        currentIndex: 0,
+        sentenceStates: {},
         initialized: true,
         flashcardCount: flashcardWords.length,
       });
     }
-  }, [state.initialized, state.flashcardCount, flashcardWords.length, totalGaps, allGapWords, onStateChange, state, isCompleted, gapLookup]);
+  }, [sentences, state.initialized, onStateChange, isCompleted, flashcardWords.length, state.flashcardCount]);
 
-  if (totalGaps === 0) {
+  if (sentences.length === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <Puzzle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -102,8 +103,29 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
     );
   }
 
-  const { placedWords, availableWords, validationState, incorrectGaps } = state;
+  if (!state.initialized) {
+    return null;
+  }
+
+  const currentSentence = sentences[currentIndex];
+  const currentState = sentenceStates[currentIndex] || {
+    placedWords: {},
+    availableWords: [],
+    validationState: "idle" as ValidationState,
+    incorrectGaps: [],
+  };
+  const { placedWords, availableWords, validationState, incorrectGaps } = currentState;
   const incorrectGapsSet = new Set(incorrectGaps);
+
+  const updateCurrentSentenceState = (updates: Partial<FillSentenceState>) => {
+    onStateChange({
+      ...state,
+      sentenceStates: {
+        ...sentenceStates,
+        [currentIndex]: { ...currentState, ...updates },
+      },
+    });
+  };
 
   const [selectedWord, setSelectedWord] = useState<{ word: string; index: number } | null>(null);
 
@@ -127,8 +149,7 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
       if (existingWord) {
         newAvailable.push(existingWord);
       }
-      onStateChange({
-        ...state,
+      updateCurrentSentenceState({
         placedWords: { ...placedWords, [gapId]: selectedWord.word },
         availableWords: newAvailable,
         validationState: "idle",
@@ -136,8 +157,7 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
       });
       setSelectedWord(null);
     } else if (existingWord) {
-      onStateChange({
-        ...state,
+      updateCurrentSentenceState({
         placedWords: { ...placedWords, [gapId]: null },
         availableWords: [...availableWords, existingWord],
         validationState: "idle",
@@ -164,8 +184,7 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
       if (fromGap !== gapId) {
         newPlaced[fromGap] = existingWordInTarget || null;
       }
-      onStateChange({
-        ...state,
+      updateCurrentSentenceState({
         placedWords: newPlaced,
         validationState: "idle",
         incorrectGaps: [],
@@ -179,8 +198,7 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
       if (existingWordInTarget) {
         newAvailable.push(existingWordInTarget);
       }
-      onStateChange({
-        ...state,
+      updateCurrentSentenceState({
         placedWords: { ...placedWords, [gapId]: word },
         availableWords: newAvailable,
         validationState: "idle",
@@ -197,8 +215,8 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
     let allCorrect = true;
     const newIncorrect: number[] = [];
 
-    for (const gapId of Object.keys(gapLookup).map(Number)) {
-      const gap = gapLookup[gapId];
+    for (const gapId of Object.keys(currentSentence.gapLookup).map(Number)) {
+      const gap = currentSentence.gapLookup[gapId];
       const placed = placedWords[gapId];
       if (placed?.toLowerCase() !== gap.original.toLowerCase()) {
         allCorrect = false;
@@ -206,191 +224,278 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
       }
     }
 
-    onStateChange({
-      ...state,
+    updateCurrentSentenceState({
       incorrectGaps: newIncorrect,
       validationState: allCorrect ? "correct" : "incorrect",
     });
   };
 
-  const handleReset = useCallback(() => {
-    onStateChange({
+  const handleReset = () => {
+    updateCurrentSentenceState({
       placedWords: {},
-      availableWords: shuffleArray([...allGapWords]),
+      availableWords: shuffleArray([...currentSentence.allGapWords]),
       validationState: "idle",
       incorrectGaps: [],
+    });
+  };
+
+  const handleFullReset = useCallback(() => {
+    const initialStates: Record<number, FillSentenceState> = {};
+    sentences.forEach((sentence, idx) => {
+      initialStates[idx] = {
+        placedWords: {},
+        availableWords: shuffleArray([...sentence.allGapWords]),
+        validationState: "idle",
+        incorrectGaps: [],
+      };
+    });
+    onStateChange({
+      currentIndex: 0,
+      sentenceStates: initialStates,
       initialized: true,
       flashcardCount: state.flashcardCount,
     });
     onResetProgress?.();
-  }, [allGapWords, onStateChange, onResetProgress, state.flashcardCount]);
+  }, [sentences, onStateChange, onResetProgress, state.flashcardCount]);
+
+  const handleNext = () => {
+    if (currentIndex < sentences.length - 1) {
+      onStateChange({ ...state, currentIndex: currentIndex + 1 });
+      setSelectedWord(null);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      onStateChange({ ...state, currentIndex: currentIndex - 1 });
+      setSelectedWord(null);
+    }
+  };
+
+  const completedCount = Object.values(sentenceStates).filter(s => s.validationState === "correct").length;
+  const allComplete = completedCount === sentences.length;
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto">
-        <div className="px-6 sm:px-8 py-6">
-          <div className="max-w-3xl mx-auto space-y-6">
-            <p className="text-sm text-muted-foreground">
-              Click a word below to select it, then click a gap to place it. Or drag and drop words. Click a placed word to return it.
-            </p>
-            
-            <div className="space-y-6 font-serif text-lg leading-relaxed text-foreground/90">
-              {paragraphData.map((para, pIdx) => (
-                <p key={pIdx}>
-                  {para.template.map((item, tIdx) => {
-                    if (item.type === "text") {
-                      return <span key={tIdx}>{item.content}</span>;
-                    }
-                    const gapId = item.gapId!;
-                    const placed = placedWords[gapId];
-                    const isIncorrect = incorrectGapsSet.has(gapId);
-
-                    const isClickTarget = selectedWord && !placed;
-                    return (
-                      <span
-                        key={tIdx}
-                        onDrop={(e) => handleDrop(e, gapId)}
-                        onDragOver={handleDragOver}
-                        onClick={() => handleGapClick(gapId)}
-                        data-testid={`gap-${gapId}`}
-                        className={`inline-flex items-center justify-center min-w-[60px] h-7 mx-0.5 px-2 rounded border-2 border-dashed transition-colors cursor-pointer ${
-                          placed
-                            ? isIncorrect
-                              ? "bg-destructive/10 border-destructive text-foreground"
-                              : validationState === "correct"
-                                ? "bg-green-100 dark:bg-green-900/30 border-green-500 text-foreground"
-                                : "bg-primary/10 border-primary/50 text-foreground"
-                            : isClickTarget
-                              ? "bg-primary/20 border-primary animate-pulse"
-                              : "bg-muted/50 border-muted-foreground/30 text-muted-foreground"
-                        }`}
-                        draggable={!!placed}
-                        onDragStart={(e) => placed && handleDragStart(e, placed, gapId)}
-                      >
-                        {placed || "___"}
-                      </span>
-                    );
-                  })}
-                </p>
-              ))}
+      <div className="flex-1 overflow-auto px-6 sm:px-8 py-6">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-sm text-muted-foreground mb-4">
+            Fill in the gaps with the correct words. Click a word to select it, then click a gap to place it.
+          </p>
+          
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-muted-foreground">
+              Sentence {currentIndex + 1} of {sentences.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm">
+                <span className="text-green-600 dark:text-green-400">{completedCount}</span>
+                <span className="text-muted-foreground"> / {sentences.length} complete</span>
+              </span>
             </div>
           </div>
-        </div>
 
-        <div className="sticky bottom-0 z-50 px-6 sm:px-8 py-3 bg-background/95 backdrop-blur-sm border-t">
-          <div className="max-w-3xl mx-auto">
-            <div className="min-h-[60px] p-4 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Available words:</p>
+          <div className="bg-card border rounded-lg p-6 mb-6">
+            <p className="font-serif text-xl leading-relaxed text-foreground/90">
+              {currentSentence.template.map((item, idx) => {
+                if (item.type === "text") {
+                  return <span key={idx}>{item.content}</span>;
+                }
+                const gapId = item.gapId!;
+                const placed = placedWords[gapId];
+                const isIncorrect = incorrectGapsSet.has(gapId);
+                const isClickTarget = selectedWord && !placed;
+                
+                return (
+                  <span
+                    key={idx}
+                    onClick={() => handleGapClick(gapId)}
+                    onDrop={(e) => handleDrop(e, gapId)}
+                    onDragOver={handleDragOver}
+                    data-testid={`gap-${gapId}`}
+                    className={`
+                      inline-flex items-center justify-center min-w-[80px] h-8 mx-1
+                      border-b-2 border-dashed cursor-pointer transition-colors
+                      ${placed 
+                        ? isIncorrect
+                          ? "bg-destructive/10 border-destructive text-destructive"
+                          : validationState === "correct"
+                            ? "bg-green-100 dark:bg-green-900/30 border-green-500 text-green-700 dark:text-green-400"
+                            : "bg-primary/10 border-primary"
+                        : isClickTarget
+                          ? "bg-primary/20 border-primary"
+                          : "border-muted-foreground/50"
+                      }
+                    `}
+                    draggable={!!placed}
+                    onDragStart={(e) => placed && handleDragStart(e, placed, gapId)}
+                  >
+                    {placed || ""}
+                  </span>
+                );
+              })}
+            </p>
+          </div>
+
+          {availableWords.length > 0 && (
+            <div className="bg-muted/50 rounded-lg p-4 mb-6">
+              <p className="text-sm text-muted-foreground mb-3">Word bank:</p>
               <div className="flex flex-wrap gap-2">
-                {availableWords.length === 0 && (
-                  <span className="text-muted-foreground text-sm">All words placed</span>
-                )}
-                {availableWords.map((word, idx) => {
-                  const isSelected = selectedWord?.index === idx;
-                  return (
-                    <span
-                      key={`${word}-${idx}`}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, word)}
-                      onClick={() => handleWordBankClick(word, idx)}
-                      data-testid={`word-bank-${idx}`}
-                      className={`px-3 py-1.5 border rounded-md cursor-pointer active:cursor-grabbing hover:bg-accent transition-colors text-base font-serif ${
-                        isSelected 
-                          ? "bg-primary text-primary-foreground border-primary ring-2 ring-primary/50" 
-                          : "bg-background"
-                      }`}
-                    >
-                      {word}
-                    </span>
-                  );
-                })}
+                {availableWords.map((word, idx) => (
+                  <Button
+                    key={idx}
+                    variant={selectedWord?.index === idx ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleWordBankClick(word, idx)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, word)}
+                    data-testid={`word-bank-${idx}`}
+                    className="cursor-grab active:cursor-grabbing"
+                  >
+                    {word}
+                  </Button>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          )}
 
-      <div className="border-t bg-card px-6 sm:px-8 py-4">
-        <div className="max-w-3xl mx-auto">
           {validationState === "correct" && (
-            <div className="flex items-center gap-2 mb-3 text-green-600 dark:text-green-400">
+            <div className="flex items-center gap-2 mb-4 text-green-600 dark:text-green-400">
               <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">All correct!</span>
+              <span className="font-medium">Correct!</span>
             </div>
           )}
           {validationState === "incorrect" && (
-            <div className="flex items-center gap-2 mb-3 text-destructive">
+            <div className="flex items-center gap-2 mb-4 text-destructive">
               <XCircle className="h-5 w-5" />
               <span className="font-medium">Some answers are incorrect. Try again!</span>
             </div>
           )}
 
-          <div className="flex gap-2">
-            <Button onClick={handleCheck} data-testid="button-check">
-              <Check className="h-4 w-4 mr-2" />
-              Check
-            </Button>
-            <Button variant="outline" onClick={handleReset} data-testid="button-reset">
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
-            </Button>
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2">
+              <Button onClick={handleCheck} data-testid="button-check" disabled={availableWords.length > 0}>
+                <Check className="h-4 w-4 mr-2" />
+                Check
+              </Button>
+              <Button variant="outline" onClick={handleReset} data-testid="button-reset-sentence">
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Reset
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+                data-testid="button-prev"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleNext}
+                disabled={currentIndex === sentences.length - 1}
+                data-testid="button-next"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
+
+      {allComplete && (
+        <div className="border-t px-6 sm:px-8 py-4">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="font-medium">All sentences completed!</span>
+            </div>
+            <Button variant="outline" onClick={handleFullReset} data-testid="button-reset-all">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset All
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function generateGaps(paragraphs: string[], flashcardWords: string[]): {
-  paragraphData: ParagraphData[];
-  gapLookup: GapLookup;
-  allGapWords: string[];
-} {
-  let gapIdCounter = 0;
-  const gapLookup: GapLookup = {};
-  const allGapWords: string[] = [];
-
+function extractSentencesWithGaps(paragraphs: string[], flashcardWords: string[]): SentenceData[] {
   const flashcardWordsLower = new Set(flashcardWords.map(w => w.toLowerCase()));
-  const usedWords = new Set<string>();
+  const result: SentenceData[] = [];
+  let globalGapId = 0;
 
-  const paragraphData = paragraphs.map((para) => {
-    const words = para.split(/(\s+)/);
-    const template: TemplateItem[] = [];
-    let currentText = "";
+  paragraphs.forEach(para => {
+    const sentenceMatches = para.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [];
+    
+    sentenceMatches.forEach(sentence => {
+      const trimmed = sentence.trim();
+      if (!trimmed) return;
 
-    words.forEach((w) => {
-      const cleanWord = w.replace(/[.,!?;:«»„"'"]/g, "").trim();
-      const cleanWordLower = cleanWord.toLowerCase();
-      const isFlashcardWord = cleanWord && flashcardWordsLower.has(cleanWordLower);
-      const isFirstOccurrence = isFlashcardWord && !usedWords.has(cleanWordLower);
+      const words = trimmed.split(/(\s+)/);
+      const template: TemplateItem[] = [];
+      const gapLookup: Record<number, GapInfo> = {};
+      const allGapWords: string[] = [];
+      let currentText = "";
 
-      if (isFirstOccurrence) {
-        usedWords.add(cleanWordLower);
-        if (currentText) {
-          template.push({ type: "text", content: currentText });
-          currentText = "";
+      const cleanWords = words.filter(w => w.trim()).map(w => w.replace(/[.,!?;:«»„"'"]/g, "").trim().toLowerCase());
+      const flashcardWordsInSentence = cleanWords.filter(w => w && flashcardWordsLower.has(w));
+      
+      if (flashcardWordsInSentence.length === 0) return;
+
+      const otherWords = cleanWords.filter(w => w && !flashcardWordsLower.has(w) && w.length > 2);
+      const shuffledOthers = shuffleArray(otherWords);
+      const randomWordsToGap = shuffledOthers.slice(0, Math.min(2, shuffledOthers.length));
+      
+      const wordsToGap = new Set([...flashcardWordsInSentence, ...randomWordsToGap]);
+      const usedInSentence = new Set<string>();
+
+      words.forEach((w) => {
+        const cleanWord = w.replace(/[.,!?;:«»„"'"]/g, "").trim();
+        const cleanWordLower = cleanWord.toLowerCase();
+        const shouldGap = cleanWord && wordsToGap.has(cleanWordLower) && !usedInSentence.has(cleanWordLower);
+
+        if (shouldGap) {
+          usedInSentence.add(cleanWordLower);
+          if (currentText) {
+            template.push({ type: "text", content: currentText });
+            currentText = "";
+          }
+          const gapId = globalGapId++;
+          gapLookup[gapId] = { id: gapId, original: cleanWord };
+          allGapWords.push(cleanWord);
+          template.push({ type: "gap", gapId });
+          const punctuation = w.match(/[.,!?;:«»„"'"]+$/)?.[0] || "";
+          if (punctuation) {
+            template.push({ type: "text", content: punctuation });
+          }
+        } else {
+          currentText += w;
         }
-        const gapId = gapIdCounter++;
-        gapLookup[gapId] = { id: gapId, original: cleanWord };
-        allGapWords.push(cleanWord);
-        template.push({ type: "gap", gapId });
-        const punctuation = w.match(/[.,!?;:«»„"'"]+$/)?.[0] || "";
-        if (punctuation) {
-          template.push({ type: "text", content: punctuation });
-        }
-      } else {
-        currentText += w;
+      });
+
+      if (currentText) {
+        template.push({ type: "text", content: currentText });
+      }
+
+      if (allGapWords.length > 0) {
+        result.push({
+          original: trimmed,
+          template,
+          gapLookup,
+          allGapWords,
+        });
       }
     });
-
-    if (currentText) {
-      template.push({ type: "text", content: currentText });
-    }
-
-    return { template };
   });
 
-  return { paragraphData, gapLookup, allGapWords };
+  return result;
 }
 
 function shuffleArray<T>(array: T[]): T[] {

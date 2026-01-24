@@ -1,10 +1,15 @@
 export type ValidationState = "idle" | "correct" | "incorrect";
 
-export interface FillModeState {
+export interface FillSentenceState {
   placedWords: Record<number, string | null>;
   availableWords: string[];
   validationState: ValidationState;
   incorrectGaps: number[];
+}
+
+export interface FillModeState {
+  currentIndex: number;
+  sentenceStates: Record<number, FillSentenceState>;
   initialized: boolean;
   flashcardCount: number;
 }
@@ -75,10 +80,8 @@ function createInitialCardsDirectionState(): CardsDirectionState {
 export function createInitialPracticeState(): PracticeState {
   return {
     fill: {
-      placedWords: {},
-      availableWords: [],
-      validationState: "idle",
-      incorrectGaps: [],
+      currentIndex: 0,
+      sentenceStates: {},
       initialized: false,
       flashcardCount: 0,
     },
