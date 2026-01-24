@@ -425,8 +425,24 @@ export function SpeakMode({
   if (dialogueState === "loading" || generateQuestionMutation.isPending) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <Loader2 className="h-12 w-12 text-muted-foreground mb-4 animate-spin" />
-        <p className="text-muted-foreground text-center">Generating question...</p>
+        <div className="bg-card border rounded-xl p-8 shadow-sm max-w-sm w-full">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <MessageCircle className="h-8 w-8 text-primary" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-card border flex items-center justify-center">
+                <Loader2 className="h-4 w-4 text-primary animate-spin" />
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="font-medium">Preparing question</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {currentQuestionIndex + 1} of {TOTAL_QUESTIONS}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
