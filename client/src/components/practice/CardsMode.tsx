@@ -537,29 +537,29 @@ export function CardsMode({
     <div className="flex flex-col h-full">
       <div className="px-6 sm:px-8 py-4">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
             <DirectionTabs />
             
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{correctCount + incorrectCount}/{questions.length}</span>
-              <div className="w-24 bg-muted rounded-full h-1.5">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <span className="text-sm text-muted-foreground shrink-0">{correctCount + incorrectCount}/{questions.length}</span>
+              <div className="flex-1 bg-muted rounded-full h-1.5">
                 <div 
                   className="bg-primary h-1.5 rounded-full transition-all"
                   style={{ width: `${((correctCount + incorrectCount) / questions.length) * 100}%` }}
                 />
               </div>
-            </div>
-            
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-green-600 dark:text-green-400">{correctCount}</span>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-destructive">{incorrectCount}</span>
+              <div className="flex items-center gap-2 text-sm shrink-0">
+                <span className="text-green-600 dark:text-green-400">{correctCount}</span>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-destructive">{incorrectCount}</span>
+              </div>
             </div>
             
             <Button
               variant="outline"
               onClick={handleReset}
               data-testid="button-reset-cards"
+              className="shrink-0"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset
