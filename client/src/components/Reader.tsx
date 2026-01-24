@@ -502,21 +502,19 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                     </Button>
                   </div>
 
-                  {interactionMode === "word" && (
-                    <div className="ml-auto">
-                      <Button 
-                        variant={multiSelectMode ? "default" : "outline"}
-                        onClick={toggleMultiSelectMode}
-                        data-testid="button-multi-select"
-                        className="gap-2"
-                      >
-                        {multiSelectMode ? (
-                          <X className="h-4 w-4" />
-                        ) : null}
-                        {multiSelectMode ? "Cancel" : "Flashcards"}
-                      </Button>
-                    </div>
-                  )}
+                  <div className="ml-auto">
+                    <Button 
+                      variant={multiSelectMode ? "default" : "outline"}
+                      onClick={toggleMultiSelectMode}
+                      data-testid="button-multi-select"
+                      className="gap-2"
+                    >
+                      {multiSelectMode ? (
+                        <X className="h-4 w-4" />
+                      ) : null}
+                      {multiSelectMode ? "Cancel" : "Flashcards"}
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground mt-3">
                   {multiSelectMode 
