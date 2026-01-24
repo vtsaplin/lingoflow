@@ -270,13 +270,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   };
   
   useEffect(() => {
-    if (interactionMode === "sentence" && multiSelectMode) {
-      setMultiSelectMode(false);
-      setSelectedWords(new Set());
-    }
-  }, [interactionMode, multiSelectMode]);
-
-  useEffect(() => {
     setMultiSelectMode(false);
     setSelectedWords(new Set());
     setSelectedText(null);
@@ -862,28 +855,18 @@ function Paragraph({
 }) {
   const flashcardSet = new Set(flashcardWords.map(w => w.toLowerCase()));
   
-  const sentenceContainsFlashcard = (sentence: string): boolean => {
-    if (flashcardWords.length === 0) return false;
-    const normalizedSentence = sentence.toLowerCase();
-    return flashcardWords.some(word => {
-      const regex = new RegExp(`\\b${word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-      return regex.test(normalizedSentence);
-    });
-  };
-  
-  if (mode === "sentence") {
+  if (mode === "sentence" && !multiSelectMode) {
     const sentences = text.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [text];
     return (
       <p>
         {sentences.map((sentence, idx) => {
           const trimmedSentence = sentence.trim();
-          const hasFlashcardWord = sentenceContainsFlashcard(trimmedSentence);
           return (
             <span 
               key={idx}
               onClick={(e) => onInteract(trimmedSentence, e)}
               data-testid={`sentence-${idx}`}
-              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === trimmedSentence ? 'active' : ''} ${hasFlashcardWord ? 'eligible-sentence' : ''}`}
+              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === trimmedSentence ? 'active' : ''}`}
             >
               {sentence}
             </span>
