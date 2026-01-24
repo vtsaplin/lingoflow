@@ -459,14 +459,18 @@ export function SpeakMode({
             <div className="flex flex-col items-center gap-4 py-8">
               {!isPlaying && (
                 <p className="text-sm text-muted-foreground animate-pulse">
-                  Your turn — press the button below and respond
+                  Your turn — press the button and respond
                 </p>
               )}
-              {isPlaying && (
-                <p className="text-sm text-muted-foreground">
-                  Playing question...
-                </p>
-              )}
+              <Button
+                size="lg"
+                onClick={startRecording}
+                disabled={isPlaying}
+                data-testid="button-start-recording"
+              >
+                <Mic className="h-5 w-5 mr-2" />
+                {isPlaying ? "Playing..." : "Start Recording"}
+              </Button>
             </div>
           )}
 
@@ -476,6 +480,15 @@ export function SpeakMode({
                 <span className="animate-pulse">●</span>
                 <span>Recording...</span>
               </div>
+              <Button
+                size="lg"
+                variant="destructive"
+                onClick={stopRecording}
+                data-testid="button-stop-recording"
+              >
+                <MicOff className="h-5 w-5 mr-2" />
+                Stop
+              </Button>
             </div>
           )}
 
@@ -525,39 +538,27 @@ export function SpeakMode({
               {evaluation.isAppropriate ? (
                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                   <CheckCircle2 className="h-5 w-5" />
-                  <span className="font-medium">Correct!</span>
+                  <span className="font-medium">Good response!</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-destructive">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                   <XCircle className="h-5 w-5" />
-                  <span className="font-medium">Try again with a different answer</span>
+                  <span className="font-medium">Try a different answer</span>
                 </div>
               )}
             </div>
           )}
 
           <div className="flex flex-wrap gap-2">
-            {state === "listening" && (
-              <Button onClick={startRecording} disabled={isPlaying} data-testid="button-start-recording">
-                <Mic className="h-4 w-4 mr-2" />
-                Start Recording
-              </Button>
-            )}
-            {state === "recording" && (
-              <Button variant="destructive" onClick={stopRecording} data-testid="button-stop-recording">
-                <MicOff className="h-4 w-4 mr-2" />
-                Stop
-              </Button>
-            )}
             {state === "result" && (
               <>
-                <Button onClick={nextQuestion} data-testid="button-next">
-                  <ArrowRight className="h-4 w-4 mr-2" />
-                  Next
-                </Button>
                 <Button variant="outline" onClick={retryQuestion} data-testid="button-retry">
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Retry
+                </Button>
+                <Button onClick={nextQuestion} data-testid="button-next">
+                  Next Question
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
                 {!isCompleted && (
                   <Button variant="outline" onClick={markComplete} data-testid="button-mark-complete">
@@ -567,8 +568,9 @@ export function SpeakMode({
                 )}
               </>
             )}
-            <Button variant="ghost" onClick={handleReset} data-testid="button-reset-all">
-              Reset All
+            <Button variant="outline" onClick={handleReset} data-testid="button-reset">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
             </Button>
           </div>
         </div>
