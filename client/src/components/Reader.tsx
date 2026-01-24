@@ -861,6 +861,8 @@ function Paragraph({
       <p>
         {sentences.map((sentence, idx) => {
           const trimmedSentence = sentence.trim();
+          // Split sentence into words to highlight flashcard words
+          const wordsInSentence = sentence.split(/(\s+)/);
           return (
             <span 
               key={idx}
@@ -868,7 +870,17 @@ function Paragraph({
               data-testid={`sentence-${idx}`}
               className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === trimmedSentence ? 'active' : ''}`}
             >
-              {sentence}
+              {wordsInSentence.map((word, wordIdx) => {
+                if (word.trim().length === 0) return <span key={wordIdx}>{word}</span>;
+                const cleanWord = word.replace(/[.,?!/#$%^&*;:{}=\-_`~()«»„"]/g, "");
+                if (!cleanWord) return <span key={wordIdx}>{word}</span>;
+                const isFlashcard = flashcardSet.has(cleanWord.toLowerCase());
+                return (
+                  <span key={wordIdx} className={isFlashcard ? 'flashcard-word' : ''}>
+                    {word}
+                  </span>
+                );
+              })}
             </span>
           );
         })}
