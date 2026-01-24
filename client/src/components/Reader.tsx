@@ -524,7 +524,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         className="gap-2"
                       >
                         <MousePointer2 className="h-4 w-4" />
-                        Select Words
+                        Select words to memorize
                       </Button>
                     )}
                   </div>
