@@ -841,7 +841,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <div className="text-center">
-                <h3 className="font-medium text-lg">Saving flashcards...</h3>
+                <h3 className="font-medium text-lg">Updating review...</h3>
                 {saveProgress.total > 0 ? (
                   <>
                     <p className="text-sm text-muted-foreground mt-1">
