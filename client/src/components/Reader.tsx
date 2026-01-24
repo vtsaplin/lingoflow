@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic, MousePointer2, Check, Plus } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic, MousePointer2, Check, Plus, Minus, Save } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -245,8 +245,15 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         if (savedCount > 0) messages.push(`${savedCount} added`);
         if (removedCount > 0) messages.push(`${removedCount} removed`);
         
+        // Dynamic title based on action
+        const toastTitle = savedCount > 0 && removedCount > 0 
+          ? "Saved Words Updated"
+          : savedCount > 0 
+            ? "Added to Saved Words" 
+            : "Removed from Saved Words";
+        
         toast({
-          title: "Added to Saved Words",
+          title: toastTitle,
           description: messages.join(', '),
         });
       }
@@ -701,9 +708,22 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
             {multiSelectMode && !selectedText && (() => {
               const existingSet = new Set(flashcardsForText.map(f => f.german.toLowerCase()));
-              const hasChanges = 
-                Array.from(selectedWords).some(w => !existingSet.has(w)) ||
-                Array.from(existingSet).some(w => !selectedWords.has(w));
+              const wordsToAdd = Array.from(selectedWords).filter(w => !existingSet.has(w));
+              const wordsToRemove = Array.from(existingSet).filter(w => !selectedWords.has(w));
+              const hasChanges = wordsToAdd.length > 0 || wordsToRemove.length > 0;
+              
+              // Determine button label based on action
+              const getButtonContent = () => {
+                if (wordsToAdd.length > 0 && wordsToRemove.length > 0) {
+                  return { icon: <Save className="h-4 w-4" />, text: "Save Changes" };
+                } else if (wordsToRemove.length > 0) {
+                  return { icon: <Minus className="h-4 w-4" />, text: `Remove ${wordsToRemove.length} Word${wordsToRemove.length > 1 ? 's' : ''}` };
+                } else if (wordsToAdd.length > 0) {
+                  return { icon: <Plus className="h-4 w-4" />, text: `Add ${wordsToAdd.length} Word${wordsToAdd.length > 1 ? 's' : ''}` };
+                }
+                return { icon: <Save className="h-4 w-4" />, text: "Save Changes" };
+              };
+              const buttonContent = getButtonContent();
               
               return (
                 <div className="border-t bg-card animate-in slide-in-from-bottom-4">
@@ -727,7 +747,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                               variant="default" 
                               size="sm"
                               onClick={() => hasChanges ? setShowSaveConfirm(true) : null}
-                              disabled={isBatchSaving || selectedWords.size === 0 || !hasChanges}
+                              disabled={isBatchSaving || !hasChanges}
                               data-testid="button-batch-save"
                               className="gap-2"
                             >
@@ -738,8 +758,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                                 </>
                               ) : (
                                 <>
-                                  <Plus className="h-4 w-4" />
-                                  Add to Saved Words
+                                  {buttonContent.icon}
+                                  {buttonContent.text}
                                 </>
                               )}
                             </Button>
