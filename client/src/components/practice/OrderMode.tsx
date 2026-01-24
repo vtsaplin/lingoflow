@@ -362,15 +362,15 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
             >
               <div className="flex flex-wrap gap-2 min-h-[48px] items-center">
                 {orderedWords.length === 0 && dropTargetIndex === 0 && (
-                  <div className="w-1 h-9 bg-primary rounded-full animate-pulse shadow-sm shadow-primary/50" />
+                  <div className="w-0.5 h-8 bg-primary rounded-full animate-pulse" />
                 )}
                 {orderedWords.length === 0 && dropTargetIndex !== 0 && (
                   <p className="text-sm text-muted-foreground italic">Drag or click words to place them here</p>
                 )}
                 {orderedWords.map((word, idx) => (
-                  <div key={`ordered-${idx}`} className="flex items-center">
+                  <div key={`ordered-${idx}`} className="flex items-center gap-0">
                     {dropTargetIndex === idx && (
-                      <div className="w-1 h-9 bg-primary rounded-full animate-pulse shadow-sm shadow-primary/50 transition-opacity duration-150" />
+                      <div className="w-0.5 h-8 bg-primary rounded-full animate-pulse -mr-1" />
                     )}
                     <span
                       onClick={() => handleWordClick(word, true)}
@@ -390,7 +390,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                       {word}
                     </span>
                     {dropTargetIndex === orderedWords.length && idx === orderedWords.length - 1 && (
-                      <div className="w-1 h-9 bg-primary rounded-full animate-pulse shadow-sm shadow-primary/50 ml-1 transition-opacity duration-150" />
+                      <div className="w-0.5 h-8 bg-primary rounded-full animate-pulse ml-1" />
                     )}
                   </div>
                 ))}
