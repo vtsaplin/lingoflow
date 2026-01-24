@@ -301,7 +301,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                     : validationState === "incorrect"
                       ? "bg-destructive/10 border-destructive"
                       : "bg-primary/5 border-primary/30"
-                  : "bg-muted/30 border-muted-foreground/30"
+                  : "bg-background border-muted-foreground/30"
               }`}
               onDrop={(e) => handleDropOnOrdered(e)}
               onDragOver={(e) => e.preventDefault()}
@@ -336,7 +336,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
             </div>
 
             <div
-              className="min-h-[80px] p-4 rounded-lg bg-muted/50"
+              className="min-h-[80px] p-4 rounded-lg border"
               onDrop={handleDropOnShuffled}
               onDragOver={(e) => e.preventDefault()}
               data-testid="shuffled-area"
@@ -352,7 +352,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                     onClick={() => handleWordClick(word, false)}
                     draggable
                     onDragStart={(e) => handleDragStart(e, word, false, idx)}
-                    className="px-3 py-2 rounded-md bg-secondary text-secondary-foreground font-medium cursor-pointer transition-all hover-elevate active-elevate-2"
+                    className="px-3 py-1.5 bg-background border rounded cursor-grab hover-elevate active-elevate-2 select-none"
                     data-testid={`shuffled-word-${idx}`}
                   >
                     {word}
