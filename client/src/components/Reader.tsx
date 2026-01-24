@@ -40,6 +40,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const [isBatchSaving, setIsBatchSaving] = useState(false);
+  const [saveProgress, setSaveProgress] = useState({ completed: 0, total: 0 });
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { 
@@ -193,18 +194,26 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       f => !selectedWords.has(f.german.toLowerCase())
     );
     
+    const totalOperations = wordsToAdd.length + wordsToRemove.length;
+    let completedCount = 0;
+    setSaveProgress({ completed: 0, total: totalOperations });
+    
     let savedCount = 0;
     let removedCount = 0;
     let errorCount = 0;
     
     try {
-      // Fetch all translations in parallel for speed
+      // Fetch all translations in parallel for speed, but track progress
       const translationPromises = wordsToAdd.map(async (word) => {
         try {
           const response = await apiRequest('POST', '/api/dictionary', { word });
           const data = await response.json();
+          completedCount++;
+          setSaveProgress({ completed: completedCount, total: totalOperations });
           return { success: true, word: data.word, translation: data.translation };
         } catch {
+          completedCount++;
+          setSaveProgress({ completed: completedCount, total: totalOperations });
           return { success: false, word };
         }
       });
@@ -221,10 +230,12 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         }
       }
       
-      // Remove words (instant, no API needed)
+      // Remove words (instant, no API needed) and update progress
       for (const flashcard of wordsToRemove) {
         removeFlashcard(flashcard.id);
         removedCount++;
+        completedCount++;
+        setSaveProgress({ completed: completedCount, total: totalOperations });
       }
       
       // Update selection to reflect current saved state (don't clear, maintain overlay feel)
@@ -258,6 +269,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       });
     } finally {
       setIsBatchSaving(false);
+      setSaveProgress({ completed: 0, total: 0 });
     }
   };
   
@@ -827,7 +839,19 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <div className="text-center">
                 <h3 className="font-medium text-lg">Saving flashcards...</h3>
-                <p className="text-sm text-muted-foreground mt-1">Please wait</p>
+                {saveProgress.total > 0 ? (
+                  <>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {saveProgress.completed} / {saveProgress.total}
+                    </p>
+                    <Progress 
+                      value={(saveProgress.completed / saveProgress.total) * 100} 
+                      className="mt-3 h-2"
+                    />
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-1">Please wait</p>
+                )}
               </div>
             </div>
           </div>
