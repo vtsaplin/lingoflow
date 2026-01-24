@@ -524,7 +524,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                             className="gap-2"
                           >
                             <Check className="h-4 w-4" />
-                            Done
+                            Back to Explore
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Return to Explore without applying changes</TooltipContent>
