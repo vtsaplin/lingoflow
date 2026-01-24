@@ -40,8 +40,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const [isBatchSaving, setIsBatchSaving] = useState(false);
-  const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0, currentWord: "" });
-    const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { 
     practiceState, 
@@ -194,9 +193,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       f => !selectedWords.has(f.german.toLowerCase())
     );
     
-    const totalOperations = wordsToAdd.length + wordsToRemove.length;
-    setSaveProgress({ current: 0, total: totalOperations, currentWord: "" });
-    
     let savedCount = 0;
     let removedCount = 0;
     let errorCount = 0;
@@ -231,8 +227,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         removedCount++;
       }
       
-      setSaveProgress({ current: totalOperations, total: totalOperations, currentWord: "" });
-      
       // Update selection to reflect current saved state (don't clear, maintain overlay feel)
       const updatedFlashcardWords = new Set(
         getFlashcardsForText(topicId, textId).map(f => f.german.toLowerCase())
@@ -264,7 +258,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       });
     } finally {
       setIsBatchSaving(false);
-      setSaveProgress({ current: 0, total: 0, currentWord: "" });
     }
   };
   
@@ -839,22 +832,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <div className="text-center">
                 <h3 className="font-medium text-lg">Saving flashcards...</h3>
-                {saveProgress.total > 0 && (
-                  <>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {saveProgress.current} of {saveProgress.total}
-                    </p>
-                    {saveProgress.currentWord && (
-                      <p className="text-sm font-medium mt-2 text-primary">
-                        {saveProgress.currentWord}
-                      </p>
-                    )}
-                    <Progress 
-                      value={(saveProgress.current / saveProgress.total) * 100} 
-                      className="mt-3 h-2"
-                    />
-                  </>
-                )}
+                <p className="text-sm text-muted-foreground mt-1">Please wait</p>
               </div>
             </div>
           </div>
