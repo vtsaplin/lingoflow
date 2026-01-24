@@ -44,7 +44,15 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
   useEffect(() => {
     const countIncreased = inputSentences.length > savedCount && savedCount > 0;
     const countDecreased = inputSentences.length < savedCount && savedCount > 0;
-    const needsReinit = !state.initialized || countIncreased || countDecreased;
+    
+    const statesMatchSentences = sentences.every((sentence, idx) => {
+      const stored = sentenceStates[idx];
+      if (!stored) return false;
+      const storedAllWords = [...stored.shuffledWords, ...stored.orderedWords];
+      return storedAllWords.length === sentence.words.length;
+    });
+    
+    const needsReinit = !state.initialized || countIncreased || countDecreased || !statesMatchSentences;
     
     if (sentences.length > 0 && needsReinit) {
       const initialStates: Record<number, OrderSentenceState> = {};
@@ -77,7 +85,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
         flashcardCount: inputSentences.length,
       });
     }
-  }, [sentences, state.initialized, onStateChange, isCompleted, inputSentences.length, savedCount]);
+  }, [sentences, state.initialized, sentenceStates, onStateChange, isCompleted, inputSentences.length, savedCount]);
 
   if (inputSentences.length === 0) {
     return (
