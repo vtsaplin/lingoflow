@@ -413,7 +413,7 @@ export function SpeakMode({
       <div className="flex-1 overflow-auto px-6 sm:px-8 py-6">
         <div className="max-w-3xl mx-auto">
           <p className="text-sm text-muted-foreground mb-4">
-            Вопрос {questionNumber}. Прослушайте и ответьте на немецком.
+            Question {questionNumber}. Listen and answer in German.
           </p>
           
           <div className="flex items-start gap-4 mb-6">
@@ -447,7 +447,7 @@ export function SpeakMode({
                       data-testid="button-show-hint"
                     >
                       <HelpCircle className="h-3.5 w-3.5" />
-                      Показать подсказку
+                      Show hint
                     </button>
                   )}
                 </div>
@@ -459,7 +459,7 @@ export function SpeakMode({
             <div className="flex flex-col items-center gap-4 py-8">
               {!isPlaying && (
                 <p className="text-sm text-muted-foreground animate-pulse">
-                  Ваша очередь — нажмите кнопку и ответьте
+                  Your turn — press the button and respond
                 </p>
               )}
               <Button
