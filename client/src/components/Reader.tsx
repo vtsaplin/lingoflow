@@ -531,14 +531,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                 </div>
                 <div className="mt-3">
                   {multiSelectMode ? (
-                    <>
-                      <p className="text-sm text-muted-foreground">
-                        Edit the words you want to practice
-                      </p>
-                      <p className="text-sm font-medium text-foreground mt-1">
-                        {selectedWords.size} words selected
-                      </p>
-                    </>
+                    <p className="text-sm text-muted-foreground">
+                      Edit the words you want to practice
+                    </p>
                   ) : (
                     <p className="text-sm text-muted-foreground">
                       Click on {interactionMode === "word" ? "words" : "sentences"} to hear pronunciation and see {interactionMode === "word" ? "definitions" : "translations"}.
