@@ -92,10 +92,10 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
         <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-muted-foreground text-center">
-          No sentences with flashcard words found.
+          No sentences found in this text.
         </p>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Add words to your flashcards in Study mode to practice sentence ordering.
+          This text doesn't have any sentences long enough for ordering practice.
         </p>
       </div>
     );

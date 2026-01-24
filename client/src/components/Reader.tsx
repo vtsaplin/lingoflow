@@ -80,19 +80,23 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     });
   };
 
-  const eligibleSentences = useMemo(() => {
+  const allTextSentences = useMemo(() => {
     const allSentences: string[] = [];
     paragraphs.forEach(p => {
       const sentences = p.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [];
       sentences.forEach(s => {
         const trimmed = s.trim();
-        if (trimmed && sentenceContainsFlashcardWord(trimmed)) {
+        if (trimmed && trimmed.split(/\s+/).length >= 3) {
           allSentences.push(trimmed);
         }
       });
     });
     return allSentences;
-  }, [paragraphs, flashcardsForText]);
+  }, [paragraphs]);
+
+  const eligibleSentences = useMemo(() => {
+    return allTextSentences.filter(s => sentenceContainsFlashcardWord(s));
+  }, [allTextSentences, flashcardsForText]);
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
@@ -800,7 +804,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "order" && (
           <OrderMode 
-            sentences={eligibleSentences}
+            sentences={allTextSentences}
             state={practiceState.order}
             onStateChange={updateOrderState}
             onResetProgress={() => resetModeProgress(topicId, textId, "order")}
