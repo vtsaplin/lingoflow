@@ -62,7 +62,7 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
         } else {
           initialStates[idx] = {
             placedWords: {},
-            availableWords: shuffleArray([...sentence.allGapWords]),
+            availableWords: [],
             validationState: "idle",
             incorrectGaps: [],
           };
@@ -115,8 +115,13 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
     validationState: "idle" as ValidationState,
     incorrectGaps: [],
   };
-  const { placedWords, availableWords, validationState, incorrectGaps } = currentState;
+  const { placedWords, validationState, incorrectGaps } = currentState;
   const incorrectGapsSet = new Set(incorrectGaps);
+  
+  // Derive available words from current sentence's gaps minus placed words
+  // This ensures word bank always matches the template
+  const placedWordsSet = new Set(Object.values(placedWords).filter(Boolean) as string[]);
+  const availableWords = currentSentence.allGapWords.filter(w => !placedWordsSet.has(w));
 
   const updateCurrentSentenceState = (updates: Partial<FillSentenceState>) => {
     onStateChange({
@@ -142,17 +147,8 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
     const existingWord = placedWords[gapId];
     
     if (selectedWord) {
-      let newAvailable = [...availableWords];
-      const idx = newAvailable.findIndex((w, i) => w === selectedWord.word && i === selectedWord.index);
-      if (idx !== -1) {
-        newAvailable.splice(idx, 1);
-      }
-      if (existingWord) {
-        newAvailable.push(existingWord);
-      }
       updateCurrentSentenceState({
         placedWords: { ...placedWords, [gapId]: selectedWord.word },
-        availableWords: newAvailable,
         validationState: "idle",
         incorrectGaps: [],
       });
@@ -160,7 +156,6 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
     } else if (existingWord) {
       updateCurrentSentenceState({
         placedWords: { ...placedWords, [gapId]: null },
-        availableWords: [...availableWords, existingWord],
         validationState: "idle",
         incorrectGaps: [],
       });
@@ -191,17 +186,8 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
         incorrectGaps: [],
       });
     } else {
-      let newAvailable = [...availableWords];
-      const idx = newAvailable.indexOf(word);
-      if (idx !== -1) {
-        newAvailable.splice(idx, 1);
-      }
-      if (existingWordInTarget) {
-        newAvailable.push(existingWordInTarget);
-      }
       updateCurrentSentenceState({
         placedWords: { ...placedWords, [gapId]: word },
-        availableWords: newAvailable,
         validationState: "idle",
         incorrectGaps: [],
       });
@@ -234,7 +220,6 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
   const handleReset = () => {
     updateCurrentSentenceState({
       placedWords: {},
-      availableWords: shuffleArray([...currentSentence.allGapWords]),
       validationState: "idle",
       incorrectGaps: [],
     });
@@ -242,10 +227,10 @@ export function FillMode({ paragraphs, flashcardWords, state, onStateChange, onR
 
   const handleFullReset = useCallback(() => {
     const initialStates: Record<number, FillSentenceState> = {};
-    sentences.forEach((sentence, idx) => {
+    sentences.forEach((_, idx) => {
       initialStates[idx] = {
         placedWords: {},
-        availableWords: shuffleArray([...sentence.allGapWords]),
+        availableWords: [],
         validationState: "idle",
         incorrectGaps: [],
       };
