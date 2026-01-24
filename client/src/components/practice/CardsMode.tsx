@@ -436,7 +436,7 @@ export function CardsMode({
           </li>
           <li className="flex gap-2">
             <span className="font-medium text-foreground">2.</span>
-            <span>Click the <strong>+ Cards</strong> button</span>
+            <span>Click the <strong>Cards</strong> button (with + icon)</span>
           </li>
           <li className="flex gap-2">
             <span className="font-medium text-foreground">3.</span>
@@ -458,7 +458,7 @@ export function CardsMode({
           You have {flashcards.length} card{flashcards.length !== 1 ? "s" : ""}, but need at least 4 with unique translations.
         </p>
         <p className="text-sm text-muted-foreground text-center">
-          Go to <strong>Study</strong> → <strong>+ Cards</strong> to add more words.
+          Go to <strong>Study</strong> → click <strong>Cards</strong> button to add more words.
         </p>
       </div>
     );

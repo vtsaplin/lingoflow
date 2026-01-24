@@ -515,7 +515,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         ) : (
                           <Plus className="h-4 w-4" />
                         )}
-                        {multiSelectMode ? "Cancel" : "+ Cards"}
+                        {multiSelectMode ? "Cancel" : "Cards"}
                       </Button>
                     </div>
                   )}
