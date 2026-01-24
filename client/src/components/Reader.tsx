@@ -107,10 +107,15 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
   useEffect(() => {
     if (activeTextKey !== textKey) return;
-    if (practiceState.write.validationState === "correct" && !progress.write) {
+    const { sentenceStates, initialized } = practiceState.write;
+    if (!initialized || !progress) return;
+    const sentenceCount = Object.keys(sentenceStates).length;
+    if (sentenceCount === 0) return;
+    const allCorrect = Object.values(sentenceStates).every(s => s.validationState === "correct");
+    if (allCorrect && !progress.write) {
       setModeComplete(topicId, textId, "write");
     }
-  }, [practiceState.write.validationState, topicId, textId, setModeComplete, progress.write, activeTextKey, textKey]);
+  }, [practiceState.write, topicId, textId, setModeComplete, progress, activeTextKey, textKey]);
 
   // Cards progress is now handled via onDirectionComplete callback in CardsMode
 
@@ -785,7 +790,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         {practiceMode === "write" && (
           <WriteMode 
             paragraphs={paragraphs}
-            flashcardWords={flashcardsForText.map(f => f.german)}
             state={practiceState.write}
             onStateChange={updateWriteState}
             onResetProgress={() => resetModeProgress(topicId, textId, "write")}

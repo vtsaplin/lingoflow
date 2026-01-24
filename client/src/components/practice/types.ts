@@ -27,12 +27,16 @@ export interface OrderModeState {
   flashcardCount: number;
 }
 
-export interface WriteModeState {
+export interface WriteSentenceState {
   inputs: Record<number, string>;
   validationState: ValidationState;
   incorrectGaps: number[];
+}
+
+export interface WriteModeState {
+  currentIndex: number;
+  sentenceStates: Record<number, WriteSentenceState>;
   initialized: boolean;
-  flashcardCount: number;
 }
 
 export type CardsDirection = "de-ru" | "ru-de";
@@ -92,11 +96,9 @@ export function createInitialPracticeState(): PracticeState {
       flashcardCount: 0,
     },
     write: {
-      inputs: {},
-      validationState: "idle",
-      incorrectGaps: [],
+      currentIndex: 0,
+      sentenceStates: {},
       initialized: false,
-      flashcardCount: 0,
     },
     cards: {
       direction: "de-ru",

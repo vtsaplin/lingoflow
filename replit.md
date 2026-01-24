@@ -52,9 +52,9 @@ Preferred communication style: Simple, everyday language.
   - Each direction tracks progress separately; Cards is complete when both directions pass at 100%
   - Tab indicator shows "½" when one direction complete, checkmark when both complete
   - Requires 4+ flashcards with unique translations/German words
-- Fill mode: Creates gaps ONLY for words in user's flashcard dictionary (one gap per unique word), click word bank to fill gaps
+- Fill mode: Sentence-by-sentence with navigation, creates gaps for flashcard words + random words (~30% of words, max 3 gaps), click word bank to fill gaps
 - Order mode: Uses saved sentences from Study mode (sentence interaction → Save button), displays Russian translation as hint, shuffle German words to reorder (min 3 words per sentence)
-- Write mode: Creates gaps ONLY for flashcard dictionary words (one gap per unique word) with first-letter hints
+- Write mode: Sentence-by-sentence with navigation, creates gaps for RANDOM words (not flashcard-dependent, ~30% of words, max 3 gaps, min 3 letters), type missing words with first-letter hints
 - Speak mode: AI-powered dialogue practice system:
   - Generates contextual conversation questions based on text topic via `/api/generate-dialogue`
   - App speaks question in German via TTS, user responds via microphone
@@ -62,7 +62,7 @@ Preferred communication style: Simple, everyday language.
   - Feedback shows whether response was appropriate (not exact match, but contextually correct)
   - Suggested response shown if user's answer was inappropriate
 - Strict validation with Check button (correct/incorrect feedback per gap/sentence)
-- Flashcard-dependent modes (Fill, Write, Cards) track flashcardCount to detect new additions
+- Flashcard-dependent modes (Fill, Cards) track flashcardCount to detect new additions
 - Order mode tracks saved sentence count separately
 - When flashcard count increases, Cards mode appends new questions without resetting progress; other modes reinitialize with new gaps while preserving work
 - Gap indexing uses stable gapId in templates with gapLookup for O(1) access
