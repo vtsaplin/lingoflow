@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown, Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
@@ -21,6 +21,9 @@ interface SentenceWithWords {
 export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
   const [translations, setTranslations] = useState<Record<number, string>>({});
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const orderedAreaRef = useRef<HTMLDivElement>(null);
+  const dragCounter = useRef(0);
   
   const translateMutation = useMutation({
     mutationFn: async ({ text, index }: { text: string; index: number }) => {
@@ -175,12 +178,16 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     e.dataTransfer.setData("word", word);
     e.dataTransfer.setData("fromOrdered", String(fromOrdered));
     e.dataTransfer.setData("index", String(index));
+    e.dataTransfer.effectAllowed = "move";
+    setIsDragging(true);
   };
 
   const handleDropOnOrdered = (e: React.DragEvent) => {
     e.preventDefault();
     const insertAt = dropTargetIndex;
     setDropTargetIndex(null);
+    setIsDragging(false);
+    dragCounter.current = 0;
     
     const word = e.dataTransfer.getData("word");
     const fromOrdered = e.dataTransfer.getData("fromOrdered") === "true";
@@ -213,6 +220,8 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
   const handleDropOnShuffled = (e: React.DragEvent) => {
     e.preventDefault();
     setDropTargetIndex(null);
+    setIsDragging(false);
+    dragCounter.current = 0;
     const word = e.dataTransfer.getData("word");
     const fromOrdered = e.dataTransfer.getData("fromOrdered") === "true";
     const originalIndex = parseInt(e.dataTransfer.getData("index"));
@@ -228,18 +237,32 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
 
   const handleDragOverWord = (e: React.DragEvent, idx: number) => {
     e.preventDefault();
+    e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     const midX = rect.left + rect.width / 2;
     const insertIndex = e.clientX < midX ? idx : idx + 1;
-    setDropTargetIndex(insertIndex);
+    if (dropTargetIndex !== insertIndex) {
+      setDropTargetIndex(insertIndex);
+    }
   };
 
-  const handleDragLeaveOrdered = () => {
-    setDropTargetIndex(null);
+  const handleDragEnterOrdered = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current++;
+  };
+
+  const handleDragLeaveOrdered = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setDropTargetIndex(null);
+    }
   };
 
   const handleDragEnd = () => {
     setDropTargetIndex(null);
+    setIsDragging(false);
+    dragCounter.current = 0;
   };
 
   const checkAnswers = useCallback(() => {
@@ -316,14 +339,18 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
 
           <div className="space-y-4">
             <div
-              className={`bg-card border rounded-lg p-6 transition-colors ${
+              ref={orderedAreaRef}
+              className={`bg-card border-2 rounded-lg p-6 transition-all duration-200 ${
                 validationState === "correct"
                   ? "border-green-500"
                   : validationState === "incorrect"
                     ? "border-destructive"
-                    : ""
+                    : isDragging
+                      ? "border-primary/50 border-dashed bg-primary/5"
+                      : "border-border"
               }`}
-              onDrop={(e) => handleDropOnOrdered(e)}
+              onDrop={handleDropOnOrdered}
+              onDragEnter={handleDragEnterOrdered}
               onDragOver={(e) => {
                 e.preventDefault();
                 if (orderedWords.length === 0) {
@@ -333,9 +360,9 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
               onDragLeave={handleDragLeaveOrdered}
               data-testid="ordered-area"
             >
-              <div className="flex flex-wrap gap-2 min-h-[40px] items-center">
+              <div className="flex flex-wrap gap-2 min-h-[48px] items-center">
                 {orderedWords.length === 0 && dropTargetIndex === 0 && (
-                  <div className="w-1 h-8 bg-primary rounded-full mx-1 animate-pulse" />
+                  <div className="w-1 h-9 bg-primary rounded-full animate-pulse shadow-sm shadow-primary/50" />
                 )}
                 {orderedWords.length === 0 && dropTargetIndex !== 0 && (
                   <p className="text-sm text-muted-foreground italic">Drag or click words to place them here</p>
@@ -343,7 +370,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                 {orderedWords.map((word, idx) => (
                   <div key={`ordered-${idx}`} className="flex items-center">
                     {dropTargetIndex === idx && (
-                      <div className="w-1 h-8 bg-primary rounded-full mx-1 animate-pulse" />
+                      <div className="w-1 h-9 bg-primary rounded-full animate-pulse shadow-sm shadow-primary/50 transition-opacity duration-150" />
                     )}
                     <span
                       onClick={() => handleWordClick(word, true)}
@@ -351,7 +378,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                       onDragStart={(e) => handleDragStart(e, word, true, idx)}
                       onDragEnd={handleDragEnd}
                       onDragOver={(e) => handleDragOverWord(e, idx)}
-                      className={`px-3 py-1.5 rounded cursor-pointer transition-all hover-elevate active-elevate-2 select-none ${
+                      className={`px-3 py-2 rounded-md cursor-pointer transition-all duration-150 hover-elevate active-elevate-2 select-none font-medium ${
                         validationState === "correct"
                           ? "bg-green-100 dark:bg-green-900/30 border border-green-500 text-green-700 dark:text-green-400"
                           : validationState === "incorrect"
@@ -363,7 +390,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                       {word}
                     </span>
                     {dropTargetIndex === orderedWords.length && idx === orderedWords.length - 1 && (
-                      <div className="w-1 h-8 bg-primary rounded-full mx-1 animate-pulse" />
+                      <div className="w-1 h-9 bg-primary rounded-full animate-pulse shadow-sm shadow-primary/50 ml-1 transition-opacity duration-150" />
                     )}
                   </div>
                 ))}
@@ -377,7 +404,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
               data-testid="shuffled-area"
             >
               <p className="text-sm text-muted-foreground mb-2">Word bank:</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 min-h-[40px]">
                 {shuffledWords.length === 0 && orderedWords.length > 0 && (
                   <p className="text-sm text-muted-foreground italic">All words placed</p>
                 )}
@@ -388,7 +415,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                     draggable
                     onDragStart={(e) => handleDragStart(e, word, false, idx)}
                     onDragEnd={handleDragEnd}
-                    className="px-3 py-1.5 bg-background border rounded cursor-grab hover-elevate active-elevate-2 select-none"
+                    className="px-3 py-2 bg-background border rounded-md cursor-grab hover-elevate active-elevate-2 select-none font-medium transition-all duration-150"
                     data-testid={`shuffled-word-${idx}`}
                   >
                     {word}
