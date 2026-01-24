@@ -226,6 +226,7 @@ export function SpeakMode({
       
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop());
+        mediaRecorderRef.current = null;
         if (!mountedRef.current) return;
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         await processRecording(blob);
