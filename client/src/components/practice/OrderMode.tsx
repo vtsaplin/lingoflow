@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown, Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
@@ -242,13 +242,26 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     setDropTargetIndex(null);
   };
 
-  const handleCheck = () => {
+  const checkAnswers = useCallback(() => {
     const userAnswer = orderedWords.join(" ");
     const correctAnswer = currentSentence.words.join(" ");
     const isCorrect = userAnswer === correctAnswer;
     updateCurrentSentenceState({
       validationState: isCorrect ? "correct" : "incorrect",
     });
+  }, [orderedWords, currentSentence.words, updateCurrentSentenceState]);
+
+  // Auto-check when all words are placed (word bank is empty)
+  useEffect(() => {
+    if (validationState !== "idle") return;
+    
+    if (shuffledWords.length === 0 && orderedWords.length > 0) {
+      checkAnswers();
+    }
+  }, [shuffledWords.length, orderedWords.length, validationState, checkAnswers]);
+
+  const handleCheck = () => {
+    checkAnswers();
   };
 
   const handleReset = () => {
