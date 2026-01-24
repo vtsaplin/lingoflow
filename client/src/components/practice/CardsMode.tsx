@@ -421,27 +421,44 @@ export function CardsMode({
 
   if (flashcards.length === 0) {
     return (
-      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+      <div className="flex flex-col h-full items-center justify-center px-6 py-12 max-w-md mx-auto">
         <Layers className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-center">
-          No flashcards saved for this text yet.
+        <p className="text-lg font-medium text-center mb-2">
+          No flashcards yet
         </p>
-        <p className="text-sm text-muted-foreground text-center mt-2">
-          Switch to Study mode and click on words to save them to your flashcards.
+        <p className="text-sm text-muted-foreground text-center mb-4">
+          To practice with cards, you need to add words first:
         </p>
+        <ol className="text-sm text-muted-foreground space-y-2 text-left">
+          <li className="flex gap-2">
+            <span className="font-medium text-foreground">1.</span>
+            <span>Go to the <strong>Study</strong> tab</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-medium text-foreground">2.</span>
+            <span>Click the <strong>+ Cards</strong> button</span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-medium text-foreground">3.</span>
+            <span>Select at least 4 words and save them</span>
+          </li>
+        </ol>
       </div>
     );
   }
   
   if (minUnique < 4) {
     return (
-      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+      <div className="flex flex-col h-full items-center justify-center px-6 py-12 max-w-md mx-auto">
         <Layers className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-center">
-          You need at least 4 flashcards with different translations to practice.
+        <p className="text-lg font-medium text-center mb-2">
+          Need more flashcards
         </p>
-        <p className="text-sm text-muted-foreground text-center mt-2">
-          Currently saved: {flashcards.length} card{flashcards.length !== 1 ? "s" : ""} ({minUnique} unique)
+        <p className="text-muted-foreground text-center mb-2">
+          You have {flashcards.length} card{flashcards.length !== 1 ? "s" : ""}, but need at least 4 with unique translations.
+        </p>
+        <p className="text-sm text-muted-foreground text-center">
+          Go to <strong>Study</strong> → <strong>+ Cards</strong> to add more words.
         </p>
       </div>
     );

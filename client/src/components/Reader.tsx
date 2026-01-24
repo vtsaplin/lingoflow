@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic, MousePointer2, Check } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic, MousePointer2, Check, Plus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -40,6 +40,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const [isBatchSaving, setIsBatchSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState({ current: 0, total: 0, currentWord: "" });
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { 
@@ -509,8 +510,12 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         data-testid="button-multi-select"
                         className="gap-2"
                       >
-                        <MousePointer2 className="h-4 w-4" />
-                        {multiSelectMode ? "Cancel" : "Select"}
+                        {multiSelectMode ? (
+                          <X className="h-4 w-4" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                        {multiSelectMode ? "Cancel" : "+ Cards"}
                       </Button>
                     </div>
                   )}
@@ -709,26 +714,48 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                           </Button>
                         )}
                         {hasChanges && (
-                          <Button 
-                            variant="default" 
-                            size="sm"
-                            onClick={handleBatchSave}
-                            disabled={isBatchSaving}
-                            data-testid="button-batch-save"
-                            className="gap-2"
-                          >
-                            {isBatchSaving ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Saving...
-                              </>
-                            ) : (
-                              <>
-                                <Check className="h-4 w-4" />
-                                Save
-                              </>
-                            )}
-                          </Button>
+                          <>
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              onClick={() => setShowSaveConfirm(true)}
+                              disabled={isBatchSaving}
+                              data-testid="button-batch-save"
+                              className="gap-2"
+                            >
+                              {isBatchSaving ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="h-4 w-4" />
+                                  Save
+                                </>
+                              )}
+                            </Button>
+                            <AlertDialog open={showSaveConfirm} onOpenChange={setShowSaveConfirm}>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Update Flashcards?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Adding or removing flashcards will reset your practice progress for this text. 
+                                    Fill, Write, and Cards exercises will start over.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => {
+                                    setShowSaveConfirm(false);
+                                    handleBatchSave();
+                                  }}>
+                                    Yes, Update
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
                         )}
                       </div>
                     </div>
