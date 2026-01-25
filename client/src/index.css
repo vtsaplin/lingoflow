@@ -132,10 +132,14 @@
 }
 
 /* Multi-select mode selected words - higher priority than hover */
-.multi-selected,
-.multi-selected:hover {
+.multi-selected {
   @apply bg-emerald-100 dark:bg-emerald-900/40 rounded-sm px-0.5 -mx-0.5;
   box-shadow: 0 2px 0 0 rgb(16 185 129 / 0.6);
+}
+
+.multi-selected:hover {
+  @apply bg-emerald-200 dark:bg-emerald-800/60 rounded-sm px-0.5 -mx-0.5;
+  box-shadow: 0 2px 0 0 rgb(16 185 129 / 0.9);
 }
 
 .eligible-sentence:hover:not(.active) {
