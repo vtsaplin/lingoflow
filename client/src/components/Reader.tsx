@@ -949,7 +949,7 @@ function Paragraph({
             <span 
               onClick={(e) => onInteract(cleanWord, e)}
               data-testid={`word-${idx}`}
-              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isFlashcard ? 'flashcard-word' : ''} ${isMultiSelected ? 'multi-selected' : ''}`}
+              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isFlashcard ? 'flashcard-word' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${multiSelectMode ? 'multi-select-mode' : ''}`}
             >
               {cleanWord}
             </span>

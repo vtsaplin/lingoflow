@@ -99,8 +99,17 @@
   @apply rounded cursor-pointer transition-colors duration-200;
 }
 
-.reader-highlight:hover:not(.active):not(.multi-selected) {
+.reader-highlight:hover:not(.active):not(.multi-selected):not(.multi-select-mode) {
   @apply bg-amber-100/70 dark:bg-amber-800/30;
+}
+
+/* Hover in multi-select mode - underline instead of yellow background */
+.reader-highlight.multi-select-mode:hover:not(.active):not(.multi-selected) {
+  @apply bg-transparent;
+  text-decoration: underline;
+  text-decoration-color: rgb(16 185 129);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 .reader-highlight.active,
