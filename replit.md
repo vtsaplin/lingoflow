@@ -106,6 +106,13 @@ Preferred communication style: Simple, everyday language.
 - ID3v2 CHAP/CTOC tags for VLC chapter support via node-id3 library
 - Temp files tracked and cleaned up after generation
 
+### Settings System
+- localStorage-backed settings persistence via `useSettings` hook (key: "lingoflow-settings")
+- Settings dialog accessible via gear icon in sidebar header
+- TTS Voice Selection: Choose from 10 OpenAI voices (alloy, ash, ballad, coral, echo, fable, nova, onyx, sage, shimmer)
+- Voice preview: Listen to sample audio before selecting a voice
+- Settings integrated into Reader, CardsMode, and SpeakMode for consistent TTS voice usage
+
 ### Data Flow
 - Shared schemas in `/shared/schema.ts` define types used by both frontend and backend
 - Route definitions in `/shared/routes.ts` provide type-safe API contracts
