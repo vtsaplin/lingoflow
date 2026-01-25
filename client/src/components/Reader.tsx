@@ -540,8 +540,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         data-testid="button-multi-select"
                         className="gap-2"
                       >
-                        <MousePointer2 className="h-4 w-4" />
-                        Select Words to Review
+                        <Bookmark className="h-4 w-4" />
+                        Save Words to Review
                       </Button>
                     )}
                   </div>
@@ -643,7 +643,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                             ) : (
                               <Bookmark className="h-4 w-4 mr-1" />
                             )}
-                            Save
+                            Save Word
                           </Button>
                         );
                       })()}
