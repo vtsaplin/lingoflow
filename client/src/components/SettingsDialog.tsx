@@ -121,18 +121,18 @@ export function SettingsDialog() {
         </button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+        <DialogHeader className="text-left">
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
-        <div className="space-y-6 py-4">
-          <div className="space-y-3">
-            <Label htmlFor="voice-select">Text-to-Speech Voice</Label>
-            <div className="flex gap-2">
+        <div className="space-y-6 pt-2">
+          <div className="space-y-4">
+            <Label htmlFor="voice-select" className="text-left block">Text-to-Speech Voice</Label>
+            <div className="flex items-center gap-3">
               <Select
                 value={settings.ttsVoice}
                 onValueChange={(value) => setVoice(value as TTSVoice)}
               >
-                <SelectTrigger id="voice-select" className="flex-1" data-testid="select-voice">
+                <SelectTrigger id="voice-select" className="w-[240px]" data-testid="select-voice">
                   <SelectValue placeholder="Select voice" />
                 </SelectTrigger>
                 <SelectContent>
@@ -142,7 +142,7 @@ export function SettingsDialog() {
                       value={option.value}
                       data-testid={`voice-option-${option.value}`}
                     >
-                      <div className="flex flex-col">
+                      <div className="flex flex-col items-start">
                         <span>{option.label}</span>
                         <span className="text-xs text-muted-foreground">{option.description}</span>
                       </div>
@@ -164,7 +164,7 @@ export function SettingsDialog() {
                 )}
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground text-left">
               Choose the voice for reading German texts aloud.
             </p>
           </div>

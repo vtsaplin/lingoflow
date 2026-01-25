@@ -24,7 +24,7 @@ export type Text = z.infer<typeof textSchema>;
 export const ttsRequestSchema = z.object({
   text: z.string(),
   speed: z.number().min(0.25).max(4.0).optional().default(1.0),
-  voice: z.enum(["alloy", "ash", "ballad", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer"]).optional().default("alloy"),
+  voice: z.enum(["alloy", "echo", "fable", "onyx", "nova", "shimmer"]).optional().default("alloy"),
 });
 
 export const translateRequestSchema = z.object({

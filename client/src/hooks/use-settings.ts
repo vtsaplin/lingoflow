@@ -2,7 +2,7 @@ import { useCallback, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "lingoflow-settings";
 
-export type TTSVoice = "alloy" | "ash" | "ballad" | "coral" | "echo" | "fable" | "onyx" | "nova" | "sage" | "shimmer";
+export type TTSVoice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 
 export interface Settings {
   ttsVoice: TTSVoice;
@@ -69,13 +69,9 @@ export function useSettings() {
 
 export const VOICE_OPTIONS: { value: TTSVoice; label: string; description: string }[] = [
   { value: "alloy", label: "Alloy", description: "Neutral and balanced" },
-  { value: "ash", label: "Ash", description: "Warm and conversational" },
-  { value: "ballad", label: "Ballad", description: "Soft and melodic" },
-  { value: "coral", label: "Coral", description: "Clear and articulate" },
   { value: "echo", label: "Echo", description: "Deep and resonant" },
   { value: "fable", label: "Fable", description: "Expressive storyteller" },
   { value: "nova", label: "Nova", description: "Bright and energetic" },
   { value: "onyx", label: "Onyx", description: "Strong and authoritative" },
-  { value: "sage", label: "Sage", description: "Calm and wise" },
   { value: "shimmer", label: "Shimmer", description: "Light and airy" },
 ];

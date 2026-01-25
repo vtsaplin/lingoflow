@@ -109,7 +109,7 @@ Preferred communication style: Simple, everyday language.
 ### Settings System
 - localStorage-backed settings persistence via `useSettings` hook (key: "lingoflow-settings")
 - Settings dialog accessible via gear icon in sidebar header
-- TTS Voice Selection: Choose from 10 OpenAI voices (alloy, ash, ballad, coral, echo, fable, nova, onyx, sage, shimmer)
+- TTS Voice Selection: Choose from 6 OpenAI voices (alloy, echo, fable, nova, onyx, shimmer)
 - Voice preview: Listen to sample audio before selecting a voice
 - Settings integrated into Reader, CardsMode, and SpeakMode for consistent TTS voice usage
 

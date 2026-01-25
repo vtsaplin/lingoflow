@@ -91,7 +91,7 @@ export async function dictionary(word: string): Promise<any> {
   }
 }
 
-export type TTSVoice = "alloy" | "ash" | "ballad" | "coral" | "echo" | "fable" | "onyx" | "nova" | "sage" | "shimmer";
+export type TTSVoice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 
 export async function tts(text: string, speed: number = 1.0, voice: TTSVoice = "alloy"): Promise<Buffer | null> {
   const client = getTTSClient();
