@@ -277,9 +277,12 @@ export function CardsMode({
           showResults: false,
           flashcardCount: flashcards.length
         });
+        
+        // Reset completion status when new flashcards are added
+        onResetProgress?.(direction);
       }
     }
-  }, [currentDirectionState.initialized, currentDirectionState.flashcardCount, flashcards, uniqueTranslationCount, uniqueGermanCount, direction, updateDirectionState, currentDirectionState]);
+  }, [currentDirectionState.initialized, currentDirectionState.flashcardCount, flashcards, uniqueTranslationCount, uniqueGermanCount, direction, updateDirectionState, currentDirectionState, onResetProgress]);
 
   const handleDirectionChange = useCallback((newDirection: CardsDirection) => {
     if (autoAdvanceTimerRef.current) {
@@ -312,12 +315,14 @@ export function CardsMode({
         } else {
           onStateChange({ ...currentState, direction: newDirection, ruDe: newDirState });
         }
+        // Reset completion status for the reinitialized direction
+        onResetProgress?.(newDirection);
         return;
       }
     }
     
     onStateChange({ ...currentState, direction: newDirection });
-  }, [onStateChange, flashcards, uniqueTranslationCount, uniqueGermanCount]);
+  }, [onStateChange, flashcards, uniqueTranslationCount, uniqueGermanCount, onResetProgress]);
 
   const handleReset = useCallback(() => {
     lastSpokenCardIdRef.current = null;
