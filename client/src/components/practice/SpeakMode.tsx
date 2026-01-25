@@ -5,6 +5,7 @@ import { useTTS } from "@/hooks/use-services";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { SpeakModeState } from "./types";
+import { useSettings } from "@/hooks/use-settings";
 
 interface SpeakModeProps {
   sentences: string[];
@@ -76,6 +77,7 @@ export function SpeakMode({
   const processingRef = useRef(false);
   
   const ttsMutation = useTTS();
+  const { settings } = useSettings();
 
   const pendingQuestionIndexRef = useRef<number>(0);
   
@@ -198,7 +200,7 @@ export function SpeakMode({
     try {
       setIsPlaying(true);
       setError(null);
-      const blob = await ttsMutation.mutateAsync({ text: currentQuestion.question });
+      const blob = await ttsMutation.mutateAsync({ text: currentQuestion.question, voice: settings.ttsVoice });
       
       if (!mountedRef.current) return;
       

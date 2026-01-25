@@ -2,10 +2,12 @@ import { useMutation } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import { z } from "zod";
 
+export type TTSVoice = "alloy" | "ash" | "ballad" | "coral" | "echo" | "fable" | "onyx" | "nova" | "sage" | "shimmer";
+
 export function useTTS() {
   return useMutation({
-    mutationFn: async ({ text, speed = 1.0 }: { text: string; speed?: number }) => {
-      const validated = api.services.tts.input.parse({ text, speed });
+    mutationFn: async ({ text, speed = 1.0, voice = "alloy" }: { text: string; speed?: number; voice?: TTSVoice }) => {
+      const validated = api.services.tts.input.parse({ text, speed, voice });
       const res = await fetch(api.services.tts.path, {
         method: api.services.tts.method,
         headers: { "Content-Type": "application/json" },

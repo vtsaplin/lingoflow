@@ -14,8 +14,10 @@ import {
   Check,
   Loader2,
   CheckCircle2,
-  FileDown
+  FileDown,
+  Settings
 } from "lucide-react";
+import { SettingsDialog } from "@/components/SettingsDialog";
 import { useTopics } from "@/hooks/use-content";
 import { usePracticeProgress } from "@/hooks/use-practice-progress";
 import { useFlashcards } from "@/hooks/use-flashcards";
@@ -280,6 +282,7 @@ export function SidebarNav() {
                 <span className="text-xs">{flashcardCount}</span>
               </button>
             )}
+            <SettingsDialog />
           </div>
         </div>
 

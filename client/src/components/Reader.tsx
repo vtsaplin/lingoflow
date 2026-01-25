@@ -14,6 +14,7 @@ import { usePracticeProgress } from "@/hooks/use-practice-progress";
 import { useFlashcards } from "@/hooks/use-flashcards";
 import { useSavedSentences } from "@/hooks/use-saved-sentences";
 import { usePracticeState } from "@/hooks/use-practice-state";
+import { useSettings } from "@/hooks/use-settings";
 import { FillMode } from "@/components/practice/FillMode";
 import { OrderMode } from "@/components/practice/OrderMode";
 import { WriteMode } from "@/components/practice/WriteMode";
@@ -67,6 +68,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const { getSentencesForText } = useSavedSentences();
   const savedSentencesForText = getSentencesForText(topicId, textId);
   
+  const { settings } = useSettings();
   const { toast } = useToast();
   
 
@@ -146,7 +148,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         audioRef.current = null;
       }
       const speed = slowMode ? 0.7 : 1.0;
-      const blob = await ttsMutation.mutateAsync({ text, speed });
+      const blob = await ttsMutation.mutateAsync({ text, speed, voice: settings.ttsVoice });
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audioRef.current = audio;

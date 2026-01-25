@@ -91,14 +91,16 @@ export async function dictionary(word: string): Promise<any> {
   }
 }
 
-export async function tts(text: string, speed: number = 1.0): Promise<Buffer | null> {
+export type TTSVoice = "alloy" | "ash" | "ballad" | "coral" | "echo" | "fable" | "onyx" | "nova" | "sage" | "shimmer";
+
+export async function tts(text: string, speed: number = 1.0, voice: TTSVoice = "alloy"): Promise<Buffer | null> {
   const client = getTTSClient();
   if (!client) return null;
 
   try {
     const mp3 = await client.audio.speech.create({
       model: "tts-hd",
-      voice: "alloy",
+      voice: voice,
       input: text,
       speed: speed,
     });

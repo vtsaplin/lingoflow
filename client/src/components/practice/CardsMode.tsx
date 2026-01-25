@@ -4,6 +4,7 @@ import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2, Check } from "lucide
 import type { Flashcard } from "@/hooks/use-flashcards";
 import type { CardsModeState, CardsDirectionState, CardsQuestionState, CardsDirection } from "./types";
 import { useTTS } from "@/hooks/use-services";
+import { useSettings } from "@/hooks/use-settings";
 
 function playSound(correct: boolean) {
   try {
@@ -123,6 +124,7 @@ export function CardsMode({
   const lastSpokenCardIdRef = useRef<string | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const tts = useTTS();
+  const { settings } = useSettings();
 
   useEffect(() => {
     return () => {
@@ -156,7 +158,7 @@ export function CardsMode({
       
       lastSpokenCardIdRef.current = currentQuestion.cardId;
       tts.mutate(
-        { text: currentQuestion.questionWord, speed: 1.0 },
+        { text: currentQuestion.questionWord, speed: 1.0, voice: settings.ttsVoice },
         {
           onSuccess: (blob) => {
             const url = URL.createObjectURL(blob);
@@ -400,7 +402,7 @@ export function CardsMode({
     }
     
     tts.mutate(
-      { text: textToSpeak, speed: 1.0 },
+      { text: textToSpeak, speed: 1.0, voice: settings.ttsVoice },
       {
         onSuccess: (blob) => {
           const url = URL.createObjectURL(blob);

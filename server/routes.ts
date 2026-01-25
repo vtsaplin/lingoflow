@@ -52,8 +52,8 @@ export async function registerRoutes(
 
   app.post(api.services.tts.path, async (req, res) => {
     try {
-        const { text, speed } = api.services.tts.input.parse(req.body);
-        const audioBuffer = await tts(text, speed);
+        const { text, speed, voice } = api.services.tts.input.parse(req.body);
+        const audioBuffer = await tts(text, speed, voice);
         if (!audioBuffer) {
             return res.status(500).json({ message: "TTS failed" });
         }
