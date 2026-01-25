@@ -97,22 +97,8 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
     }
   }, [sentences, state.initialized, onStateChange, isCompleted]);
 
-  if (sentences.length === 0) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <Puzzle className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-center">
-          No sentences found in this text.
-        </p>
-      </div>
-    );
-  }
-
-  if (!state.initialized) {
-    return null;
-  }
-
-  const currentSentence = sentences[currentIndex];
+  // Define these variables before hooks that use them (to satisfy hook rules)
+  const currentSentence = sentences[currentIndex] || { original: "", template: [], gapLookup: {}, allGapWords: [] };
   const currentState = sentenceStates[currentIndex] || {
     placedWords: {},
     availableWords: [],
@@ -223,6 +209,7 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
   // Auto-check when all gaps are filled
   useEffect(() => {
     if (validationState !== "idle") return;
+    if (!state.initialized || sentences.length === 0) return;
     
     const gapIds = Object.keys(currentSentence.gapLookup).map(Number);
     const allFilled = gapIds.every(gapId => placedWords[gapId]);
@@ -230,7 +217,23 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
     if (allFilled && gapIds.length > 0) {
       checkAnswers();
     }
-  }, [placedWords, currentSentence.gapLookup, validationState, checkAnswers]);
+  }, [placedWords, currentSentence.gapLookup, validationState, checkAnswers, state.initialized, sentences.length]);
+
+  // Early returns AFTER all hooks
+  if (sentences.length === 0) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <Puzzle className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground text-center">
+          No sentences found in this text.
+        </p>
+      </div>
+    );
+  }
+
+  if (!state.initialized) {
+    return null;
+  }
 
   const handleCheck = () => {
     checkAnswers();

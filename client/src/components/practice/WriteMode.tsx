@@ -89,22 +89,8 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
     }
   }, [sentences, state.initialized, onStateChange, isCompleted]);
 
-  if (sentences.length === 0) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <PenLine className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-center">
-          No sentences found in this text.
-        </p>
-      </div>
-    );
-  }
-
-  if (!state.initialized) {
-    return null;
-  }
-
-  const currentSentence = sentences[currentIndex];
+  // Define variables before hooks that use them (to satisfy hook rules)
+  const currentSentence = sentences[currentIndex] || { original: "", template: [], gapLookup: {} };
   const currentState = sentenceStates[currentIndex] || {
     inputs: {},
     validationState: "idle" as ValidationState,
@@ -133,6 +119,8 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
   };
 
   const checkAnswers = useCallback(() => {
+    if (!state.initialized || sentences.length === 0) return;
+    
     let allCorrect = true;
     const newIncorrect: number[] = [];
 
@@ -150,11 +138,12 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
       incorrectGaps: newIncorrect,
       validationState: allCorrect ? "correct" : "incorrect",
     });
-  }, [currentSentence.gapLookup, inputs, updateCurrentSentenceState]);
+  }, [currentSentence.gapLookup, inputs, updateCurrentSentenceState, state.initialized, sentences.length]);
 
   // Auto-check when all gaps are filled
   useEffect(() => {
     if (validationState !== "idle") return;
+    if (!state.initialized || sentences.length === 0) return;
     
     const gapIds = Object.keys(currentSentence.gapLookup).map(Number);
     const allFilled = gapIds.every(gapId => (inputs[gapId] || "").trim().length > 0);
@@ -162,7 +151,23 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
     if (allFilled && gapIds.length > 0) {
       checkAnswers();
     }
-  }, [inputs, currentSentence.gapLookup, validationState, checkAnswers]);
+  }, [inputs, currentSentence.gapLookup, validationState, checkAnswers, state.initialized, sentences.length]);
+
+  // Early returns AFTER all hooks
+  if (sentences.length === 0) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <PenLine className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground text-center">
+          No sentences found in this text.
+        </p>
+      </div>
+    );
+  }
+
+  if (!state.initialized) {
+    return null;
+  }
 
   const handleCheck = () => {
     checkAnswers();

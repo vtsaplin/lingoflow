@@ -105,39 +105,8 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     }
   }, [currentIndex, state.initialized, sentences.length]);
 
-  if (inputSentences.length === 0) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-center">
-          No sentences found in this text.
-        </p>
-        <p className="text-sm text-muted-foreground text-center mt-2">
-          This text doesn't have any sentences long enough for ordering practice.
-        </p>
-      </div>
-    );
-  }
-
-  if (sentences.length === 0) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-center">
-          Sentences are too short for practice.
-        </p>
-        <p className="text-sm text-muted-foreground text-center mt-2">
-          Sentences need at least 3 words for ordering practice.
-        </p>
-      </div>
-    );
-  }
-
-  if (!state.initialized) {
-    return null;
-  }
-
-  const currentSentence = sentences[currentIndex];
+  // Define variables before hooks that use them (to satisfy hook rules)
+  const currentSentence = sentences[currentIndex] || { original: "", words: [] };
   const currentState = sentenceStates[currentIndex] || {
     shuffledWords: [],
     orderedWords: [],
@@ -281,11 +250,45 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
   // Auto-check when all words are placed (word bank is empty)
   useEffect(() => {
     if (validationState !== "idle") return;
+    if (!state.initialized || sentences.length === 0) return;
     
     if (shuffledWords.length === 0 && orderedWords.length > 0) {
       checkAnswers();
     }
-  }, [shuffledWords.length, orderedWords.length, validationState, checkAnswers]);
+  }, [shuffledWords.length, orderedWords.length, validationState, checkAnswers, state.initialized, sentences.length]);
+
+  // Early returns AFTER all hooks
+  if (inputSentences.length === 0) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground text-center">
+          No sentences found in this text.
+        </p>
+        <p className="text-sm text-muted-foreground text-center mt-2">
+          This text doesn't have any sentences long enough for ordering practice.
+        </p>
+      </div>
+    );
+  }
+
+  if (sentences.length === 0) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
+        <ArrowUpDown className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground text-center">
+          Sentences are too short for practice.
+        </p>
+        <p className="text-sm text-muted-foreground text-center mt-2">
+          Sentences need at least 3 words for ordering practice.
+        </p>
+      </div>
+    );
+  }
+
+  if (!state.initialized) {
+    return null;
+  }
 
   const handleCheck = () => {
     checkAnswers();
