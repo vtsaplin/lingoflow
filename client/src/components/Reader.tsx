@@ -782,6 +782,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
 
         {practiceMode === "cards" && (
           <CardsMode 
+            key="cards"
             flashcards={flashcardsForText}
             state={practiceState.cards}
             onStateChange={updateCardsState}
@@ -795,6 +796,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "fill" && (
           <FillMode 
+            key="fill"
             paragraphs={paragraphs}
             state={practiceState.fill}
             onStateChange={updateFillState}
@@ -804,6 +806,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "order" && (
           <OrderMode 
+            key="order"
             sentences={allTextSentences}
             state={practiceState.order}
             onStateChange={updateOrderState}
@@ -813,6 +816,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "write" && (
           <WriteMode 
+            key="write"
             paragraphs={paragraphs}
             state={practiceState.write}
             onStateChange={updateWriteState}
@@ -822,6 +826,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         )}
         {practiceMode === "speak" && (
           <SpeakMode 
+            key="speak"
             sentences={eligibleSentences}
             topicId={topicId}
             textId={textId}
