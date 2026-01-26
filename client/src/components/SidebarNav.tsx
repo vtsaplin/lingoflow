@@ -257,16 +257,13 @@ export function SidebarNav() {
             <div className="mt-3" data-testid="global-progress">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                 <span>Overall Progress</span>
-                <span className="font-medium">{globalProgress.percentage}%</span>
+                <span className={`font-medium ${globalProgress.percentage === 100 ? 'text-green-600 dark:text-green-500' : ''}`}>{globalProgress.percentage}%</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-primary transition-all duration-300"
+                  className={`h-full transition-all duration-300 ${globalProgress.percentage === 100 ? 'bg-green-600 dark:bg-green-500' : 'bg-primary'}`}
                   style={{ width: `${globalProgress.percentage}%` }}
                 />
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {globalProgress.completedTexts} of {globalProgress.totalTexts} texts completed
               </div>
             </div>
           )}
@@ -375,7 +372,7 @@ export function SidebarNav() {
                                       className="text-xs text-muted-foreground"
                                       data-testid={`topic-progress-${topic.id}`}
                                     >
-                                      {topicProgress.completedTexts}/{topicProgress.totalTexts}
+                                      {topicProgress.percentage}%
                                     </span>
                                   )
                                 )}
@@ -397,7 +394,7 @@ export function SidebarNav() {
                                   />
                                 </div>
                                 <span className={`shrink-0 ${topicProgress.percentage === 100 ? 'text-green-600 dark:text-green-500 font-medium' : 'text-muted-foreground'}`}>
-                                  {topicProgress.completedTexts}/{topicProgress.totalTexts}
+                                  {topicProgress.percentage}%
                                 </span>
                               </div>
                             )}
