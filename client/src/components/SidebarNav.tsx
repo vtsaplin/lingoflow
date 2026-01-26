@@ -365,12 +365,19 @@ export function SidebarNav() {
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 {hasTexts && !selectionMode && !(isExpanded || hasActiveText) && (
-                                  <span 
-                                    className={`text-xs ${topicProgress.percentage === 100 ? 'text-green-600 dark:text-green-500 font-medium' : 'text-muted-foreground'}`}
-                                    data-testid={`topic-progress-${topic.id}`}
-                                  >
-                                    {topicProgress.completedTexts}/{topicProgress.totalTexts}
-                                  </span>
+                                  topicProgress.percentage === 100 ? (
+                                    <CheckCircle2 
+                                      className="h-4 w-4 text-green-600 dark:text-green-500" 
+                                      data-testid={`topic-progress-${topic.id}`}
+                                    />
+                                  ) : (
+                                    <span 
+                                      className="text-xs text-muted-foreground"
+                                      data-testid={`topic-progress-${topic.id}`}
+                                    >
+                                      {topicProgress.completedTexts}/{topicProgress.totalTexts}
+                                    </span>
+                                  )
                                 )}
                                 {!selectionMode && (
                                   (isExpanded || hasActiveText) ? (
