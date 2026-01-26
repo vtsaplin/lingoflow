@@ -363,7 +363,15 @@ export function SidebarNav() {
                                 <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
                                 <span className="truncate font-medium">{topic.title}</span>
                               </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
+                              <div className="flex items-center gap-2 shrink-0">
+                                {hasTexts && !selectionMode && !(isExpanded || hasActiveText) && (
+                                  <span 
+                                    className={`text-xs ${topicProgress.percentage === 100 ? 'text-green-600 dark:text-green-500 font-medium' : 'text-muted-foreground'}`}
+                                    data-testid={`topic-progress-${topic.id}`}
+                                  >
+                                    {topicProgress.completedTexts}/{topicProgress.totalTexts}
+                                  </span>
+                                )}
                                 {!selectionMode && (
                                   (isExpanded || hasActiveText) ? (
                                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -373,8 +381,8 @@ export function SidebarNav() {
                                 )}
                               </div>
                             </div>
-                            {hasTexts && !selectionMode && (
-                              <div className="flex items-center gap-2 ml-7 text-xs" data-testid={`topic-progress-${topic.id}`}>
+                            {hasTexts && !selectionMode && (isExpanded || hasActiveText) && (
+                              <div className="flex items-center gap-2 ml-7 text-xs" data-testid={`topic-progress-expanded-${topic.id}`}>
                                 <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                                   <div 
                                     className={`h-full transition-all duration-300 ${topicProgress.percentage === 100 ? 'bg-green-600 dark:bg-green-500' : 'bg-primary'}`}
@@ -382,7 +390,7 @@ export function SidebarNav() {
                                   />
                                 </div>
                                 <span className={`shrink-0 ${topicProgress.percentage === 100 ? 'text-green-600 dark:text-green-500 font-medium' : 'text-muted-foreground'}`}>
-                                  {topicProgress.completedTexts}/{topicProgress.totalTexts}
+                                  {topicProgress.completedTexts}/{topicProgress.totalTexts} texts
                                 </span>
                               </div>
                             )}
