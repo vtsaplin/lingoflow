@@ -142,41 +142,65 @@ export function usePracticeProgress() {
     return Math.round((getCompletionCount(topicId, textId) / 5) * 100);
   }, [getCompletionCount]);
 
-  // Calculate topic progress (percentage of completed modes across all texts in topic)
-  const getTopicProgress = useCallback((topicId: string, textIds: string[]): { completed: number; total: number; percentage: number } => {
-    if (textIds.length === 0) return { completed: 0, total: 0, percentage: 0 };
+  // Calculate topic progress with text-level stats
+  const getTopicProgress = useCallback((topicId: string, textIds: string[]): { 
+    completedModes: number; 
+    totalModes: number; 
+    percentage: number;
+    completedTexts: number;
+    totalTexts: number;
+  } => {
+    if (textIds.length === 0) return { completedModes: 0, totalModes: 0, percentage: 0, completedTexts: 0, totalTexts: 0 };
     
-    const total = textIds.length * 5; // 5 modes per text
-    let completed = 0;
+    const totalModes = textIds.length * 5; // 5 modes per text
+    let completedModes = 0;
+    let completedTexts = 0;
     
     for (const textId of textIds) {
-      completed += getCompletionCount(topicId, textId);
+      completedModes += getCompletionCount(topicId, textId);
+      if (isTextComplete(topicId, textId)) {
+        completedTexts++;
+      }
     }
     
     return {
-      completed,
-      total,
-      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+      completedModes,
+      totalModes,
+      percentage: totalModes > 0 ? Math.round((completedModes / totalModes) * 100) : 0,
+      completedTexts,
+      totalTexts: textIds.length
     };
-  }, [getCompletionCount]);
+  }, [getCompletionCount, isTextComplete]);
 
-  // Calculate global progress across all texts
-  const getGlobalProgress = useCallback((allTexts: TopicText[]): { completed: number; total: number; percentage: number } => {
-    if (allTexts.length === 0) return { completed: 0, total: 0, percentage: 0 };
+  // Calculate global progress with text-level stats
+  const getGlobalProgress = useCallback((allTexts: TopicText[]): { 
+    completedModes: number; 
+    totalModes: number; 
+    percentage: number;
+    completedTexts: number;
+    totalTexts: number;
+  } => {
+    if (allTexts.length === 0) return { completedModes: 0, totalModes: 0, percentage: 0, completedTexts: 0, totalTexts: 0 };
     
-    const total = allTexts.length * 5; // 5 modes per text
-    let completed = 0;
+    const totalModes = allTexts.length * 5; // 5 modes per text
+    let completedModes = 0;
+    let completedTexts = 0;
     
     for (const { topicId, textId } of allTexts) {
-      completed += getCompletionCount(topicId, textId);
+      completedModes += getCompletionCount(topicId, textId);
+      if (isTextComplete(topicId, textId)) {
+        completedTexts++;
+      }
     }
     
     return {
-      completed,
-      total,
-      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+      completedModes,
+      totalModes,
+      percentage: totalModes > 0 ? Math.round((completedModes / totalModes) * 100) : 0,
+      completedTexts,
+      totalTexts: allTexts.length
     };
-  }, [getCompletionCount]);
+  }, [getCompletionCount, isTextComplete]);
 
   return {
     getTextProgress,

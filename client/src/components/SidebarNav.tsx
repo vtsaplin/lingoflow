@@ -266,7 +266,7 @@ export function SidebarNav() {
                 />
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {globalProgress.completed} / {globalProgress.total} modes completed
+                {globalProgress.completedTexts} of {globalProgress.totalTexts} texts completed
               </div>
             </div>
           )}
@@ -364,11 +364,6 @@ export function SidebarNav() {
                                 <span className="truncate font-medium">{topic.title}</span>
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
-                                {hasTexts && !selectionMode && (
-                                  <span className={`text-xs font-medium ${topicProgress.percentage === 100 ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'}`} data-testid={`topic-progress-${topic.id}`}>
-                                    {topicProgress.percentage}%
-                                  </span>
-                                )}
                                 {!selectionMode && (
                                   (isExpanded || hasActiveText) ? (
                                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -379,11 +374,16 @@ export function SidebarNav() {
                               </div>
                             </div>
                             {hasTexts && !selectionMode && (
-                              <div className="h-1 bg-muted rounded-full overflow-hidden ml-7">
-                                <div 
-                                  className={`h-full transition-all duration-300 ${topicProgress.percentage === 100 ? 'bg-green-600 dark:bg-green-500' : 'bg-primary'}`}
-                                  style={{ width: `${topicProgress.percentage}%` }}
-                                />
+                              <div className="flex items-center gap-2 ml-7 text-xs" data-testid={`topic-progress-${topic.id}`}>
+                                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all duration-300 ${topicProgress.percentage === 100 ? 'bg-green-600 dark:bg-green-500' : 'bg-primary'}`}
+                                    style={{ width: `${topicProgress.percentage}%` }}
+                                  />
+                                </div>
+                                <span className={`shrink-0 ${topicProgress.percentage === 100 ? 'text-green-600 dark:text-green-500 font-medium' : 'text-muted-foreground'}`}>
+                                  {topicProgress.completedTexts}/{topicProgress.totalTexts}
+                                </span>
                               </div>
                             )}
                           </div>
