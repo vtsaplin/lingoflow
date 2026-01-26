@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { useTopics } from "@/hooks/use-content";
-import { usePracticeProgress } from "@/hooks/use-practice-progress";
+import { usePracticeProgress, TopicText } from "@/hooks/use-practice-progress";
 import { useFlashcards } from "@/hooks/use-flashcards";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,7 +61,7 @@ function getSavedWidth(): number {
 export function SidebarNav() {
   const { data: topics, isLoading } = useTopics();
   const [location] = useLocation();
-  const { getCompletionCount, isTextComplete } = usePracticeProgress();
+  const { getCompletionCount, isTextComplete, getTopicProgress, getGlobalProgress } = usePracticeProgress();
   const { getFlashcardCount, exportToCSV } = useFlashcards();
   const [open, setOpen] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
@@ -73,6 +73,15 @@ export function SidebarNav() {
   const [selectedTexts, setSelectedTexts] = useState<SelectedText[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const savedScrollTop = useRef<number>(0);
+  
+  // Build list of all texts for global progress calculation (after all hooks)
+  const allTexts: TopicText[] = topics?.flatMap(topic => 
+    topic.texts?.map(text => ({ topicId: topic.id, textId: text.id })) || []
+  ) || [];
+  
+  const globalProgress = getGlobalProgress(allTexts);
   const flashcardCount = getFlashcardCount();
   
   const handleExportFlashcards = () => {
@@ -87,9 +96,6 @@ export function SidebarNav() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-  
-  const scrollViewportRef = useRef<HTMLDivElement>(null);
-  const savedScrollTop = useRef<number>(0);
 
   const currentPath = location;
 
@@ -247,6 +253,23 @@ export function SidebarNav() {
           <p className="mt-2 text-sm text-muted-foreground">
             Read. Listen. Practice.
           </p>
+          {!isLoading && allTexts.length > 0 && (
+            <div className="mt-3" data-testid="global-progress">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                <span>Overall Progress</span>
+                <span className="font-medium">{globalProgress.percentage}%</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${globalProgress.percentage}%` }}
+                />
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {globalProgress.completed} / {globalProgress.total} modes completed
+              </div>
+            </div>
+          )}
           <div className="mt-3 flex items-center gap-1">
             <a 
               href="/podcast/feed.xml" 
@@ -306,6 +329,8 @@ export function SidebarNav() {
                   const hasActiveText = topic.texts?.some(t => isTextActive(topic.id, t.id));
                   const topicFullySelected = isTopicFullySelected(topic.id);
                   const topicPartiallySelected = isTopicPartiallySelected(topic.id);
+                  const textIds = topic.texts?.map(t => t.id) || [];
+                  const topicProgress = getTopicProgress(topic.id, textIds);
 
                   return (
                     <Collapsible 
@@ -330,27 +355,37 @@ export function SidebarNav() {
                         </div>
                         <CollapsibleTrigger asChild>
                           <div 
-                            className="group flex-1 flex items-center justify-between gap-2 px-3 py-2.5 rounded-md text-sm transition-colors cursor-pointer text-foreground hover:bg-muted overflow-hidden min-w-0"
+                            className="group flex-1 flex flex-col gap-1 px-3 py-2 rounded-md text-sm transition-colors cursor-pointer text-foreground hover:bg-muted overflow-hidden min-w-0"
                             data-testid={`topic-${topic.id}`}
                           >
-                            <div className="flex items-center gap-3 overflow-hidden min-w-0">
-                              <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                              <span className="truncate font-medium">{topic.title}</span>
+                            <div className="flex items-center justify-between gap-2 overflow-hidden min-w-0">
+                              <div className="flex items-center gap-3 overflow-hidden min-w-0">
+                                <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                <span className="truncate font-medium">{topic.title}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {hasTexts && !selectionMode && (
+                                  <span className={`text-xs font-medium ${topicProgress.percentage === 100 ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'}`} data-testid={`topic-progress-${topic.id}`}>
+                                    {topicProgress.percentage}%
+                                  </span>
+                                )}
+                                {!selectionMode && (
+                                  (isExpanded || hasActiveText) ? (
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                  )
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              {hasTexts && (
-                                <span className="text-xs text-muted-foreground">
-                                  {topic.texts.length}
-                                </span>
-                              )}
-                              {!selectionMode && (
-                                (isExpanded || hasActiveText) ? (
-                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                )
-                              )}
-                            </div>
+                            {hasTexts && !selectionMode && (
+                              <div className="h-1 bg-muted rounded-full overflow-hidden ml-7">
+                                <div 
+                                  className={`h-full transition-all duration-300 ${topicProgress.percentage === 100 ? 'bg-green-600 dark:bg-green-500' : 'bg-primary'}`}
+                                  style={{ width: `${topicProgress.percentage}%` }}
+                                />
+                              </div>
+                            )}
                           </div>
                         </CollapsibleTrigger>
                       </div>

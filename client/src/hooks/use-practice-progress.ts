@@ -100,6 +100,11 @@ function resetTextProgressInternal(topicId: string, textId: string) {
   notifyListeners();
 }
 
+export interface TopicText {
+  topicId: string;
+  textId: string;
+}
+
 export function usePracticeProgress() {
   // Subscribe to store updates and get current state
   // We use the returned progress to track which keys have changed
@@ -137,6 +142,42 @@ export function usePracticeProgress() {
     return Math.round((getCompletionCount(topicId, textId) / 5) * 100);
   }, [getCompletionCount]);
 
+  // Calculate topic progress (percentage of completed modes across all texts in topic)
+  const getTopicProgress = useCallback((topicId: string, textIds: string[]): { completed: number; total: number; percentage: number } => {
+    if (textIds.length === 0) return { completed: 0, total: 0, percentage: 0 };
+    
+    const total = textIds.length * 5; // 5 modes per text
+    let completed = 0;
+    
+    for (const textId of textIds) {
+      completed += getCompletionCount(topicId, textId);
+    }
+    
+    return {
+      completed,
+      total,
+      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+    };
+  }, [getCompletionCount]);
+
+  // Calculate global progress across all texts
+  const getGlobalProgress = useCallback((allTexts: TopicText[]): { completed: number; total: number; percentage: number } => {
+    if (allTexts.length === 0) return { completed: 0, total: 0, percentage: 0 };
+    
+    const total = allTexts.length * 5; // 5 modes per text
+    let completed = 0;
+    
+    for (const { topicId, textId } of allTexts) {
+      completed += getCompletionCount(topicId, textId);
+    }
+    
+    return {
+      completed,
+      total,
+      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+    };
+  }, [getCompletionCount]);
+
   return {
     getTextProgress,
     setModeComplete,
@@ -144,6 +185,8 @@ export function usePracticeProgress() {
     resetTextProgress,
     getCompletionCount,
     isTextComplete,
-    getCompletionPercentage
+    getCompletionPercentage,
+    getTopicProgress,
+    getGlobalProgress
   };
 }
