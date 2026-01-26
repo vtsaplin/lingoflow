@@ -390,7 +390,7 @@ export function SidebarNav() {
                                   />
                                 </div>
                                 <span className={`shrink-0 ${topicProgress.percentage === 100 ? 'text-green-600 dark:text-green-500 font-medium' : 'text-muted-foreground'}`}>
-                                  {topicProgress.completedTexts}/{topicProgress.totalTexts} texts
+                                  {topicProgress.completedTexts}/{topicProgress.totalTexts}
                                 </span>
                               </div>
                             )}
