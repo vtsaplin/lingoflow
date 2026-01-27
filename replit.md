@@ -39,7 +39,7 @@ Preferred communication style: Simple, everyday language.
 - `GET /podcast/feed.xml` - RSS podcast feed
 - `GET /podcast/audio/:topicId/:textId.mp3` - Episode audio with caching
 - `POST /api/download-combined-mp3` - Batch download selected texts as single MP3
-- `POST /api/transcribe` - Audio transcription via Whisper API (for Speak mode)
+- `POST /api/transcribe` - Audio transcription via Azure GPT Audio API (for Speak mode)
 - `POST /api/generate-dialogue` - Generate contextual dialogue questions from text content
 - `POST /api/evaluate-response` - Evaluate user's spoken response appropriateness
 

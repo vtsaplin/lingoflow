@@ -42,6 +42,8 @@ waitForPort = 5000
 [userenv]
 
 [userenv.shared]
+AZURE_GPT_AUDIO_ENDPOINT = "https://openai-sweden-central-tsaplin.openai.azure.com"
+AZURE_GPT_AUDIO_DEPLOYMENT = "gpt-audio"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-3de4f21c-65e3-43b2-9357-9e0b39cbe575"
