@@ -20,6 +20,7 @@ import { OrderMode } from "@/components/practice/OrderMode";
 import { WriteMode } from "@/components/practice/WriteMode";
 import { CardsMode } from "@/components/practice/CardsMode";
 import { SpeakMode } from "@/components/practice/SpeakMode";
+import { SentenceAnalysisDialog } from "@/components/SentenceAnalysisDialog";
 
 type InteractionMode = "word" | "sentence";
 type PracticeMode = "read" | "cards" | "fill" | "order" | "write" | "speak";
@@ -671,12 +672,13 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       </div>
                     )}
 
-                    {translateMutation.isSuccess && selectedText && (
+                    {translateMutation.isSuccess && selectedText && interactionMode === "sentence" && (
                       <div className="animate-in fade-in">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Translation</p>
-                        <p className="text-base text-foreground">
+                        <p className="text-base text-foreground mb-3">
                           {translateMutation.data.translation}
                         </p>
+                        <SentenceAnalysisDialog sentence={selectedText} />
                       </div>
                     )}
 
