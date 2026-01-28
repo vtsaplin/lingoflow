@@ -44,6 +44,12 @@ waitForPort = 5000
 [userenv.shared]
 AZURE_GPT_AUDIO_ENDPOINT = "https://openai-sweden-central-tsaplin.openai.azure.com"
 AZURE_GPT_AUDIO_DEPLOYMENT = "gpt-audio"
+AZURE_OPENAI_TTS_ENDPOINT = "https://openai-west-us3-tsaplin.openai.azure.com/"
+AZURE_OPENAI_TTS_DEPLOYMENT = "tts-hd"
+AZURE_OPENAI_CHAT_ENDPOINT = "https://openai-west-us3-tsaplin.openai.azure.com/"
+AZURE_OPENAI_CHAT_DEPLOYMENT = "gpt-5"
+AZURE_WHISPER_ENDPOINT = "https://openai-west-europe-tsaplin.openai.azure.com"
+AZURE_WHISPER_DEPLOYMENT = "whisper"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-3de4f21c-65e3-43b2-9357-9e0b39cbe575"
