@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Volume2, Mic, MicOff, RotateCcw, ArrowRight, CheckCircle2, XCircle, Loader2, MessageCircle, HelpCircle } from "lucide-react";
+import { Volume2, Mic, MicOff, RotateCcw, ArrowRight, CheckCircle2, XCircle, Loader2, MessageCircle } from "lucide-react";
 import { useTTS } from "@/hooks/use-services";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -26,7 +26,6 @@ const TOTAL_QUESTIONS = 5;
 
 interface DialogueQuestion {
   question: string;
-  context: string;
   expectedTopics: string[];
 }
 
@@ -58,11 +57,8 @@ export function SpeakMode({
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(!currentSavedQuestion);
-  const [showHint, setShowHint] = useState(false);
-  
   const currentQuestion = currentSavedQuestion ? {
     question: currentSavedQuestion.question,
-    context: currentSavedQuestion.context,
     expectedTopics: currentSavedQuestion.expectedTopics,
   } : null;
   
@@ -104,7 +100,6 @@ export function SpeakMode({
         const newQuestions = [...questions];
         newQuestions[targetIndex] = {
           question: newQuestion.question,
-          context: newQuestion.context,
           expectedTopics: newQuestion.expectedTopics,
         };
         onStateChange({
@@ -382,7 +377,6 @@ export function SpeakMode({
     setEvaluation(null);
     setUserTranscript("");
     setShouldAutoPlay(true);
-    setShowHint(false);
     setDialogueState("loading");
     generateQuestionMutation.mutate({ 
       textContent, 
@@ -410,7 +404,6 @@ export function SpeakMode({
     });
     setEvaluation(null);
     setUserTranscript("");
-    setShowHint(false);
     setDialogueState("loading");
     if (onResetProgress) {
       onResetProgress();
@@ -510,24 +503,6 @@ export function SpeakMode({
               <p className="font-serif text-lg leading-relaxed text-foreground/90">
                 {currentQuestion.question}
               </p>
-              {currentQuestion.context && (
-                <div className="mt-2">
-                  {showHint ? (
-                    <p className="text-sm text-muted-foreground italic">
-                      {currentQuestion.context}
-                    </p>
-                  ) : (
-                    <button
-                      onClick={() => setShowHint(true)}
-                      className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-                      data-testid="button-show-hint"
-                    >
-                      <HelpCircle className="h-3.5 w-3.5" />
-                      Show hint
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
