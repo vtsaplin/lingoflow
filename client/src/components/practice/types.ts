@@ -66,6 +66,7 @@ export interface CardsModeState {
 
 export interface SpeakQuestionState {
   question: string;
+  context: string;
   expectedTopics: string[];
   suggestedResponse?: string;
   userTranscript?: string;

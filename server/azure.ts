@@ -114,6 +114,7 @@ export async function tts(text: string, speed: number = 1.0, voice: TTSVoice = "
 
 export interface DialogueQuestion {
   question: string;
+  context: string;
   expectedTopics: string[];
 }
 
@@ -152,6 +153,7 @@ Generate ${questionCount} simple conversational question(s) in German based on t
 
 For each question, provide:
 - question: Simple question in German about specific content from the text (short, basic vocabulary, A2-B1 level)
+- context: Very brief hint in Russian - refer to specific part of the text for the answer (простым языком, 10-15 слов максимум!)
 - expectedTopics: Array of 3-5 German words FROM THE TEXT that could be used in the answer
 
 Example: If text says "Meine Nachbarn machen jeden Abend laute Musik"
