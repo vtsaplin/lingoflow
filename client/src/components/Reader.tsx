@@ -602,6 +602,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       >
                         {ttsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
                       </Button>
+                      {interactionMode === "sentence" && (
+                        <SentenceAnalysisDialog sentence={selectedText} />
+                      )}
                       {interactionMode === "word" && (() => {
                         const isSaved = hasFlashcard(selectedText, topicId, textId);
                         const savedFlashcard = isSaved ? getFlashcardByGerman(selectedText, topicId, textId) : null;
@@ -675,10 +678,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                     {translateMutation.isSuccess && selectedText && interactionMode === "sentence" && (
                       <div className="animate-in fade-in">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Translation</p>
-                        <p className="text-base text-foreground mb-3">
+                        <p className="text-base text-foreground">
                           {translateMutation.data.translation}
                         </p>
-                        <SentenceAnalysisDialog sentence={selectedText} />
                       </div>
                     )}
 
