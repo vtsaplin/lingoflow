@@ -581,12 +581,12 @@ export function CardsMode({
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-start px-6 pt-8">
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 w-full max-w-lg px-4">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
             {isDeRu ? "German" : "Russian"}
           </p>
           <div className="flex items-center justify-center gap-3">
-            <p className="text-3xl font-serif font-bold text-foreground">
+            <p className={`font-serif font-bold text-foreground text-center ${isDeRu ? "text-3xl" : "text-xl leading-relaxed"}`}>
               {currentQuestion.questionWord}
             </p>
             {isDeRu && (
@@ -595,7 +595,7 @@ export function CardsMode({
                 size="icon"
                 onClick={speakCurrentWord}
                 disabled={tts.isPending}
-                className="h-9 w-9"
+                className="h-9 w-9 shrink-0"
                 data-testid="button-speak-card-word"
               >
                 <Volume2 className="h-5 w-5" />
