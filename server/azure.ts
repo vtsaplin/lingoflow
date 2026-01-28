@@ -153,11 +153,13 @@ Generate ${questionCount} simple conversational question(s) in German based on t
 
 For each question, provide:
 - question: Simple question in German about specific content from the text (short, basic vocabulary, A2-B1 level)
-- context: Very brief hint in Russian - refer to specific part of the text for the answer (простым языком, 10-15 слов максимум!)
+- context: Russian translation of the question ONLY. No location hints, no extra explanations - just the translation.
 - expectedTopics: Array of 3-5 German words FROM THE TEXT that could be used in the answer
 
 Example: If text says "Meine Nachbarn machen jeden Abend laute Musik"
 Good question: "Wann machen die Nachbarn Musik?" (asks about specific text detail)
+Good context: "Когда соседи играют музыку?" (just the translation)
+Bad context: "В конце текста: когда соседи играют музыку?" (no location hints!)
 Bad question: "Magst du Musik?" (too generic, not about the text)
 ${previousQuestionsNote}
 
