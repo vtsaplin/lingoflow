@@ -4,6 +4,8 @@ import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Arr
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { OrderModeState, OrderSentenceState } from "./types";
+import { useTTS } from "@/hooks/use-services";
+import { useSettings } from "@/hooks/use-settings";
 
 interface OrderModeProps {
   sentences: string[];
@@ -114,6 +116,37 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
   };
   const { shuffledWords, orderedWords, validationState } = currentState;
   const completedCount = Object.values(sentenceStates).filter(s => s.validationState === "correct").length;
+  
+  const tts = useTTS();
+  const { settings } = useSettings();
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Play sentence audio when validation is correct
+  useEffect(() => {
+    if (validationState === "correct" && currentSentence.original) {
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+      tts.mutate(
+        { text: currentSentence.original, speed: 1.0, voice: settings.ttsVoice },
+        {
+          onSuccess: (blob) => {
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            currentAudioRef.current = audio;
+            audio.play().catch(() => {});
+            audio.onended = () => {
+              URL.revokeObjectURL(url);
+              if (currentAudioRef.current === audio) {
+                currentAudioRef.current = null;
+              }
+            };
+          }
+        }
+      );
+    }
+  }, [validationState, currentSentence.original]);
 
   const updateCurrentSentenceState = (updates: Partial<OrderSentenceState>) => {
     onStateChange({

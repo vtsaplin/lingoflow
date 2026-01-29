@@ -1,7 +1,9 @@
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, RotateCcw, CheckCircle2, XCircle, PenLine, ChevronLeft, ChevronRight } from "lucide-react";
 import type { WriteModeState, WriteSentenceState, ValidationState } from "./types";
+import { useTTS } from "@/hooks/use-services";
+import { useSettings } from "@/hooks/use-settings";
 
 interface WriteModeProps {
   paragraphs: string[];
@@ -98,6 +100,37 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
   };
   const { inputs, validationState, incorrectGaps } = currentState;
   const incorrectGapsSet = new Set(incorrectGaps);
+  
+  const tts = useTTS();
+  const { settings } = useSettings();
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Play sentence audio when validation is correct
+  useEffect(() => {
+    if (validationState === "correct" && currentSentence.original) {
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+      tts.mutate(
+        { text: currentSentence.original, speed: 1.0, voice: settings.ttsVoice },
+        {
+          onSuccess: (blob) => {
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            currentAudioRef.current = audio;
+            audio.play().catch(() => {});
+            audio.onended = () => {
+              URL.revokeObjectURL(url);
+              if (currentAudioRef.current === audio) {
+                currentAudioRef.current = null;
+              }
+            };
+          }
+        }
+      );
+    }
+  }, [validationState, currentSentence.original]);
 
   const updateCurrentSentenceState = (updates: Partial<WriteSentenceState>) => {
     onStateChange({
