@@ -310,7 +310,15 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
             <p className="font-serif text-lg leading-relaxed text-foreground/90">
               {currentSentence.template.map((item, tIdx) => {
                 if (item.type === "text") {
-                  return <span key={tIdx}>{item.content}</span>;
+                  // Subtle highlight for non-gap words to show they are correct/fixed
+                  return (
+                    <span 
+                      key={tIdx} 
+                      className="text-green-700/70 dark:text-green-400/60"
+                    >
+                      {item.content}
+                    </span>
+                  );
                 }
                 const gapId = item.gapId!;
                 const gap = currentSentence.gapLookup[gapId];
