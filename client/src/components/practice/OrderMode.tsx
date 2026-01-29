@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown, Loader2 } from "lucide-react";
+import { Check, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowUpDown, Loader2, Volume2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { OrderModeState, OrderSentenceState } from "./types";
@@ -120,31 +120,39 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
   const tts = useTTS();
   const { settings } = useSettings();
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  
+  const playSentence = useCallback(() => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
+    setIsPlaying(true);
+    tts.mutate(
+      { text: currentSentence.original, speed: 1.0, voice: settings.ttsVoice },
+      {
+        onSuccess: (blob) => {
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          currentAudioRef.current = audio;
+          audio.play().catch(() => setIsPlaying(false));
+          audio.onended = () => {
+            URL.revokeObjectURL(url);
+            setIsPlaying(false);
+            if (currentAudioRef.current === audio) {
+              currentAudioRef.current = null;
+            }
+          };
+        },
+        onError: () => setIsPlaying(false)
+      }
+    );
+  }, [currentSentence.original, settings.ttsVoice, tts]);
   
   // Play sentence audio when validation is correct
   useEffect(() => {
     if (validationState === "correct" && currentSentence.original) {
-      if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
-        currentAudioRef.current = null;
-      }
-      tts.mutate(
-        { text: currentSentence.original, speed: 1.0, voice: settings.ttsVoice },
-        {
-          onSuccess: (blob) => {
-            const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
-            currentAudioRef.current = audio;
-            audio.play().catch(() => {});
-            audio.onended = () => {
-              URL.revokeObjectURL(url);
-              if (currentAudioRef.current === audio) {
-                currentAudioRef.current = null;
-              }
-            };
-          }
-        }
-      );
+      playSentence();
     }
   }, [validationState, currentSentence.original]);
 
@@ -493,9 +501,21 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
       <div className="border-t bg-card px-6 sm:px-8 py-4">
         <div className="max-w-3xl mx-auto">
           {validationState === "correct" && (
-            <div className="flex items-center gap-2 mb-4 text-green-600 dark:text-green-400">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">Correct!</span>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-medium">Correct!</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={playSentence}
+                disabled={tts.isPending}
+                className={isPlaying ? "text-primary bg-primary/10" : ""}
+                data-testid="button-play-correct-sentence"
+              >
+                <Volume2 className={`h-4 w-4 ${isPlaying ? "animate-pulse" : ""}`} />
+              </Button>
             </div>
           )}
           {validationState === "incorrect" && (
