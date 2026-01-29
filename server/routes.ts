@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { getTopics, getTopic } from "./content";
-import { translate, dictionary, tts, generateDialogue, evaluateResponse, analyzeSentence } from "./azure";
+import { translate, dictionary, tts, generateDialogue, evaluateResponse } from "./azure";
 import { registerPodcastRoutes } from "./podcast";
 import { generateCombinedMp3 } from "./combined-mp3";
 import { z } from "zod";
@@ -140,22 +140,6 @@ export async function registerRoutes(
     } catch (err) {
       console.error("Evaluate response failed:", err);
       res.status(500).json({ message: "Failed to evaluate response" });
-    }
-  });
-
-  // Analyze sentence grammar
-  const analyzeSentenceSchema = z.object({
-    sentence: z.string(),
-  });
-
-  app.post("/api/analyze-sentence", async (req, res) => {
-    try {
-      const { sentence } = analyzeSentenceSchema.parse(req.body);
-      const analysis = await analyzeSentence(sentence);
-      res.json(analysis);
-    } catch (err) {
-      console.error("Analyze sentence failed:", err);
-      res.status(500).json({ message: "Failed to analyze sentence" });
     }
   });
 

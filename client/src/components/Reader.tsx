@@ -20,7 +20,6 @@ import { OrderMode } from "@/components/practice/OrderMode";
 import { WriteMode } from "@/components/practice/WriteMode";
 import { CardsMode } from "@/components/practice/CardsMode";
 import { SpeakMode } from "@/components/practice/SpeakMode";
-import { SentenceAnalysisDialog } from "@/components/SentenceAnalysisDialog";
 
 type InteractionMode = "word" | "sentence";
 type PracticeMode = "read" | "cards" | "fill" | "order" | "write" | "speak";
@@ -602,9 +601,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       >
                         {ttsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
                       </Button>
-                      {interactionMode === "sentence" && (
-                        <SentenceAnalysisDialog sentence={selectedText} />
-                      )}
                       {interactionMode === "word" && (() => {
                         const isSaved = hasFlashcard(selectedText, topicId, textId);
                         const savedFlashcard = isSaved ? getFlashcardByGerman(selectedText, topicId, textId) : null;
