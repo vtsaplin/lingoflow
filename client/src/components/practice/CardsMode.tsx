@@ -1,10 +1,8 @@
 import { useMemo, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2, Check } from "lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, Layers, Check } from "lucide-react";
 import type { Flashcard } from "@/hooks/use-flashcards";
 import type { CardsModeState, CardsDirectionState, CardsQuestionState, CardsDirection } from "./types";
-import { useTTS } from "@/hooks/use-services";
-import { useSettings } from "@/hooks/use-settings";
 
 function playSound(correct: boolean) {
   try {
@@ -121,61 +119,14 @@ export function CardsMode({
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
-  const lastSpokenCardIdRef = useRef<string | null>(null);
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const tts = useTTS();
-  const { settings } = useSettings();
 
   useEffect(() => {
     return () => {
       if (autoAdvanceTimerRef.current) {
         clearTimeout(autoAdvanceTimerRef.current);
       }
-      if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
-        currentAudioRef.current = null;
-      }
     };
   }, []);
-
-  // Auto-speak German words in DE→RU mode
-  useEffect(() => {
-    if (direction !== "de-ru") return;
-    
-    const { questions, currentIndex, showResults } = currentDirectionState;
-    const currentQuestion = questions[currentIndex];
-    
-    if (
-      currentQuestion && 
-      !showResults && 
-      currentQuestion.selectedAnswer === null &&
-      lastSpokenCardIdRef.current !== currentQuestion.cardId
-    ) {
-      if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
-        currentAudioRef.current = null;
-      }
-      
-      lastSpokenCardIdRef.current = currentQuestion.cardId;
-      tts.mutate(
-        { text: currentQuestion.questionWord, speed: 1.0, voice: settings.ttsVoice },
-        {
-          onSuccess: (blob) => {
-            const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
-            currentAudioRef.current = audio;
-            audio.play().catch(() => {});
-            audio.onended = () => {
-              URL.revokeObjectURL(url);
-              if (currentAudioRef.current === audio) {
-                currentAudioRef.current = null;
-              }
-            };
-          }
-        }
-      );
-    }
-  }, [direction, currentDirectionState.currentIndex, currentDirectionState.questions, currentDirectionState.showResults, tts]);
 
   // Check for 100% completion - only if flashcard count matches
   useEffect(() => {
@@ -291,11 +242,6 @@ export function CardsMode({
       clearTimeout(autoAdvanceTimerRef.current);
       autoAdvanceTimerRef.current = null;
     }
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current = null;
-    }
-    lastSpokenCardIdRef.current = null;
     
     const currentState = stateRef.current;
     const targetDirState = newDirection === "de-ru" ? currentState.deRu : currentState.ruDe;
@@ -327,7 +273,6 @@ export function CardsMode({
   }, [onStateChange, flashcards, uniqueTranslationCount, uniqueGermanCount, onResetProgress]);
 
   const handleReset = useCallback(() => {
-    lastSpokenCardIdRef.current = null;
     updateDirectionState({
       questions: generateQuestions(flashcards, direction),
       currentIndex: 0,
@@ -383,42 +328,6 @@ export function CardsMode({
       autoAdvanceTimerRef.current = null;
     }, 1200);
   }, [updateDirectionState, onStateChange]);
-
-  const speakCurrentWord = useCallback(() => {
-    const currentState = stateRef.current;
-    const dirState = currentState.direction === "de-ru" ? currentState.deRu : currentState.ruDe;
-    const currentQuestion = dirState.questions[dirState.currentIndex];
-    if (!currentQuestion) return;
-    
-    // For DE→RU, speak the German question word
-    // For RU→DE, speak the correct German answer after selection
-    const textToSpeak = currentState.direction === "de-ru" 
-      ? currentQuestion.questionWord 
-      : currentQuestion.correctAnswer;
-    
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current = null;
-    }
-    
-    tts.mutate(
-      { text: textToSpeak, speed: 1.0, voice: settings.ttsVoice },
-      {
-        onSuccess: (blob) => {
-          const url = URL.createObjectURL(blob);
-          const audio = new Audio(url);
-          currentAudioRef.current = audio;
-          audio.play().catch(() => {});
-          audio.onended = () => {
-            URL.revokeObjectURL(url);
-            if (currentAudioRef.current === audio) {
-              currentAudioRef.current = null;
-            }
-          };
-        }
-      }
-    );
-  }, [tts]);
 
   const { questions, currentIndex, showResults } = currentDirectionState;
   const correctCount = questions.filter(q => q.isCorrect === true).length;
@@ -585,23 +494,9 @@ export function CardsMode({
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
             {isDeRu ? "German" : "Russian"}
           </p>
-          <div className="flex items-center justify-center gap-3">
-            <p className={`font-serif font-bold text-foreground text-center ${isDeRu ? "text-3xl" : "text-xl leading-relaxed"}`}>
-              {currentQuestion.questionWord}
-            </p>
-            {isDeRu && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={speakCurrentWord}
-                disabled={tts.isPending}
-                className="h-9 w-9 shrink-0"
-                data-testid="button-speak-card-word"
-              >
-                <Volume2 className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
+          <p className={`font-serif font-bold text-foreground text-center ${isDeRu ? "text-3xl" : "text-xl leading-relaxed"}`}>
+            {currentQuestion.questionWord}
+          </p>
         </div>
 
         <div className="w-full max-w-md space-y-3">
@@ -642,22 +537,6 @@ export function CardsMode({
             );
           })}
           
-          {/* Show speaker button for RU→DE after answer is revealed */}
-          {!isDeRu && currentQuestion.selectedAnswer !== null && (
-            <div className="flex justify-center pt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={speakCurrentWord}
-                disabled={tts.isPending}
-                className="text-muted-foreground"
-                data-testid="button-speak-answer"
-              >
-                <Volume2 className="h-4 w-4 mr-2" />
-                Listen to German
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </div>
