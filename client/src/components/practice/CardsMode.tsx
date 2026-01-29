@@ -623,41 +623,60 @@ export function CardsMode({
             }
 
             return (
-              <Button
-                key={idx}
-                variant="outline"
-                className={buttonClass}
-                onClick={() => handleSelectAnswer(option)}
-                disabled={showFeedback}
-                data-testid={`button-option-${idx}`}
-              >
-                <span className="flex-1 line-clamp-2 text-left">{option}</span>
-                {showFeedback && isCorrectOption && (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 ml-2 shrink-0" />
+              <div key={idx} className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className={buttonClass}
+                  onClick={() => handleSelectAnswer(option)}
+                  disabled={showFeedback}
+                  data-testid={`button-option-${idx}`}
+                >
+                  <span className="flex-1 line-clamp-2 text-left">{option}</span>
+                  {showFeedback && isCorrectOption && (
+                    <CheckCircle2 className="h-5 w-5 text-green-500 ml-2 shrink-0" />
+                  )}
+                  {showFeedback && isSelected && !isCorrectOption && (
+                    <XCircle className="h-5 w-5 text-destructive ml-2 shrink-0" />
+                  )}
+                </Button>
+                {!isDeRu && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (currentAudioRef.current) {
+                        currentAudioRef.current.pause();
+                        currentAudioRef.current = null;
+                      }
+                      tts.mutate(
+                        { text: option, speed: 1.0, voice: settings.ttsVoice },
+                        {
+                          onSuccess: (blob) => {
+                            const url = URL.createObjectURL(blob);
+                            const audio = new Audio(url);
+                            currentAudioRef.current = audio;
+                            audio.play().catch(() => {});
+                            audio.onended = () => {
+                              URL.revokeObjectURL(url);
+                              if (currentAudioRef.current === audio) {
+                                currentAudioRef.current = null;
+                              }
+                            };
+                          }
+                        }
+                      );
+                    }}
+                    disabled={tts.isPending}
+                    className="shrink-0"
+                    data-testid={`button-speak-option-${idx}`}
+                  >
+                    <Volume2 className="h-4 w-4" />
+                  </Button>
                 )}
-                {showFeedback && isSelected && !isCorrectOption && (
-                  <XCircle className="h-5 w-5 text-destructive ml-2 shrink-0" />
-                )}
-              </Button>
+              </div>
             );
           })}
-          
-          {/* Show speaker button for RU→DE after answer is revealed */}
-          {!isDeRu && currentQuestion.selectedAnswer !== null && (
-            <div className="flex justify-center pt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={speakCurrentWord}
-                disabled={tts.isPending}
-                className="text-muted-foreground"
-                data-testid="button-speak-answer"
-              >
-                <Volume2 className="h-4 w-4 mr-2" />
-                Listen to German
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </div>
