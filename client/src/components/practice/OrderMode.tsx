@@ -13,6 +13,8 @@ interface OrderModeProps {
   onStateChange: (state: OrderModeState) => void;
   onResetProgress?: () => void;
   isCompleted?: boolean;
+  translations: Record<string, string>;
+  onTranslationAdd: (key: string, value: string) => void;
 }
 
 interface SentenceWithWords {
@@ -24,21 +26,20 @@ function stripPunctuation(word: string): string {
   return word.replace(/[.,!?;:„"»«"'()–—-]+$/g, "").replace(/^[„"»«"'()–—-]+/g, "");
 }
 
-export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, isCompleted = false }: OrderModeProps) {
-  const [translations, setTranslations] = useState<Record<number, string>>({});
+export function OrderMode({ sentences: inputSentences, state, onStateChange, onResetProgress, isCompleted = false, translations, onTranslationAdd }: OrderModeProps) {
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const orderedAreaRef = useRef<HTMLDivElement>(null);
   const dragCounter = useRef(0);
   
   const translateMutation = useMutation({
-    mutationFn: async ({ text, index }: { text: string; index: number }) => {
+    mutationFn: async ({ text }: { text: string }) => {
       const res = await apiRequest("POST", "/api/translate", { text });
       const data = await res.json();
-      return { translation: data.translation, index };
+      return { translation: data.translation, text };
     },
     onSuccess: (data) => {
-      setTranslations(prev => ({ ...prev, [data.index]: data.translation }));
+      onTranslationAdd(data.text, data.translation);
     },
   });
 
@@ -99,13 +100,11 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
 
   // Auto-fetch translation when sentence changes
   useEffect(() => {
-    if (state.initialized && sentences.length > 0 && !translations[currentIndex]) {
-      const currentSentence = sentences[currentIndex];
-      if (currentSentence) {
-        translateMutation.mutate({ text: currentSentence.original, index: currentIndex });
-      }
+    const sentence = sentences[currentIndex];
+    if (state.initialized && sentences.length > 0 && sentence && !translations[sentence.original]) {
+      translateMutation.mutate({ text: sentence.original });
     }
-  }, [currentIndex, state.initialized, sentences.length]);
+  }, [currentIndex, state.initialized, sentences.length, translations]);
 
   // Define variables before hooks that use them (to satisfy hook rules)
   const currentSentence = sentences[currentIndex] || { original: "", words: [] };
@@ -360,7 +359,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     }
   };
 
-  const currentTranslation = translations[currentIndex];
+  const currentTranslation = translations[currentSentence.original];
 
   return (
     <div className="flex flex-col h-full">
@@ -548,7 +547,6 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
                 variant="ghost" 
                 onClick={() => {
                   onResetProgress();
-                  setTranslations({});
                   onStateChange({
                     currentIndex: 0,
                     sentenceStates: {},

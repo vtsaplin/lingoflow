@@ -13,6 +13,8 @@ interface WriteModeProps {
   onStateChange: (state: WriteModeState) => void;
   onResetProgress?: () => void;
   isCompleted?: boolean;
+  translations: Record<string, string>;
+  onTranslationAdd: (key: string, value: string) => void;
 }
 
 interface GapInfo {
@@ -33,23 +35,21 @@ interface SentenceData {
   gapLookup: Record<number, GapInfo>;
 }
 
-export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, isCompleted = false }: WriteModeProps) {
+export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, isCompleted = false, translations, onTranslationAdd }: WriteModeProps) {
   const sentences = useMemo(() => {
     return extractSentencesWithGaps(paragraphs);
   }, [paragraphs]);
 
   const { currentIndex, sentenceStates } = state;
   
-  const [translations, setTranslations] = useState<Record<number, string>>({});
-  
   const translateMutation = useMutation({
-    mutationFn: async ({ text, index }: { text: string; index: number }) => {
+    mutationFn: async ({ text }: { text: string }) => {
       const res = await apiRequest("POST", "/api/translate", { text });
       const data = await res.json();
-      return { translation: data.translation, index };
+      return { translation: data.translation, text };
     },
     onSuccess: (data) => {
-      setTranslations(prev => ({ ...prev, [data.index]: data.translation }));
+      onTranslationAdd(data.text, data.translation);
     },
   });
   
@@ -111,15 +111,13 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
   
   // Auto-fetch translation when sentence changes
   useEffect(() => {
-    if (state.initialized && sentences.length > 0 && !translations[currentIndex]) {
-      const sentence = sentences[currentIndex];
-      if (sentence) {
-        translateMutation.mutate({ text: sentence.original, index: currentIndex });
-      }
+    const sentence = sentences[currentIndex];
+    if (state.initialized && sentences.length > 0 && sentence && !translations[sentence.original]) {
+      translateMutation.mutate({ text: sentence.original });
     }
   }, [state.initialized, currentIndex, sentences, translations]);
   
-  const currentTranslation = translations[currentIndex];
+  const currentTranslation = translations[currentSentence.original];
   const currentState = sentenceStates[currentIndex] || {
     inputs: {},
     validationState: "idle" as ValidationState,

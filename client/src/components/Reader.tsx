@@ -42,6 +42,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const [selectedWords, setSelectedWords] = useState<Set<string>>(new Set());
   const [isBatchSaving, setIsBatchSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState({ completed: 0, total: 0 });
+  const [sentenceTranslations, setSentenceTranslations] = useState<Record<string, string>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const { 
@@ -804,6 +805,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             onStateChange={updateFillState}
             onResetProgress={() => resetModeProgress(topicId, textId, "fill")}
             isCompleted={progress.fill}
+            translations={sentenceTranslations}
+            onTranslationAdd={(key, value) => setSentenceTranslations(prev => ({ ...prev, [key]: value }))}
           />
         )}
         {practiceMode === "order" && (
@@ -814,6 +817,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             onStateChange={updateOrderState}
             onResetProgress={() => resetModeProgress(topicId, textId, "order")}
             isCompleted={progress.order}
+            translations={sentenceTranslations}
+            onTranslationAdd={(key, value) => setSentenceTranslations(prev => ({ ...prev, [key]: value }))}
           />
         )}
         {practiceMode === "write" && (
@@ -824,6 +829,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             onStateChange={updateWriteState}
             onResetProgress={() => resetModeProgress(topicId, textId, "write")}
             isCompleted={progress.write}
+            translations={sentenceTranslations}
+            onTranslationAdd={(key, value) => setSentenceTranslations(prev => ({ ...prev, [key]: value }))}
           />
         )}
         {practiceMode === "speak" && (
