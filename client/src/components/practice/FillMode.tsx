@@ -140,7 +140,7 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
   const { settings } = useSettings();
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const playedSentencesRef = useRef<Set<string>>(new Set());
+  const prevValidationStateRef = useRef<ValidationState>(validationState);
   
   const playSentence = useCallback(() => {
     if (currentAudioRef.current) {
@@ -169,14 +169,16 @@ export function FillMode({ paragraphs, state, onStateChange, onResetProgress, is
     );
   }, [currentSentence.original, settings.ttsVoice, tts]);
   
-  // Play sentence audio when validation becomes correct (only once per sentence)
+  // Play sentence audio only when validation TRANSITIONS to correct (not on mount)
   useEffect(() => {
-    const sentenceKey = `${currentIndex}-${currentSentence.original}`;
-    if (validationState === "correct" && currentSentence.original && !playedSentencesRef.current.has(sentenceKey)) {
-      playedSentencesRef.current.add(sentenceKey);
+    const wasNotCorrect = prevValidationStateRef.current !== "correct";
+    const isNowCorrect = validationState === "correct";
+    prevValidationStateRef.current = validationState;
+    
+    if (wasNotCorrect && isNowCorrect && currentSentence.original) {
       playSentence();
     }
-  }, [validationState, currentSentence.original, currentIndex]);
+  }, [validationState, currentSentence.original]);
   
   const placedWordsSet = new Set(Object.values(placedWords).filter(Boolean) as string[]);
   const availableWords = shuffleArraySeeded(
