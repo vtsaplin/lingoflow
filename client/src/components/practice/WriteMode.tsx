@@ -1,11 +1,20 @@
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, RotateCcw, CheckCircle2, XCircle, PenLine, ChevronLeft, ChevronRight, Volume2, Loader2 } from "lucide-react";
+import { Check, RotateCcw, CheckCircle2, XCircle, PenLine, ChevronLeft, ChevronRight, Volume2, Loader2, Keyboard } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { WriteModeState, WriteSentenceState, ValidationState } from "./types";
 import { useTTS } from "@/hooks/use-services";
 import { useSettings } from "@/hooks/use-settings";
+
+// Real-time umlaut replacement: ae→ä, oe→ö, ue→ü, ss→ß
+function replaceUmlauts(text: string): string {
+  return text
+    .replace(/ae/gi, (match) => match[0] === 'A' ? 'Ä' : 'ä')
+    .replace(/oe/gi, (match) => match[0] === 'O' ? 'Ö' : 'ö')
+    .replace(/ue/gi, (match) => match[0] === 'U' ? 'Ü' : 'ü')
+    .replace(/ss/g, 'ß');
+}
 
 interface WriteModeProps {
   paragraphs: string[];
@@ -181,9 +190,11 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
   };
 
   const handleInputChange = (gapId: number, value: string) => {
+    // Apply real-time umlaut replacement
+    const convertedValue = replaceUmlauts(value);
     const newIncorrect = incorrectGaps.filter((id) => id !== gapId);
     updateCurrentSentenceState({
-      inputs: { ...inputs, [gapId]: value },
+      inputs: { ...inputs, [gapId]: convertedValue },
       validationState: "idle",
       incorrectGaps: newIncorrect,
     });
@@ -274,6 +285,10 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
           <p className="text-sm text-muted-foreground mb-2">
             Type the missing words. The first letter is shown as a hint.
           </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4 bg-muted/30 px-3 py-2 rounded-md" data-testid="text-umlaut-hint">
+            <Keyboard className="h-3 w-3 flex-shrink-0" />
+            <span>Keyboard tip: ae → ä, oe → ö, ue → ü, ss → ß</span>
+          </div>
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-muted-foreground">
               Sentence {currentIndex + 1} of {sentences.length}
