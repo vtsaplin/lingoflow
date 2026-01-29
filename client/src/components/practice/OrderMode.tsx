@@ -121,6 +121,7 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
   const { settings } = useSettings();
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const playedSentencesRef = useRef<Set<string>>(new Set());
   
   const playSentence = useCallback(() => {
     if (currentAudioRef.current) {
@@ -149,12 +150,14 @@ export function OrderMode({ sentences: inputSentences, state, onStateChange, onR
     );
   }, [currentSentence.original, settings.ttsVoice, tts]);
   
-  // Play sentence audio when validation is correct
+  // Play sentence audio when validation becomes correct (only once per sentence)
   useEffect(() => {
-    if (validationState === "correct" && currentSentence.original) {
+    const sentenceKey = `${currentIndex}-${currentSentence.original}`;
+    if (validationState === "correct" && currentSentence.original && !playedSentencesRef.current.has(sentenceKey)) {
+      playedSentencesRef.current.add(sentenceKey);
       playSentence();
     }
-  }, [validationState, currentSentence.original]);
+  }, [validationState, currentSentence.original, currentIndex]);
 
   const updateCurrentSentenceState = (updates: Partial<OrderSentenceState>) => {
     onStateChange({
