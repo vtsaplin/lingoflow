@@ -1,6 +1,8 @@
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, RotateCcw, CheckCircle2, XCircle, PenLine, ChevronLeft, ChevronRight, Volume2 } from "lucide-react";
+import { Check, RotateCcw, CheckCircle2, XCircle, PenLine, ChevronLeft, ChevronRight, Volume2, Loader2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import type { WriteModeState, WriteSentenceState, ValidationState } from "./types";
 import { useTTS } from "@/hooks/use-services";
 import { useSettings } from "@/hooks/use-settings";
@@ -37,6 +39,19 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
   }, [paragraphs]);
 
   const { currentIndex, sentenceStates } = state;
+  
+  const [translations, setTranslations] = useState<Record<number, string>>({});
+  
+  const translateMutation = useMutation({
+    mutationFn: async ({ text, index }: { text: string; index: number }) => {
+      const res = await apiRequest("POST", "/api/translate", { text });
+      const data = await res.json();
+      return { translation: data.translation, index };
+    },
+    onSuccess: (data) => {
+      setTranslations(prev => ({ ...prev, [data.index]: data.translation }));
+    },
+  });
   
   // All hooks must be at the top, before any conditional returns
   const handleFullReset = useCallback(() => {
@@ -93,6 +108,18 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
 
   // Define variables before hooks that use them (to satisfy hook rules)
   const currentSentence = sentences[currentIndex] || { original: "", template: [], gapLookup: {} };
+  
+  // Auto-fetch translation when sentence changes
+  useEffect(() => {
+    if (state.initialized && sentences.length > 0 && !translations[currentIndex]) {
+      const sentence = sentences[currentIndex];
+      if (sentence) {
+        translateMutation.mutate({ text: sentence.original, index: currentIndex });
+      }
+    }
+  }, [state.initialized, currentIndex, sentences, translations]);
+  
+  const currentTranslation = translations[currentIndex];
   const currentState = sentenceStates[currentIndex] || {
     inputs: {},
     validationState: "idle" as ValidationState,
@@ -254,6 +281,18 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
             <span className={`text-sm font-medium ${allComplete ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
               {completedCount} / {sentences.length} complete
             </span>
+          </div>
+          
+          <div className="mb-4 p-4 bg-muted/30 rounded-lg border" data-testid="text-translation-hint">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Translation hint:</p>
+            {currentTranslation ? (
+              <p className="text-sm">{currentTranslation}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic flex items-center gap-2">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading translation...
+              </p>
+            )}
           </div>
 
           <div className="bg-card border rounded-lg p-6">
