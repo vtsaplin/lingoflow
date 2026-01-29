@@ -285,10 +285,6 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
           <p className="text-sm text-muted-foreground mb-2">
             Type the missing words. The first letter is shown as a hint.
           </p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4 bg-muted/30 px-3 py-2 rounded-md" data-testid="text-umlaut-hint">
-            <Keyboard className="h-3 w-3 flex-shrink-0" />
-            <span>Keyboard tip: ae → ä, oe → ö, ue → ü, ss → ß</span>
-          </div>
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-muted-foreground">
               Sentence {currentIndex + 1} of {sentences.length}
@@ -347,7 +343,14 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
             </p>
           </div>
 
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex justify-center mt-4 mb-2">
+            <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 px-3 py-2 rounded-md" data-testid="text-umlaut-hint">
+              <Keyboard className="h-3 w-3 flex-shrink-0" />
+              <span>Keyboard tip: ae → ä, oe → ö, ue → ü, ss → ß</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mt-2">
             <Button
               variant="outline"
               size="sm"
