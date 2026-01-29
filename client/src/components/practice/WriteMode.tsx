@@ -7,13 +7,19 @@ import type { WriteModeState, WriteSentenceState, ValidationState } from "./type
 import { useTTS } from "@/hooks/use-services";
 import { useSettings } from "@/hooks/use-settings";
 
-// Real-time umlaut replacement: ae→ä, oe→ö, ue→ü, ss→ß
+// Real-time umlaut replacement: ae→ä, oe→ö, ue→ü
+// Note: ss→ß is NOT auto-replaced because many German words use "ss" (e.g., "bisschen")
+// Instead, validation treats ss and ß as equivalent
 function replaceUmlauts(text: string): string {
   return text
     .replace(/ae/gi, (match) => match[0] === 'A' ? 'Ä' : 'ä')
     .replace(/oe/gi, (match) => match[0] === 'O' ? 'Ö' : 'ö')
-    .replace(/ue/gi, (match) => match[0] === 'U' ? 'Ü' : 'ü')
-    .replace(/ss/g, 'ß');
+    .replace(/ue/gi, (match) => match[0] === 'U' ? 'Ü' : 'ü');
+}
+
+// Normalize text for comparison: treat ss and ß as equivalent
+function normalizeForComparison(text: string): string {
+  return text.toLowerCase().replace(/ß/g, 'ss');
 }
 
 interface WriteModeProps {
@@ -208,8 +214,9 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
 
     for (const gapId of Object.keys(currentSentence.gapLookup).map(Number)) {
       const gap = currentSentence.gapLookup[gapId];
-      const userInput = (inputs[gapId] || "").trim().toLowerCase();
-      const expected = gap.original.toLowerCase();
+      // Use normalizeForComparison to treat ss and ß as equivalent
+      const userInput = normalizeForComparison((inputs[gapId] || "").trim());
+      const expected = normalizeForComparison(gap.original);
       if (userInput !== expected) {
         allCorrect = false;
         newIncorrect.push(gapId);
@@ -356,7 +363,7 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
             </Button>
             <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 px-3 py-2 rounded-md" data-testid="text-umlaut-hint">
               <Keyboard className="h-3 w-3 flex-shrink-0" />
-              <span>ae → ä, oe → ö, ue → ü, ss → ß</span>
+              <span>ae → ä, oe → ö, ue → ü (ss = ß for validation)</span>
             </div>
             <Button
               variant="outline"
