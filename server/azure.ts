@@ -73,11 +73,12 @@ export async function dictionary(word: string): Promise<any> {
       messages: [
         { role: "system", content: `You are a German-Russian dictionary. Analyze the given German word. Return a JSON object with:
           - word: the original word
-          - translation: Russian translation
+          - translation: CONCISE Russian translation (1-3 words max, NO parentheses, NO explanations, NO synonym lists)
           - partOfSpeech: grammatical part of speech (in German)
-          - definition: short definition in German
+          - definition: short definition in German (1 sentence max)
           - example_de: example sentence in German
           - example_ru: Russian translation of the example
+          IMPORTANT: Keep translation SHORT. Bad example: "немного, чуть-чуть (разг.)" Good example: "немного"
           Return ONLY JSON.` },
         { role: "user", content: word }
       ],
