@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useCallback, useRef } from "react";
+import { useMemo, useEffect, useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2, Check } from "lucide-react";
 import type { Flashcard } from "@/hooks/use-flashcards";
@@ -125,6 +125,7 @@ export function CardsMode({
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const tts = useTTS();
   const { settings } = useSettings();
+  const [playingOptionIdx, setPlayingOptionIdx] = useState<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -649,6 +650,7 @@ export function CardsMode({
                         currentAudioRef.current.pause();
                         currentAudioRef.current = null;
                       }
+                      setPlayingOptionIdx(idx);
                       tts.mutate(
                         { text: option, speed: 1.0, voice: settings.ttsVoice },
                         {
@@ -659,16 +661,20 @@ export function CardsMode({
                             audio.play().catch(() => {});
                             audio.onended = () => {
                               URL.revokeObjectURL(url);
+                              setPlayingOptionIdx(null);
                               if (currentAudioRef.current === audio) {
                                 currentAudioRef.current = null;
                               }
                             };
+                          },
+                          onError: () => {
+                            setPlayingOptionIdx(null);
                           }
                         }
                       );
                     }}
                     disabled={tts.isPending}
-                    className="shrink-0"
+                    className={`shrink-0 ${playingOptionIdx === idx ? "text-primary bg-primary/10" : ""}`}
                     data-testid={`button-speak-option-${idx}`}
                   >
                     <Volume2 className="h-4 w-4" />
