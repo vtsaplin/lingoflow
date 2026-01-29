@@ -164,7 +164,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const handleInteraction = async (text: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (multiSelectMode && interactionMode === "word") {
+    // In multiSelectMode, word selection works in both word and sentence modes
+    if (multiSelectMode) {
       const normalizedText = text.toLowerCase();
       setSelectedWords(prev => {
         const newSet = new Set(prev);
