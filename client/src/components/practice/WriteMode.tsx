@@ -343,14 +343,7 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
             </p>
           </div>
 
-          <div className="flex justify-center mt-4 mb-2">
-            <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 px-3 py-2 rounded-md" data-testid="text-umlaut-hint">
-              <Keyboard className="h-3 w-3 flex-shrink-0" />
-              <span>Keyboard tip: ae → ä, oe → ö, ue → ü, ss → ß</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center justify-between mt-4">
             <Button
               variant="outline"
               size="sm"
@@ -361,6 +354,10 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
               <ChevronLeft className="h-4 w-4 mr-1" />
               Previous
             </Button>
+            <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 px-3 py-2 rounded-md" data-testid="text-umlaut-hint">
+              <Keyboard className="h-3 w-3 flex-shrink-0" />
+              <span>ae → ä, oe → ö, ue → ü, ss → ß</span>
+            </div>
             <Button
               variant="outline"
               size="sm"
