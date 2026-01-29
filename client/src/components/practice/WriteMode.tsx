@@ -363,7 +363,7 @@ export function WriteMode({ paragraphs, state, onStateChange, onResetProgress, i
             </Button>
             <div className="inline-flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 px-3 py-2 rounded-md" data-testid="text-umlaut-hint">
               <Keyboard className="h-3 w-3 flex-shrink-0" />
-              <span>ae → ä, oe → ö, ue → ü (ss = ß for validation)</span>
+              <span>ae → ä, oe → ö, ue → ü</span>
             </div>
             <Button
               variant="outline"
