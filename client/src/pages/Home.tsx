@@ -40,7 +40,7 @@ export default function Home() {
         <img 
           src={heroImage} 
           alt="German language learning" 
-          className="w-full h-48 sm:h-56 object-cover rounded-xl grayscale"
+          className="w-full h-48 sm:h-56 object-cover rounded-xl grayscale contrast-75 brightness-110"
           style={{
             maskImage: "radial-gradient(ellipse 90% 80% at center, black 50%, transparent 100%)",
             WebkitMaskImage: "radial-gradient(ellipse 90% 80% at center, black 50%, transparent 100%)"
