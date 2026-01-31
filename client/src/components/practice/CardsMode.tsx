@@ -60,11 +60,13 @@ function generateQuestions(flashcards: Flashcard[], direction: CardsDirection): 
   if (flashcards.length === 0) return [];
   
   const isDeRu = direction === "de-ru";
-  const uniqueAnswers = Array.from(new Set(flashcards.map(f => isDeRu ? f.translation : f.german)));
+  // Use baseForm for display if available, fall back to german
+  const getDisplayWord = (card: Flashcard) => card.baseForm || card.german;
+  const uniqueAnswers = Array.from(new Set(flashcards.map(f => isDeRu ? f.translation : getDisplayWord(f))));
   
   return shuffleArray(flashcards).map(card => {
-    const questionWord = isDeRu ? card.german : card.translation;
-    const correctAnswer = isDeRu ? card.translation : card.german;
+    const questionWord = isDeRu ? getDisplayWord(card) : card.translation;
+    const correctAnswer = isDeRu ? card.translation : getDisplayWord(card);
     
     const wrongOptions = uniqueAnswers
       .filter(t => t !== correctAnswer)
@@ -249,11 +251,13 @@ export function CardsMode({
       
       if (newFlashcards.length > 0) {
         const isDeRu = direction === "de-ru";
-        const uniqueAnswers = Array.from(new Set(flashcards.map(f => isDeRu ? f.translation : f.german)));
+        // Use baseForm for display if available, fall back to german
+        const getDisplayWord = (card: Flashcard) => card.baseForm || card.german;
+        const uniqueAnswers = Array.from(new Set(flashcards.map(f => isDeRu ? f.translation : getDisplayWord(f))));
         
         const newQuestions = newFlashcards.map(card => {
-          const questionWord = isDeRu ? card.german : card.translation;
-          const correctAnswer = isDeRu ? card.translation : card.german;
+          const questionWord = isDeRu ? getDisplayWord(card) : card.translation;
+          const correctAnswer = isDeRu ? card.translation : getDisplayWord(card);
           
           const wrongOptions = uniqueAnswers
             .filter(t => t !== correctAnswer)

@@ -195,6 +195,23 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     }
   };
   
+  // Find sentence context for a word from paragraphs
+  const findSentenceForWord = (word: string): string | undefined => {
+    const wordLower = word.toLowerCase();
+    for (const para of paragraphs) {
+      const sentences = para.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [para];
+      for (const sentence of sentences) {
+        const words = sentence.split(/\s+/).map(w => 
+          w.replace(/[.,?!/#$%^&*;:{}=\-_`~()«»„"]/g, "").toLowerCase()
+        );
+        if (words.includes(wordLower)) {
+          return sentence.trim();
+        }
+      }
+    }
+    return undefined;
+  };
+  
   const handleBatchSave = async () => {
     setIsBatchSaving(true);
     const wordsArray = Array.from(selectedWords);
@@ -217,7 +234,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       // Fetch all translations in parallel for speed, but track progress
       const translationPromises = wordsToAdd.map(async (word) => {
         try {
-          const response = await apiRequest('POST', '/api/dictionary', { word });
+          const sentence = findSentenceForWord(word);
+          const response = await apiRequest('POST', '/api/dictionary', { word, sentence });
           const data = await response.json();
           completedCount++;
           setSaveProgress({ completed: completedCount, total: totalOperations });
