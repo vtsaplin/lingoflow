@@ -64,7 +64,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const textComplete = isTextComplete(topicId, textId);
   const progress = getTextProgress(topicId, textId);
   
-  const { addFlashcard, hasFlashcard, getFlashcardsForText, removeFlashcard, clearFlashcardsForText } = useFlashcards();
+  const { addFlashcard, getFlashcardsForText, removeFlashcard, clearFlashcardsForText } = useFlashcards();
   const flashcardsForText = getFlashcardsForText(topicId, textId);
   
   const { getSentencesForText } = useSavedSentences();
@@ -271,10 +271,24 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       setSelectedWords(new Set());
       setMultiSelectMode(false);
       
-      // Show confirmation toast
-      if (savedCount > 0) {
+      // Calculate how many were skipped (already saved)
+      const skippedCount = wordsArray.length - wordsToAdd.length + (results.filter(r => r.success).length - savedCount);
+      
+      // Show confirmation toast with details
+      if (savedCount > 0 && skippedCount > 0) {
         toast({
-          title: savedCount === 1 ? "Word saved" : `${savedCount} words saved`,
+          title: `Added ${savedCount} of ${wordsArray.length} words`,
+          description: `${skippedCount} already saved`,
+        });
+      } else if (savedCount > 0) {
+        toast({
+          title: savedCount === wordsArray.length 
+            ? `All ${savedCount} words saved` 
+            : `${savedCount} words saved`,
+        });
+      } else if (skippedCount > 0) {
+        toast({
+          title: skippedCount === 1 ? "Word already saved" : `All ${skippedCount} words already saved`,
         });
       }
       
@@ -612,37 +626,43 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         {ttsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
                       </Button>
                       {interactionMode === "word" && (() => {
-                        const isSaved = hasFlashcard(selectedText, topicId, textId);
-                        const canSave = dictionaryMutation.isSuccess && dictionaryMutation.data && !isSaved;
+                        const canSave = dictionaryMutation.isSuccess && dictionaryMutation.data;
                         return (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
                               if (canSave) {
-                                addFlashcard(
-                                  dictionaryMutation.data.word,
-                                  dictionaryMutation.data.translation,
-                                  topicId,
-                                  textId,
-                                  dictionaryMutation.data.baseForm
+                                const baseFormKey = (dictionaryMutation.data.baseForm || dictionaryMutation.data.word).toLowerCase();
+                                const alreadyExists = flashcardsForText.some(
+                                  f => (f.baseForm || f.german).toLowerCase() === baseFormKey
                                 );
-                                resetTextProgress(topicId, textId);
-                                resetPracticeState();
+                                if (alreadyExists) {
+                                  toast({ title: "Word already saved" });
+                                } else {
+                                  addFlashcard(
+                                    dictionaryMutation.data.word,
+                                    dictionaryMutation.data.translation,
+                                    topicId,
+                                    textId,
+                                    dictionaryMutation.data.baseForm
+                                  );
+                                  resetTextProgress(topicId, textId);
+                                  resetPracticeState();
+                                  toast({ title: "Word saved" });
+                                }
                               }
                             }}
-                            disabled={!canSave || isSaved}
+                            disabled={!canSave}
                             data-testid="button-save-flashcard"
                             className="shrink-0"
                           >
                             {dictionaryMutation.isPending ? (
                               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                            ) : isSaved ? (
-                              <Check className="h-4 w-4 mr-1" />
                             ) : (
                               <Bookmark className="h-4 w-4 mr-1" />
                             )}
-                            {isSaved ? "Saved" : "Save Word"}
+                            Save
                           </Button>
                         );
                       })()}
