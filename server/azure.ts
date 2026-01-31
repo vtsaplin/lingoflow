@@ -65,7 +65,7 @@ export async function translate(text: string): Promise<string> {
       lastError = error;
       console.error(`Translation error (attempt ${attempt}/${maxRetries}):`, error);
       if (attempt < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        await new Promise(resolve => setTimeout(resolve, 300 * attempt));
       }
     }
   }
