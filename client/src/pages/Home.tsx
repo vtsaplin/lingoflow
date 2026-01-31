@@ -1,10 +1,33 @@
-import { MousePointer2, Volume2, BookOpen, Languages, Layers, PenLine, ArrowRightLeft, Mic, ListChecks, Save, BookmarkPlus } from "lucide-react";
+import { BookOpen, MousePointer2, Dumbbell, TrendingUp } from "lucide-react";
 import heroImage from "@/assets/images/hero-learning.png";
 
 export default function Home() {
+  const steps = [
+    {
+      icon: BookOpen,
+      title: "Choose a text",
+      description: "Pick a topic from the sidebar to start learning"
+    },
+    {
+      icon: MousePointer2,
+      title: "Study",
+      description: "Read, listen, and tap words for translations"
+    },
+    {
+      icon: Dumbbell,
+      title: "Practice",
+      description: "Test yourself with interactive exercises"
+    },
+    {
+      icon: TrendingUp,
+      title: "Track progress",
+      description: "See your completion status for each text"
+    }
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto py-8 px-6 sm:px-8">
-      <div className="space-y-3 mb-8 text-center">
+    <div className="max-w-3xl mx-auto py-12 px-6 sm:px-8">
+      <div className="space-y-3 mb-10 text-center">
         <h1 className="text-4xl sm:text-5xl font-serif font-bold tracking-tight text-foreground">
           LingoFlow
         </h1>
@@ -13,7 +36,7 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="mb-8 rounded-xl overflow-hidden shadow-sm border">
+      <div className="mb-10 rounded-xl overflow-hidden shadow-sm border">
         <img 
           src={heroImage} 
           alt="German language learning" 
@@ -21,122 +44,26 @@ export default function Home() {
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="bg-card border rounded-xl p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-5 text-foreground">Study Mode</h2>
-          
-          <div className="space-y-4">
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <BookOpen className="h-4 w-4" />
+      <div className="bg-card border rounded-xl p-6 sm:p-8 shadow-sm">
+        <h2 className="text-lg font-semibold mb-6 text-foreground text-center">How it works</h2>
+        
+        <div className="grid gap-5 sm:grid-cols-2">
+          {steps.map((step, index) => (
+            <div key={index} className="flex gap-4 items-start">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0">
+                <step.icon className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-medium text-foreground text-sm">Choose a text</h3>
-                <p className="text-muted-foreground text-xs">Pick a topic from the sidebar</p>
+                <h3 className="font-medium text-foreground">{step.title}</h3>
+                <p className="text-muted-foreground text-sm">{step.description}</p>
               </div>
             </div>
-
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <MousePointer2 className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground text-sm">Click to learn</h3>
-                <p className="text-muted-foreground text-xs">Tap words for definitions, sentences for translations</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <Volume2 className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground text-sm">Listen and repeat</h3>
-                <p className="text-muted-foreground text-xs">Audio plays automatically when you click</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <Save className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground text-sm">Save words</h3>
-                <p className="text-muted-foreground text-xs">Build your personal vocabulary list</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <Languages className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground text-sm">Your language</h3>
-                <p className="text-muted-foreground text-xs">All translations in Russian</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-card border rounded-xl p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-5 text-foreground">Practice Modes</h2>
-          
-          <div className="space-y-4">
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <Layers className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground text-sm">Cards</h3>
-                <p className="text-muted-foreground text-xs">Flashcard quiz with your saved words</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <ListChecks className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground text-sm">Fill</h3>
-                <p className="text-muted-foreground text-xs">Fill in missing words from a word bank</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <ArrowRightLeft className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground text-sm">Order</h3>
-                <p className="text-muted-foreground text-xs">Arrange words to form correct sentences</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <PenLine className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground text-sm">Write</h3>
-                <p className="text-muted-foreground text-xs">Type the missing words with hints</p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                <Mic className="h-4 w-4" />
-              </div>
-              <div>
-                <h3 className="font-medium text-foreground text-sm">Speak</h3>
-                <p className="text-muted-foreground text-xs">Practice speaking with AI dialogue</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
       <p className="text-center text-muted-foreground text-sm mt-8">
-        Select a text from the sidebar to begin reading.
+        Select a text from the sidebar to begin.
       </p>
     </div>
   );
