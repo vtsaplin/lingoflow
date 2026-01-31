@@ -114,7 +114,7 @@ export function CardsMode({
   deRuComplete,
   ruDeComplete
 }: CardsModeProps) {
-  const [viewMode, setViewMode] = useState<"quiz" | "manage">("quiz");
+  const [viewMode, setViewMode] = useState<"quiz" | "manage">("manage");
   const { direction } = state;
   const currentDirectionState = direction === "de-ru" ? state.deRu : state.ruDe;
   
@@ -442,6 +442,18 @@ export function CardsMode({
   const ViewModeToggle = () => (
     <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
       <button
+        onClick={() => setViewMode("manage")}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          viewMode === "manage" 
+            ? "bg-background shadow-sm text-foreground" 
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        data-testid="button-view-words"
+      >
+        <List className="h-4 w-4" />
+        Words
+      </button>
+      <button
         onClick={() => setViewMode("quiz")}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
           viewMode === "quiz" 
@@ -452,18 +464,6 @@ export function CardsMode({
       >
         <Layers className="h-4 w-4" />
         Quiz
-      </button>
-      <button
-        onClick={() => setViewMode("manage")}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-          viewMode === "manage" 
-            ? "bg-background shadow-sm text-foreground" 
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-        data-testid="button-view-manage"
-      >
-        <List className="h-4 w-4" />
-        Manage
       </button>
     </div>
   );
