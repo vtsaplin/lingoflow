@@ -473,7 +473,14 @@ export function CardsMode({
       <div className="px-6 sm:px-8 py-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <ViewModeToggle />
+            <div className="flex items-center gap-4">
+              <ViewModeToggle />
+              {flashcards.length > 0 && (
+                <span className="text-sm text-muted-foreground" data-testid="text-word-count">
+                  {flashcards.length} {flashcards.length === 1 ? 'word' : 'words'}
+                </span>
+              )}
+            </div>
             {flashcards.length > 0 && onClearAllFlashcards && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -514,7 +521,7 @@ export function CardsMode({
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {flashcards.map((card) => (
                 <div
                   key={card.id}
