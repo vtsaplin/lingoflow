@@ -11,18 +11,18 @@ import { Footer } from "@/components/Footer";
 
 function Router() {
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <div className="flex flex-col md:flex-row flex-1 min-h-0">
-        <SidebarNav />
-        <main className="flex-1 pt-16 md:pt-0 flex flex-col overflow-auto">
+    <div className="h-screen bg-background flex flex-col md:flex-row overflow-hidden">
+      <SidebarNav />
+      <div className="flex-1 pt-16 md:pt-0 flex flex-col min-h-0 overflow-hidden">
+        <main className="flex-1 overflow-auto">
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/topic/:topicId/text/:textId" component={TopicView} />
             <Route component={NotFound} />
           </Switch>
         </main>
+        <Footer />
       </div>
-      <Footer />
     </div>
   );
 }
