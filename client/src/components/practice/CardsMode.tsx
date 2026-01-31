@@ -149,9 +149,9 @@ export function CardsMode({
     };
   }, []);
 
-  // Auto-speak German words in DE→RU mode
+  // Auto-speak German words in DE→RU mode (only in Quiz view)
   useEffect(() => {
-    if (direction !== "de-ru") return;
+    if (direction !== "de-ru" || viewMode !== "quiz") return;
     
     const { questions, currentIndex, showResults } = currentDirectionState;
     const currentQuestion = questions[currentIndex];
@@ -186,7 +186,7 @@ export function CardsMode({
         }
       );
     }
-  }, [direction, currentDirectionState.currentIndex, currentDirectionState.questions, currentDirectionState.showResults, tts]);
+  }, [direction, viewMode, currentDirectionState.currentIndex, currentDirectionState.questions, currentDirectionState.showResults, tts]);
 
   // Check for 100% completion - only if flashcard count matches
   useEffect(() => {
