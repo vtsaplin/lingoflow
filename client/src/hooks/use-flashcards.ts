@@ -5,6 +5,7 @@ const STORAGE_KEY = "lingoflow-flashcards";
 export interface Flashcard {
   id: string;
   german: string;
+  baseForm?: string;
   translation: string;
   topicId: string;
   textId: string;
@@ -47,7 +48,7 @@ function getSnapshot(): FlashcardStore {
   return flashcardState;
 }
 
-function addFlashcardInternal(german: string, translation: string, topicId: string, textId: string) {
+function addFlashcardInternal(german: string, translation: string, topicId: string, textId: string, baseForm?: string) {
   const exists = flashcardState.cards.some(
     c => c.german.toLowerCase() === german.toLowerCase() && c.topicId === topicId && c.textId === textId
   );
@@ -56,6 +57,7 @@ function addFlashcardInternal(german: string, translation: string, topicId: stri
   const newCard: Flashcard = {
     id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     german: german.trim(),
+    baseForm: baseForm?.trim(),
     translation: translation.trim(),
     topicId,
     textId,
@@ -89,8 +91,8 @@ function clearFlashcardsForTextInternal(topicId: string, textId: string) {
 export function useFlashcards() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-  const addFlashcard = useCallback((german: string, translation: string, topicId: string, textId: string) => {
-    return addFlashcardInternal(german, translation, topicId, textId);
+  const addFlashcard = useCallback((german: string, translation: string, topicId: string, textId: string, baseForm?: string) => {
+    return addFlashcardInternal(german, translation, topicId, textId, baseForm);
   }, []);
 
   const removeFlashcard = useCallback((id: string) => {
