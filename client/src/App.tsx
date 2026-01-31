@@ -7,18 +7,22 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import TopicView from "@/pages/TopicView";
 import { SidebarNav } from "@/components/SidebarNav";
+import { Footer } from "@/components/Footer";
 
 function Router() {
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      <SidebarNav />
-      <main className="flex-1 pt-16 md:pt-0 h-screen flex flex-col">
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/topic/:topicId/text/:textId" component={TopicView} />
-          <Route component={NotFound} />
-        </Switch>
-      </main>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex flex-col md:flex-row flex-1">
+        <SidebarNav />
+        <main className="flex-1 pt-16 md:pt-0 h-screen flex flex-col">
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/topic/:topicId/text/:textId" component={TopicView} />
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+      </div>
+      <Footer />
     </div>
   );
 }
