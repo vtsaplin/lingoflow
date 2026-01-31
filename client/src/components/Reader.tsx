@@ -249,9 +249,20 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       
       const results = await Promise.all(translationPromises);
       
-      // Add flashcards from successful translations
+      // Add flashcards from successful translations, filtering duplicates by baseForm
+      const seenBaseForms = new Set<string>();
+      const existingBaseForms = new Set(
+        flashcardsForText.map(f => (f.baseForm || f.german).toLowerCase())
+      );
+      
       for (const result of results) {
         if (result.success && result.translation) {
+          const baseFormKey = (result.baseForm || result.word).toLowerCase();
+          // Skip if we've already added this baseForm in this batch or it already exists
+          if (seenBaseForms.has(baseFormKey) || existingBaseForms.has(baseFormKey)) {
+            continue;
+          }
+          seenBaseForms.add(baseFormKey);
           addFlashcard(result.word, result.translation, topicId, textId, result.baseForm);
           savedCount++;
         } else {
