@@ -36,11 +36,15 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="mb-10 rounded-xl overflow-hidden shadow-sm border">
+      <div className="mb-10 relative">
         <img 
           src={heroImage} 
           alt="German language learning" 
-          className="w-full h-48 sm:h-56 object-cover"
+          className="w-full h-48 sm:h-56 object-cover rounded-xl"
+          style={{
+            maskImage: "radial-gradient(ellipse 90% 80% at center, black 50%, transparent 100%)",
+            WebkitMaskImage: "radial-gradient(ellipse 90% 80% at center, black 50%, transparent 100%)"
+          }}
         />
       </div>
 
