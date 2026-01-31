@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2, Check, Trash2, List, Loader2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { TTSButton } from "@/components/TTSButton";
 import type { Flashcard } from "@/hooks/use-flashcards";
 import type { CardsModeState, CardsDirectionState, CardsQuestionState, CardsDirection } from "./types";
 import { useTTS } from "@/hooks/use-services";
@@ -529,28 +530,10 @@ export function CardsMode({
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={tts.isPending}
-                      onClick={() => {
-                        const textToSpeak = card.baseForm || card.german;
-                        tts.mutate(
-                          { text: textToSpeak, speed: 1.0, voice: settings.ttsVoice },
-                          {
-                            onSuccess: (blob) => {
-                              const url = URL.createObjectURL(blob);
-                              const audio = new Audio(url);
-                              audio.play().catch(() => {});
-                              audio.onended = () => URL.revokeObjectURL(url);
-                            }
-                          }
-                        );
-                      }}
+                    <TTSButton
+                      text={card.baseForm || card.german}
                       data-testid={`button-play-flashcard-${card.id}`}
-                    >
-                      {tts.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
-                    </Button>
+                    />
                     {onRemoveFlashcard && (
                       <Button
                         variant="ghost"
