@@ -48,19 +48,30 @@ export async function translate(text: string): Promise<string> {
   const client = getChatClient();
   if (!client) return "Translation unavailable (No API Key)";
 
-  try {
-    const response = await client.chat.completions.create({
-      model: "gpt-5-mini",
-      messages: [
-        { role: "system", content: "You are a professional translator. Translate the following German text to Russian. Return only the translation." },
-        { role: "user", content: text }
-      ]
-    });
-    return response.choices[0].message.content || "Error translating";
-  } catch (error) {
-    console.error("Translation error:", error);
-    return "Error translating";
+  const maxRetries = 3;
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await client.chat.completions.create({
+        model: "gpt-5-mini",
+        messages: [
+          { role: "system", content: "You are a professional translator. Translate the following German text to Russian. Return only the translation." },
+          { role: "user", content: text }
+        ]
+      });
+      return response.choices[0].message.content || "Error translating";
+    } catch (error) {
+      lastError = error;
+      console.error(`Translation error (attempt ${attempt}/${maxRetries}):`, error);
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
   }
+  
+  console.error("Translation failed after all retries:", lastError);
+  return "Error translating";
 }
 
 export async function dictionary(word: string): Promise<any> {
