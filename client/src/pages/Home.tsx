@@ -1,15 +1,24 @@
-import { MousePointer2, Volume2, BookOpen, Languages, Layers, PenLine, ArrowRightLeft, Mic, ListChecks } from "lucide-react";
+import { MousePointer2, Volume2, BookOpen, Languages, Layers, PenLine, ArrowRightLeft, Mic, ListChecks, Save, BookmarkPlus } from "lucide-react";
+import heroImage from "@/assets/images/hero-learning.png";
 
 export default function Home() {
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6 sm:px-8">
-      <div className="space-y-4 mb-12 text-center">
+    <div className="max-w-4xl mx-auto py-8 px-6 sm:px-8">
+      <div className="space-y-3 mb-8 text-center">
         <h1 className="text-4xl sm:text-5xl font-serif font-bold tracking-tight text-foreground">
           LingoFlow
         </h1>
-        <p className="text-xl text-muted-foreground">
+        <p className="text-lg text-muted-foreground">
           Read. Listen. Practice.
         </p>
+      </div>
+
+      <div className="mb-8 rounded-xl overflow-hidden shadow-sm border">
+        <img 
+          src={heroImage} 
+          alt="German language learning" 
+          className="w-full h-48 sm:h-56 object-cover"
+        />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -44,6 +53,16 @@ export default function Home() {
               <div>
                 <h3 className="font-medium text-foreground text-sm">Listen and repeat</h3>
                 <p className="text-muted-foreground text-xs">Audio plays automatically when you click</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <Save className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Save words</h3>
+                <p className="text-muted-foreground text-xs">Build your personal vocabulary list</p>
               </div>
             </div>
 
