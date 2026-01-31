@@ -46,12 +46,17 @@ Preferred communication style: Simple, everyday language.
 ### Practice Modes System
 - Two phases: Study (read & listen to learn material) and Practice (Cards, Fill, Order, Write, Speak exercises)
 - Study mode: Click words for dictionary definitions, click sentences for translations, text-to-speech playback
-- Cards mode: Bidirectional flashcard quiz with two sub-modes:
-  - DE→RU: Shows German word, pick correct Russian translation
-  - RU→DE: Shows Russian translation, pick correct German word
-  - Each direction tracks progress separately; Cards is complete when both directions pass at 100%
-  - Tab indicator shows "½" when one direction complete, checkmark when both complete
-  - Requires 4+ flashcards with unique translations/German words
+- Review mode (Cards tab): Has Quiz/Manage toggle to switch between views:
+  - Quiz view: Bidirectional flashcard quiz with DE→RU and RU→DE sub-modes
+    - DE→RU: Shows German word, pick correct Russian translation
+    - RU→DE: Shows Russian translation, pick correct German word
+    - Each direction tracks progress separately; Cards is complete when both directions pass at 100%
+    - Tab indicator shows "½" when one direction complete, checkmark when both complete
+    - Requires 4+ flashcards with unique translations/German words
+  - Manage view: List of all flashcards for current text with per-card actions
+    - Play button: TTS playback of German word (baseForm or original)
+    - Delete button: Remove individual flashcard
+    - Clear All button: Delete all flashcards for text (with confirmation dialog)
 - Fill mode: Sentence-by-sentence with navigation, creates gaps for RANDOM words (not flashcard-dependent, ~30% of words, max 3 gaps, min 3 letters), click word bank to fill gaps
 - Order mode: Uses saved sentences from Study mode (sentence interaction → Save button), displays Russian translation as hint, shuffle German words to reorder (min 3 words per sentence)
 - Write mode: Sentence-by-sentence with navigation, creates gaps for RANDOM words (not flashcard-dependent, ~30% of words, max 3 gaps, min 3 letters), type missing words with first-letter hints

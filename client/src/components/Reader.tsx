@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Trash2, Mic, MousePointer2, Check, Plus } from "lucide-react";
+import { Volume2, Loader2, PlayCircle, StopCircle, X, BookOpen, Puzzle, ArrowUpDown, PenLine, CheckCircle2, Eraser, Bookmark, BookmarkCheck, Layers, Mic, MousePointer2, Check, Plus } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -64,7 +64,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const textComplete = isTextComplete(topicId, textId);
   const progress = getTextProgress(topicId, textId);
   
-  const { addFlashcard, removeFlashcard, hasFlashcard, getFlashcardByGerman, getFlashcardsForText } = useFlashcards();
+  const { addFlashcard, hasFlashcard, getFlashcardsForText, removeFlashcard, clearFlashcardsForText } = useFlashcards();
   const flashcardsForText = getFlashcardsForText(topicId, textId);
   
   const { getSentencesForText } = useSavedSentences();
@@ -218,16 +218,13 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     const wordsToAdd = wordsArray.filter(
       word => !flashcardsForText.some(f => f.german.toLowerCase() === word)
     );
-    const wordsToRemove = flashcardsForText.filter(
-      f => !selectedWords.has(f.german.toLowerCase())
-    );
+    // No longer removing words in multi-select - deletion is now only in Review section
     
-    const totalOperations = wordsToAdd.length + wordsToRemove.length;
+    const totalOperations = wordsToAdd.length;
     let completedCount = 0;
     setSaveProgress({ completed: 0, total: totalOperations });
     
     let savedCount = 0;
-    let removedCount = 0;
     let errorCount = 0;
     
     try {
@@ -270,27 +267,14 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
         }
       }
       
-      // Remove words (instant, no API needed) and update progress
-      for (const flashcard of wordsToRemove) {
-        removeFlashcard(flashcard.id);
-        removedCount++;
-        completedCount++;
-        setSaveProgress({ completed: completedCount, total: totalOperations });
-      }
-      
-      // Update selection to reflect current saved state (don't clear, maintain overlay feel)
-      const updatedFlashcardWords = new Set(
-        getFlashcardsForText(topicId, textId).map(f => f.german.toLowerCase())
-      );
-      setSelectedWords(updatedFlashcardWords);
-      
-      // Exit selection mode gracefully and return to Explore
+      // Clear selection and exit multi-select mode
+      setSelectedWords(new Set());
       setMultiSelectMode(false);
       
-      // Show confirmation toast (no progress reset needed)
-      if (savedCount > 0 || removedCount > 0) {
+      // Show confirmation toast
+      if (savedCount > 0) {
         toast({
-          title: "Changes applied",
+          title: savedCount === 1 ? "Word saved" : `${savedCount} words saved`,
         });
       }
       
@@ -314,14 +298,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   };
   
   const toggleMultiSelectMode = () => {
-    if (multiSelectMode) {
-      setSelectedWords(new Set());
-    } else {
-      const existingFlashcardWords = new Set(
-        flashcardsForText.map(f => f.german.toLowerCase())
-      );
-      setSelectedWords(existingFlashcardWords);
-    }
+    // Always clear selection when toggling - no longer pre-populate with existing flashcards
+    setSelectedWords(new Set());
     setMultiSelectMode(!multiSelectMode);
     setSelectedText(null);
   };
@@ -605,7 +583,6 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       mode={interactionMode} 
                       onInteract={handleInteraction}
                       selectedText={selectedText}
-                      flashcardWords={flashcardsForText.map(f => f.german)}
                       multiSelectMode={multiSelectMode}
                       selectedWords={selectedWords}
                     />
@@ -636,24 +613,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                       </Button>
                       {interactionMode === "word" && (() => {
                         const isSaved = hasFlashcard(selectedText, topicId, textId);
-                        const savedFlashcard = isSaved ? getFlashcardByGerman(selectedText, topicId, textId) : null;
-                        const canSave = dictionaryMutation.isSuccess && dictionaryMutation.data;
-                        return isSaved && savedFlashcard ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              removeFlashcard(savedFlashcard.id);
-                              resetTextProgress(topicId, textId);
-                              resetPracticeState();
-                            }}
-                            data-testid="button-delete-flashcard"
-                            className="shrink-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
-                          </Button>
-                        ) : (
+                        const canSave = dictionaryMutation.isSuccess && dictionaryMutation.data && !isSaved;
+                        return (
                           <Button
                             variant="outline"
                             size="sm"
@@ -670,16 +631,18 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                                 resetPracticeState();
                               }
                             }}
-                            disabled={!canSave}
+                            disabled={!canSave || isSaved}
                             data-testid="button-save-flashcard"
                             className="shrink-0"
                           >
                             {dictionaryMutation.isPending ? (
                               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : isSaved ? (
+                              <Check className="h-4 w-4 mr-1" />
                             ) : (
                               <Bookmark className="h-4 w-4 mr-1" />
                             )}
-                            Save Word
+                            {isSaved ? "Saved" : "Save Word"}
                           </Button>
                         );
                       })()}
@@ -747,10 +710,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             )}
 
             {multiSelectMode && !selectedText && (() => {
-              const existingSet = new Set(flashcardsForText.map(f => f.german.toLowerCase()));
-              const wordsToAdd = Array.from(selectedWords).filter(w => !existingSet.has(w));
-              const wordsToRemove = Array.from(existingSet).filter(w => !selectedWords.has(w));
-              const hasChanges = wordsToAdd.length > 0 || wordsToRemove.length > 0;
+              const hasSelection = selectedWords.size > 0;
               
               return (
                 <div className="border-t bg-card animate-in slide-in-from-bottom-4">
@@ -760,14 +720,9 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                         <span className="text-sm text-muted-foreground">
                           <span className="font-medium text-foreground">{selectedWords.size}</span> words selected
                         </span>
-                        {hasChanges && (
-                          <span className="text-xs text-amber-600 dark:text-amber-400">
-                            Changes not applied
-                          </span>
-                        )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {selectedWords.size > 0 && (
+                        {hasSelection && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button 
@@ -776,10 +731,10 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                                 onClick={() => setSelectedWords(new Set())}
                                 data-testid="button-clear-selection"
                               >
-                                Clear Selection
+                                Clear
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Unselect all selected words</TooltipContent>
+                            <TooltipContent>Clear selection</TooltipContent>
                           </Tooltip>
                         )}
                         <Tooltip>
@@ -787,8 +742,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                             <Button 
                               variant="default" 
                               size="sm"
-                              onClick={() => hasChanges ? handleBatchSave() : null}
-                              disabled={isBatchSaving || !hasChanges}
+                              onClick={handleBatchSave}
+                              disabled={isBatchSaving || !hasSelection}
                               data-testid="button-batch-save"
                               className="gap-2"
                             >
@@ -800,7 +755,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                               ) : (
                                 <>
                                   <Check className="h-4 w-4" />
-                                  Update Review
+                                  Save to Review
                                 </>
                               )}
                             </Button>
@@ -824,6 +779,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
             onStateChange={updateCardsState}
             onResetProgress={(dir) => resetModeProgress(topicId, textId, dir === "de-ru" ? "cardsDeRu" : "cardsRuDe")}
             onDirectionComplete={(dir) => setModeComplete(topicId, textId, dir === "de-ru" ? "cardsDeRu" : "cardsRuDe")}
+            onRemoveFlashcard={removeFlashcard}
+            onClearAllFlashcards={() => clearFlashcardsForText(topicId, textId)}
             topicId={topicId}
             textId={textId}
             deRuComplete={progress.cardsDeRu ?? false}
@@ -920,7 +877,6 @@ function Paragraph({
   mode, 
   onInteract, 
   selectedText,
-  flashcardWords = [],
   multiSelectMode = false,
   selectedWords = new Set()
 }: { 
@@ -928,12 +884,9 @@ function Paragraph({
   mode: InteractionMode, 
   onInteract: (t: string, e: React.MouseEvent, sentence?: string) => void,
   selectedText: string | null,
-  flashcardWords?: string[],
   multiSelectMode?: boolean,
   selectedWords?: Set<string>
 }) {
-  const flashcardSet = new Set(flashcardWords.map(w => w.toLowerCase()));
-  
   // Split text into sentences for context lookup
   const sentences = text.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [text];
   
@@ -968,9 +921,8 @@ function Paragraph({
                 if (word.trim().length === 0) return <span key={wordIdx} className="pointer-events-none">{word}</span>;
                 const cleanWord = word.replace(/[.,?!/#$%^&*;:{}=\-_`~()«»„"]/g, "");
                 if (!cleanWord) return <span key={wordIdx} className="pointer-events-none">{word}</span>;
-                const isFlashcard = flashcardSet.has(cleanWord.toLowerCase());
                 return (
-                  <span key={wordIdx} className={`pointer-events-none ${isFlashcard ? 'flashcard-word' : ''}`}>
+                  <span key={wordIdx} className="pointer-events-none">
                     {word}
                   </span>
                 );
@@ -995,7 +947,6 @@ function Paragraph({
         const cleanWord = word.replace(/[.,?!/#$%^&*;:{}=\-_`~()«»„"]/g, "");
         if (!cleanWord) return <span key={idx}>{word}</span>;
 
-        const isFlashcard = flashcardSet.has(cleanWord.toLowerCase());
         const isMultiSelected = multiSelectMode && selectedWords.has(cleanWord.toLowerCase());
 
         // Extract leading and trailing punctuation
@@ -1013,7 +964,7 @@ function Paragraph({
             <span 
               onClick={(e) => onInteract(cleanWord, e, sentenceContext)}
               data-testid={`word-${idx}`}
-              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isFlashcard ? 'flashcard-word' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${multiSelectMode ? 'multi-select-mode' : ''}`}
+              className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${multiSelectMode ? 'multi-select-mode' : ''}`}
             >
               {cleanWord}
             </span>

@@ -1,6 +1,8 @@
 import { useMemo, useEffect, useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2, Check } from "lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2, Check, Trash2, List } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Flashcard } from "@/hooks/use-flashcards";
 import type { CardsModeState, CardsDirectionState, CardsQuestionState, CardsDirection } from "./types";
 import { useTTS } from "@/hooks/use-services";
@@ -41,6 +43,8 @@ interface CardsModeProps {
   onStateChange: (state: CardsModeState) => void;
   onResetProgress?: (direction: CardsDirection) => void;
   onDirectionComplete?: (direction: CardsDirection) => void;
+  onRemoveFlashcard?: (id: string) => void;
+  onClearAllFlashcards?: () => void;
   topicId: string;
   textId: string;
   deRuComplete: boolean;
@@ -102,11 +106,14 @@ export function CardsMode({
   onStateChange, 
   onResetProgress, 
   onDirectionComplete,
+  onRemoveFlashcard,
+  onClearAllFlashcards,
   topicId, 
   textId,
   deRuComplete,
   ruDeComplete
 }: CardsModeProps) {
+  const [viewMode, setViewMode] = useState<"quiz" | "manage">("quiz");
   const { direction } = state;
   const currentDirectionState = direction === "de-ru" ? state.deRu : state.ruDe;
   
@@ -431,6 +438,142 @@ export function CardsMode({
   const currentQuestion = questions[currentIndex];
   const minUnique = direction === "de-ru" ? uniqueTranslationCount : uniqueGermanCount;
 
+  const ViewModeToggle = () => (
+    <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+      <button
+        onClick={() => setViewMode("quiz")}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          viewMode === "quiz" 
+            ? "bg-background shadow-sm text-foreground" 
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        data-testid="button-view-quiz"
+      >
+        <Layers className="h-4 w-4" />
+        Quiz
+      </button>
+      <button
+        onClick={() => setViewMode("manage")}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          viewMode === "manage" 
+            ? "bg-background shadow-sm text-foreground" 
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        data-testid="button-view-manage"
+      >
+        <List className="h-4 w-4" />
+        Manage
+      </button>
+    </div>
+  );
+
+  const ManageView = () => (
+    <div className="flex flex-col h-full">
+      <div className="px-6 sm:px-8 py-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <ViewModeToggle />
+            {flashcards.length > 0 && onClearAllFlashcards && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" data-testid="button-clear-all-flashcards">
+                    <Trash2 className="h-4 w-4 mr-1.5" />
+                    Clear All
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Clear all flashcards?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will delete all {flashcards.length} flashcards for this text. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={onClearAllFlashcards} data-testid="button-confirm-clear-all">
+                      Clear All
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        </div>
+      </div>
+      <ScrollArea className="flex-1 px-6 sm:px-8 pb-6">
+        <div className="max-w-4xl mx-auto">
+          {flashcards.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Layers className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-center">
+                No flashcards saved for this text yet.
+              </p>
+              <p className="text-sm text-muted-foreground text-center mt-2">
+                Switch to Study mode and select Words to add them.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {flashcards.map((card) => (
+                <div
+                  key={card.id}
+                  className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                  data-testid={`flashcard-item-${card.id}`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-foreground">
+                      {card.baseForm || card.german}
+                    </div>
+                    <div className="text-sm text-muted-foreground truncate">
+                      {card.translation}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const textToSpeak = card.baseForm || card.german;
+                        tts.mutate(
+                          { text: textToSpeak, speed: 1.0, voice: settings.ttsVoice },
+                          {
+                            onSuccess: (blob) => {
+                              const url = URL.createObjectURL(blob);
+                              const audio = new Audio(url);
+                              audio.play().catch(() => {});
+                              audio.onended = () => URL.revokeObjectURL(url);
+                            }
+                          }
+                        );
+                      }}
+                      data-testid={`button-play-flashcard-${card.id}`}
+                    >
+                      <Volume2 className="h-4 w-4" />
+                    </Button>
+                    {onRemoveFlashcard && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onRemoveFlashcard(card.id)}
+                        data-testid={`button-delete-flashcard-${card.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+
+  if (viewMode === "manage") {
+    return <ManageView />;
+  }
+
   if (flashcards.length === 0) {
     return (
       <div className="flex flex-col h-full items-center justify-center px-6 py-12">
@@ -495,8 +638,11 @@ export function CardsMode({
       <div className="flex flex-col h-full">
         <div className="px-6 sm:px-8 py-4">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 flex-wrap">
-              <DirectionTabs />
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap">
+                <ViewModeToggle />
+                <DirectionTabs />
+              </div>
               <Button
                 variant="outline"
                 onClick={handleReset}
@@ -549,8 +695,11 @@ export function CardsMode({
     <div className="flex flex-col h-full">
       <div className="px-6 sm:px-8 py-4">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between gap-3">
-            <DirectionTabs />
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
+              <ViewModeToggle />
+              <DirectionTabs />
+            </div>
             
             <div className="flex items-center justify-center gap-3">
               <span className="text-sm text-muted-foreground shrink-0">{correctCount + incorrectCount}/{questions.length}</span>
