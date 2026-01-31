@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useLayoutEffect, useEffect } from "react";
+import { useState, useRef, useCallback, useLayoutEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   BookOpen, 
@@ -242,22 +242,6 @@ export function SidebarNav() {
     return currentPath === `/topic/${topicId}/text/${textId}`;
   };
 
-  // Auto-expand topic when navigating to a text within it
-  useEffect(() => {
-    if (!topics) return;
-    for (const topic of topics) {
-      const hasActive = topic.texts?.some(t => isTextActive(topic.id, t.id));
-      if (hasActive && !expandedTopics.has(topic.id)) {
-        setExpandedTopics(prev => {
-          const newSet = new Set(prev);
-          newSet.add(topic.id);
-          return newSet;
-        });
-        break;
-      }
-    }
-  }, [currentPath, topics]);
-
   const NavContent = () => (
     <div className="flex flex-col h-full">
       <div className="space-y-6 py-6 flex-1 overflow-hidden flex flex-col">
@@ -339,6 +323,7 @@ export function SidebarNav() {
                 {topics?.map((topic) => {
                   const hasTexts = topic.texts && topic.texts.length > 0;
                   const isExpanded = expandedTopics.has(topic.id);
+                  const hasActiveText = topic.texts?.some(t => isTextActive(topic.id, t.id));
                   const topicFullySelected = isTopicFullySelected(topic.id);
                   const topicPartiallySelected = isTopicPartiallySelected(topic.id);
                   const textIds = topic.texts?.map(t => t.id) || [];
@@ -347,7 +332,7 @@ export function SidebarNav() {
                   return (
                     <Collapsible 
                       key={topic.id} 
-                      open={selectionMode || isExpanded}
+                      open={selectionMode || isExpanded || hasActiveText}
                       onOpenChange={() => !selectionMode && toggleTopic(topic.id)}
                     >
                       <div className="flex items-center overflow-hidden">
@@ -376,7 +361,7 @@ export function SidebarNav() {
                                 <span className="truncate font-medium">{topic.title}</span>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                {hasTexts && !selectionMode && !isExpanded && (
+                                {hasTexts && !selectionMode && !(isExpanded || hasActiveText) && (
                                   topicProgress.percentage === 100 ? (
                                     <CheckCircle2 
                                       className="h-4 w-4 text-green-600 dark:text-green-500" 
@@ -392,7 +377,7 @@ export function SidebarNav() {
                                   )
                                 )}
                                 {!selectionMode && (
-                                  isExpanded ? (
+                                  (isExpanded || hasActiveText) ? (
                                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                   ) : (
                                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -400,7 +385,7 @@ export function SidebarNav() {
                                 )}
                               </div>
                             </div>
-                            {hasTexts && !selectionMode && isExpanded && (
+                            {hasTexts && !selectionMode && (isExpanded || hasActiveText) && (
                               <div className="flex items-center gap-2 ml-7 text-xs" data-testid={`topic-progress-expanded-${topic.id}`}>
                                 <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                                   <div 
