@@ -36,7 +36,7 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="relative">
+      <div className="mb-2 relative">
         <img 
           src={heroImage} 
           alt="German language learning" 
