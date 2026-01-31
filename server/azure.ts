@@ -74,23 +74,39 @@ export async function translate(text: string): Promise<string> {
   return "Error translating";
 }
 
-export async function dictionary(word: string): Promise<any> {
+export async function dictionary(word: string, sentence?: string): Promise<any> {
   const client = getChatClient();
   if (!client) return { word, translation: "No API Key" };
+
+  const contextInstruction = sentence 
+    ? `The word appears in this sentence: "${sentence}". Use this context to:
+       - Identify if this is part of a separable verb (e.g., "fange" from "anfangen", "aus" from "aussehen")
+       - Determine the correct meaning based on context
+       - Find the dictionary form (infinitive for verbs, nominative singular for nouns)`
+    : "";
 
   try {
     const response = await client.chat.completions.create({
       model: "gpt-5-mini",
       messages: [
-        { role: "system", content: `You are a German-Russian dictionary. Analyze the given German word. Return a JSON object with:
-          - word: the original word
-          - translation: CONCISE Russian translation (1-3 words max, NO parentheses, NO explanations, NO synonym lists)
+        { role: "system", content: `You are a German-Russian dictionary. Analyze the given German word. ${contextInstruction}
+          
+          Return a JSON object with:
+          - word: the original word as given
+          - baseForm: the dictionary/base form (infinitive for verbs including prefix for separable verbs, nominative singular for nouns). Only include if different from 'word'.
+          - translation: CONCISE Russian translation of the BASE FORM (1-3 words max, NO parentheses, NO explanations)
           - partOfSpeech: grammatical part of speech (in German)
           - definition: short definition in German (1 sentence max)
-          - example_de: example sentence in German
+          - example_de: example sentence in German using the base form
           - example_ru: Russian translation of the example
-          IMPORTANT: Keep translation SHORT. Bad example: "немного, чуть-чуть (разг.)" Good example: "немного"
-          Return ONLY JSON.` },
+          
+          EXAMPLES:
+          - If word is "fange" in "Ich fange um 9 Uhr an", baseForm should be "anfangen" (separable verb)
+          - If word is "aus" in "Er sieht müde aus", baseForm should be "aussehen" (separable verb)
+          - If word is "gehst", baseForm should be "gehen"
+          - If word is "Bücher", baseForm should be "das Buch"
+          
+          IMPORTANT: Keep translation SHORT. Return ONLY JSON.` },
         { role: "user", content: word }
       ],
       response_format: { type: "json_object" }

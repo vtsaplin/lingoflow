@@ -41,8 +41,8 @@ export async function registerRoutes(
 
   app.post(api.services.dictionary.path, async (req, res) => {
     try {
-      const { word } = api.services.dictionary.input.parse(req.body);
-      const result = await dictionary(word);
+      const { word, sentence } = api.services.dictionary.input.parse(req.body);
+      const result = await dictionary(word, sentence);
       res.json(result);
     } catch (err) {
        console.error(err);

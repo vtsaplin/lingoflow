@@ -33,10 +33,12 @@ export const translateRequestSchema = z.object({
 
 export const dictionaryRequestSchema = z.object({
   word: z.string(),
+  sentence: z.string().optional(),
 });
 
 export const dictionaryResponseSchema = z.object({
   word: z.string(),
+  baseForm: z.string().optional(),
   translation: z.string(),
   partOfSpeech: z.string().optional(),
   definition: z.string().optional(),
