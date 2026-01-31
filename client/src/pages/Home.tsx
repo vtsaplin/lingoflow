@@ -1,4 +1,4 @@
-import { MousePointer2, Volume2, BookOpen, Languages } from "lucide-react";
+import { MousePointer2, Volume2, BookOpen, Languages, Layers, PenLine, ArrowRightLeft, Mic, ListChecks } from "lucide-react";
 
 export default function Home() {
   return (
@@ -12,47 +12,105 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="bg-card border rounded-xl p-6 sm:p-8 shadow-sm">
-        <h2 className="text-xl font-semibold mb-6 text-foreground">How to use</h2>
-        
-        <div className="space-y-5">
-          <div className="flex gap-4">
-            <div className="p-3 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-              <BookOpen className="h-5 w-5" />
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="bg-card border rounded-xl p-6 shadow-sm">
+          <h2 className="text-lg font-semibold mb-5 text-foreground">Study Mode</h2>
+          
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <BookOpen className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Choose a text</h3>
+                <p className="text-muted-foreground text-xs">Pick a topic from the sidebar</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-medium text-foreground">Choose a text</h3>
-              <p className="text-muted-foreground text-sm">Pick a topic from the sidebar and start reading</p>
+
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <MousePointer2 className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Click to learn</h3>
+                <p className="text-muted-foreground text-xs">Tap words for definitions, sentences for translations</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <Volume2 className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Listen and repeat</h3>
+                <p className="text-muted-foreground text-xs">Audio plays automatically when you click</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <Languages className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Your language</h3>
+                <p className="text-muted-foreground text-xs">All translations in Russian</p>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex gap-4">
-            <div className="p-3 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-              <MousePointer2 className="h-5 w-5" />
+        <div className="bg-card border rounded-xl p-6 shadow-sm">
+          <h2 className="text-lg font-semibold mb-5 text-foreground">Practice Modes</h2>
+          
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <Layers className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Cards</h3>
+                <p className="text-muted-foreground text-xs">Flashcard quiz with your saved words</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-medium text-foreground">Click to learn</h3>
-              <p className="text-muted-foreground text-sm">Tap any word for definition, or sentence for translation</p>
-            </div>
-          </div>
 
-          <div className="flex gap-4">
-            <div className="p-3 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-              <Volume2 className="h-5 w-5" />
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <ListChecks className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Fill</h3>
+                <p className="text-muted-foreground text-xs">Fill in missing words from a word bank</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-medium text-foreground">Listen and repeat</h3>
-              <p className="text-muted-foreground text-sm">Audio plays automatically when you click</p>
-            </div>
-          </div>
 
-          <div className="flex gap-4">
-            <div className="p-3 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-              <Languages className="h-5 w-5" />
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <ArrowRightLeft className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Order</h3>
+                <p className="text-muted-foreground text-xs">Arrange words to form correct sentences</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-medium text-foreground">Your language</h3>
-              <p className="text-muted-foreground text-sm">All translations and definitions in Russian</p>
+
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <PenLine className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Write</h3>
+                <p className="text-muted-foreground text-xs">Type the missing words with hints</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                <Mic className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-foreground text-sm">Speak</h3>
+                <p className="text-muted-foreground text-xs">Practice speaking with AI dialogue</p>
+              </div>
             </div>
           </div>
         </div>
