@@ -39,8 +39,8 @@ export function useTranslate() {
 
 export function useDictionary() {
   return useMutation({
-    mutationFn: async ({ word }: { word: string }) => {
-      const validated = api.services.dictionary.input.parse({ word });
+    mutationFn: async ({ word, sentence }: { word: string; sentence?: string }) => {
+      const validated = api.services.dictionary.input.parse({ word, sentence });
       const res = await fetch(api.services.dictionary.path, {
         method: api.services.dictionary.method,
         headers: { "Content-Type": "application/json" },

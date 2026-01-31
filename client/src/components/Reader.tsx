@@ -36,6 +36,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("read");
   const [interactionMode, setInteractionMode] = useState<InteractionMode>("word");
   const [selectedText, setSelectedText] = useState<string | null>(null);
+  const [currentSentence, setCurrentSentence] = useState<string | null>(null);
   const [isReadingAll, setIsReadingAll] = useState(false);
   const [slowMode, setSlowMode] = useState(false);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
@@ -161,7 +162,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     }
   };
 
-  const handleInteraction = async (text: string, e: React.MouseEvent) => {
+  const handleInteraction = async (text: string, e: React.MouseEvent, sentence?: string) => {
     e.stopPropagation();
     
     // In multiSelectMode, word selection works in both word and sentence modes
@@ -180,6 +181,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     }
     
     setSelectedText(text);
+    setCurrentSentence(sentence || null);
     
     translateMutation.reset();
     dictionaryMutation.reset();
@@ -187,7 +189,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
     playAudio(text);
     
     if (interactionMode === "word") {
-      dictionaryMutation.mutate({ word: text });
+      dictionaryMutation.mutate({ word: text, sentence });
     } else {
       translateMutation.mutate({ text });
     }
@@ -219,7 +221,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
           const data = await response.json();
           completedCount++;
           setSaveProgress({ completed: completedCount, total: totalOperations });
-          return { success: true, word: data.word, translation: data.translation };
+          return { success: true, word: data.word, translation: data.translation, baseForm: data.baseForm };
         } catch {
           completedCount++;
           setSaveProgress({ completed: completedCount, total: totalOperations });
@@ -232,7 +234,7 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
       // Add flashcards from successful translations
       for (const result of results) {
         if (result.success && result.translation) {
-          addFlashcard(result.word, result.translation, topicId, textId);
+          addFlashcard(result.word, result.translation, topicId, textId, result.baseForm);
           savedCount++;
         } else {
           errorCount++;
@@ -632,7 +634,8 @@ export function Reader({ topicId, textId, topicTitle, title, paragraphs }: Reade
                                   dictionaryMutation.data.word,
                                   dictionaryMutation.data.translation,
                                   topicId,
-                                  textId
+                                  textId,
+                                  dictionaryMutation.data.baseForm
                                 );
                                 resetTextProgress(topicId, textId);
                                 resetPracticeState();
@@ -894,7 +897,7 @@ function Paragraph({
 }: { 
   text: string, 
   mode: InteractionMode, 
-  onInteract: (t: string, e: React.MouseEvent) => void,
+  onInteract: (t: string, e: React.MouseEvent, sentence?: string) => void,
   selectedText: string | null,
   flashcardWords?: string[],
   multiSelectMode?: boolean,
@@ -902,8 +905,23 @@ function Paragraph({
 }) {
   const flashcardSet = new Set(flashcardWords.map(w => w.toLowerCase()));
   
+  // Split text into sentences for context lookup
+  const sentences = text.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [text];
+  
+  // Find which sentence contains a word (for word mode context)
+  const findSentenceForWord = (word: string, wordPosition: number): string => {
+    let charCount = 0;
+    for (const sentence of sentences) {
+      const sentenceEnd = charCount + sentence.length;
+      if (wordPosition < sentenceEnd) {
+        return sentence.trim();
+      }
+      charCount = sentenceEnd;
+    }
+    return sentences[0]?.trim() || text;
+  };
+  
   if (mode === "sentence" && !multiSelectMode) {
-    const sentences = text.match(/[^.!?]+[.!?]+["']?|[^.!?]+$/g) || [text];
     return (
       <p>
         {sentences.map((sentence, idx) => {
@@ -936,9 +954,13 @@ function Paragraph({
   }
 
   const words = text.split(/(\s+)/);
+  let charPosition = 0;
   return (
     <p>
       {words.map((word, idx) => {
+        const currentPosition = charPosition;
+        charPosition += word.length;
+        
         if (word.trim().length === 0) return <span key={idx}>{word}</span>;
         
         const cleanWord = word.replace(/[.,?!/#$%^&*;:{}=\-_`~()«»„"]/g, "");
@@ -953,11 +975,14 @@ function Paragraph({
         const leadingPunct = leadingMatch ? leadingMatch[0] : "";
         const trailingPunct = trailingMatch ? trailingMatch[0] : "";
 
+        // Find the sentence containing this word for context
+        const sentenceContext = findSentenceForWord(cleanWord, currentPosition);
+
         return (
           <span key={idx}>
             {leadingPunct}
             <span 
-              onClick={(e) => onInteract(cleanWord, e)}
+              onClick={(e) => onInteract(cleanWord, e, sentenceContext)}
               data-testid={`word-${idx}`}
               className={`reader-highlight py-0.5 rounded cursor-pointer ${selectedText === cleanWord ? 'active' : ''} ${isFlashcard ? 'flashcard-word' : ''} ${isMultiSelected ? 'multi-selected' : ''} ${multiSelectMode ? 'multi-select-mode' : ''}`}
             >
