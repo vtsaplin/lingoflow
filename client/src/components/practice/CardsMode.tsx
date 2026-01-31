@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2, Check, Trash2, List } from "lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, Layers, Volume2, Check, Trash2, List, Loader2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Flashcard } from "@/hooks/use-flashcards";
@@ -532,6 +532,7 @@ export function CardsMode({
                     <Button
                       variant="ghost"
                       size="icon"
+                      disabled={tts.isPending}
                       onClick={() => {
                         const textToSpeak = card.baseForm || card.german;
                         tts.mutate(
@@ -548,7 +549,7 @@ export function CardsMode({
                       }}
                       data-testid={`button-play-flashcard-${card.id}`}
                     >
-                      <Volume2 className="h-4 w-4" />
+                      {tts.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
                     </Button>
                     {onRemoveFlashcard && (
                       <Button
