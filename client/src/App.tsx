@@ -11,10 +11,10 @@ import { Footer } from "@/components/Footer";
 
 function Router() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex flex-col md:flex-row flex-1">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
         <SidebarNav />
-        <main className="flex-1 pt-16 md:pt-0 h-screen flex flex-col">
+        <main className="flex-1 pt-16 md:pt-0 flex flex-col overflow-auto">
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/topic/:topicId/text/:textId" component={TopicView} />
