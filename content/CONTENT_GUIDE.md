@@ -72,6 +72,32 @@ Each content file should follow a unified structure:
 
 4. **Number of subtopics**: Recommended 4-6 subtopics per file
 
+#### Dot Usage and Sentence Parsing
+
+The application parses text into sentences using dots (`.`) as delimiters. To avoid incorrect sentence splitting, follow these rules:
+
+**Avoid dots in the middle of sentences:**
+- Ordinal numbers in dates: use `15 Juli` instead of `15. Juli`
+- Abbreviations: use full words instead of abbreviated forms
+
+**Forbidden patterns:**
+| Avoid | Use Instead |
+|-------|-------------|
+| `15. Juli`, `1. April` | `15 Juli`, `1 April` or `am ersten April` |
+| `Nr.` | `Nummer` |
+| `ca.` | `circa` or `ungefähr` |
+| `z.B.` | `zum Beispiel` |
+| `usw.` | `und so weiter` |
+| `etc.` | (avoid, use German alternatives) |
+
+**Allowed:**
+- Dots at the end of sentences (normal punctuation)
+- Decimal numbers when necessary (e.g., `3.5 Kilometer`)
+
+**Examples:**
+- Bad: `Ich möchte vom 15. Juli bis zum 30. Juli frei haben.`
+- Good: `Ich möchte vom 15 Juli bis zum 30 Juli frei haben.`
+
 ## Content Requirements
 
 ### Language Level
@@ -171,7 +197,7 @@ Recommended topics for A2 level:
 
 ## Writing Tips
 
-1. **Use specific details**: prices, dates, addresses make the text realistic
+1. **Use specific details**: prices, dates, addresses make the text realistic (but avoid dots in dates - use `15 Juli` not `15. Juli`)
 2. **Include emotions and opinions**: "Ich bin nervös", "Das ist ein Problem"
 3. **Use modal verbs**: können, müssen, möchte, sollen
 4. **Vary tenses**: Präsens, Perfekt, Futur mit werden/möchte

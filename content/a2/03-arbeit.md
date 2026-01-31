@@ -12,7 +12,7 @@ Wenn es noch einmal passiert, nehme ich einen früheren Zug. Es tut mir wirklich
 
 ## Urlaub beantragen
 
-Guten Tag Frau Müller, ich möchte gerne Urlaub nehmen. Ich möchte vom 15. Juli bis zum 30. Juli frei haben. Das sind zwei Wochen.
+Guten Tag Frau Müller, ich möchte gerne Urlaub nehmen. Ich möchte vom 15 Juli bis zum 30 Juli frei haben. Das sind zwei Wochen.
 
 Ist das möglich? In dieser Zeit ist nicht viel Arbeit, glaube ich. Mein Kollege Herr Weber kann meine Aufgaben übernehmen. Bitte geben Sie mir Bescheid.
 

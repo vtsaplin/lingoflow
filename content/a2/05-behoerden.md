@@ -46,6 +46,6 @@ Guten Tag, ich ziehe nächsten Monat um. Ich ziehe von Zürich nach Basel. Ich m
 
 Kann ich auch online abmelden? Oder muss ich persönlich kommen? Was passiert mit meiner Krankenversicherung? Muss ich etwas ändern? Vielen Dank.
 
-Ich ziehe am 1. April um. Ich möchte alles rechtzeitig erledigen. Brauche ich eine Bestätigung für die neue Gemeinde?
+Ich ziehe am 1 April um. Ich möchte alles rechtzeitig erledigen. Brauche ich eine Bestätigung für die neue Gemeinde?
 
 Und was ist mit der Post? Soll ich einen Nachsendeauftrag machen? Ich freue mich über eine kurze Antwort.
