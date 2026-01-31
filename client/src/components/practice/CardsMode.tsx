@@ -576,28 +576,42 @@ export function CardsMode({
 
   if (flashcards.length === 0) {
     return (
-      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <Layers className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-center">
-          No flashcards saved for this text yet.
-        </p>
-        <p className="text-sm text-muted-foreground text-center mt-2">
-          Switch to Study mode and select Words to add them.
-        </p>
+      <div className="flex flex-col h-full">
+        <div className="px-6 sm:px-8 py-4">
+          <div className="max-w-4xl mx-auto">
+            <ViewModeToggle />
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <Layers className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground text-center">
+            No flashcards saved for this text yet.
+          </p>
+          <p className="text-sm text-muted-foreground text-center mt-2">
+            Switch to Study mode and select Words to add them.
+          </p>
+        </div>
       </div>
     );
   }
   
   if (minUnique < 4) {
     return (
-      <div className="flex flex-col h-full items-center justify-center px-6 py-12">
-        <Layers className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-center">
-          You need at least 4 flashcards with unique translations to practice.
-        </p>
-        <p className="text-sm text-muted-foreground text-center mt-2">
-          Currently saved: {flashcards.length} card{flashcards.length !== 1 ? "s" : ""} ({minUnique} unique). Add more in Study mode.
-        </p>
+      <div className="flex flex-col h-full">
+        <div className="px-6 sm:px-8 py-4">
+          <div className="max-w-4xl mx-auto">
+            <ViewModeToggle />
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          <Layers className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground text-center">
+            You need at least 4 flashcards with unique translations to practice Quiz.
+          </p>
+          <p className="text-sm text-muted-foreground text-center mt-2">
+            Currently saved: {flashcards.length} card{flashcards.length !== 1 ? "s" : ""} ({minUnique} unique). Add more in Study mode.
+          </p>
+        </div>
       </div>
     );
   }
